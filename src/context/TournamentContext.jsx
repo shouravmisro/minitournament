@@ -304,13 +304,30 @@ function tournamentReducer(state, action) {
     case 'ADD_PLAYER':
       return { ...state, players: [...state.players, action.payload] };
 
-    case 'UPDATE_PLAYER':
+    case 'UPDATE_PLAYER': {
+      const updatedPlayer = action.payload;
+      const oldPlayer = state.players.find(p => p.id === updatedPlayer.id);
+      let newTeams = state.teams;
+      if (oldPlayer && oldPlayer.teamId !== updatedPlayer.teamId) {
+        newTeams = state.teams.map(t => {
+          let rIds = t.rosterIds || [];
+          if (t.id === oldPlayer.teamId) {
+            rIds = rIds.filter(id => id !== updatedPlayer.id);
+          }
+          if (t.id === updatedPlayer.teamId && !rIds.includes(updatedPlayer.id)) {
+            rIds = [...rIds, updatedPlayer.id];
+          }
+          return { ...t, rosterIds: rIds };
+        });
+      }
       return {
         ...state,
+        teams: newTeams,
         players: state.players.map(p =>
-          p.id === action.payload.id ? { ...p, ...action.payload } : p
+          p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
         ),
       };
+    }
 
     case 'DELETE_PLAYER':
       return {
@@ -325,13 +342,19 @@ function tournamentReducer(state, action) {
     case 'ADD_CAPTAIN':
       return { ...state, captains: [...state.captains, action.payload] };
 
-    case 'UPDATE_CAPTAIN':
+    case 'UPDATE_CAPTAIN': {
+      const updatedCap = action.payload;
+      const oldCap = state.captains.find(c => c.id === updatedCap.id);
       return {
         ...state,
         captains: state.captains.map(c =>
-          c.id === action.payload.id ? { ...c, ...action.payload } : c
+          c.id === updatedCap.id ? { ...c, ...updatedCap } : c
+        ),
+        players: state.players.map(p =>
+          oldCap && p.name === oldCap.name ? { ...p, name: updatedCap.name || p.name } : p
         ),
       };
+    }
 
     case 'DELETE_CAPTAIN': {
       const cap = state.captains.find(c => c.id === action.payload);
@@ -443,6 +466,24 @@ function tournamentReducer(state, action) {
         ),
       };
 
+    case 'DELETE_MATCH':
+      return { ...state, matches: state.matches.filter(m => m.id !== action.payload) };
+
+    case 'SET_MATCHES':
+      return { ...state, matches: action.payload };
+
+    case 'UPDATE_ROUND_MATCHES': {
+      const { round, updates } = action.payload;
+      return {
+        ...state,
+        matches: state.matches.map(m =>
+          m.round === round && m.stage === 'LEAGUE'
+            ? { ...m, ...updates }
+            : m
+        ),
+      };
+    }
+
     case 'ADD_AWARD':
       return { ...state, awards: [...state.awards, action.payload] };
 
@@ -494,8 +535,11 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
     deleteTeam:       useCallback((id)   => dispatch({ type: 'DELETE_TEAM',        payload: id }),                       []),
     draftPlayer:      useCallback((pid, tid) => dispatch({ type: 'DRAFT_PLAYER',   payload: { playerId: pid, teamId: tid } }), []),
     undraftPlayer:    useCallback((pid)  => dispatch({ type: 'UNDRAFT_PLAYER',     payload: { playerId: pid } }),         []),
-    addMatch:         useCallback((m)    => dispatch({ type: 'ADD_MATCH',          payload: m }),                        []),
-    updateMatch:      useCallback((m)    => dispatch({ type: 'UPDATE_MATCH',       payload: m }),                        []),
+    addMatch:           useCallback((m)              => dispatch({ type: 'ADD_MATCH',             payload: m }),                        []),
+    updateMatch:        useCallback((m)              => dispatch({ type: 'UPDATE_MATCH',          payload: m }),                        []),
+    deleteMatch:        useCallback((id)             => dispatch({ type: 'DELETE_MATCH',          payload: id }),                       []),
+    setMatches:         useCallback((matches)        => dispatch({ type: 'SET_MATCHES',           payload: matches }),                  []),
+    updateRoundMatches: useCallback((round, updates) => dispatch({ type: 'UPDATE_ROUND_MATCHES', payload: { round, updates } }),       []),
     addAward:         useCallback((a)    => dispatch({ type: 'ADD_AWARD',          payload: a }),                        []),
     updateAward:      useCallback((a)    => dispatch({ type: 'UPDATE_AWARD',       payload: a }),                        []),
     deleteAward:      useCallback((id)   => dispatch({ type: 'DELETE_AWARD',       payload: id }),                       []),

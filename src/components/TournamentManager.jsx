@@ -73,7 +73,7 @@ function OrganizerProfileModal({ onClose }) {
 }
 
 export default function TournamentManager() {
-  const { global, createTournament, deleteTournament, selectTournament } = useGlobal();
+  const { global, createTournament, deleteTournament, selectTournament, updateTournamentMeta } = useGlobal();
   const { organizer } = useOrganizer();
 
   const [showCreate, setShowCreate] = useState(false);
@@ -81,6 +81,9 @@ export default function TournamentManager() {
   const [newName, setNewName]       = useState('');
   const [newFormat, setNewFormat]   = useState('HYBRID');
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [editingTournament, setEditingTournament] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editFormat, setEditFormat] = useState('HYBRID');
 
   function handleCreate() {
     const name = newName.trim();
@@ -89,6 +92,30 @@ export default function TournamentManager() {
     setNewName('');
     setNewFormat('HYBRID');
     setShowCreate(false);
+  }
+
+  function handleStartEditTournament(t) {
+    setEditingTournament(t);
+    setEditName(t.name);
+    setEditFormat(t.format || 'HYBRID');
+  }
+
+  function handleSaveEditTournament() {
+    if (!editingTournament || !editName.trim()) return;
+    updateTournamentMeta({
+      id: editingTournament.id,
+      name: editName.trim(),
+      format: editFormat,
+    });
+    try {
+      const raw = localStorage.getItem(`mt_state_${editingTournament.id}`);
+      if (raw) {
+        const s = JSON.parse(raw);
+        s.organizer = { ...s.organizer, name: editName.trim(), format: editFormat };
+        localStorage.setItem(`mt_state_${editingTournament.id}`, JSON.stringify(s));
+      }
+    } catch {}
+    setEditingTournament(null);
   }
 
   function handleDelete(id) {
@@ -280,6 +307,13 @@ export default function TournamentManager() {
                       ) : (
                         <>
                           <button
+                            onClick={() => handleStartEditTournament(t)}
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-amber-400 hover:bg-gray-850 transition-colors"
+                            title="Edit tournament name & format"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => setConfirmDelete(t.id)}
                             className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors opacity-0 group-hover:opacity-100"
                             title="Delete tournament"
@@ -314,6 +348,75 @@ export default function TournamentManager() {
       </main>
 
       {showOrgProfile && <OrganizerProfileModal onClose={() => setShowOrgProfile(false)} />}
+
+      {/* Edit Tournament Modal */}
+      {editingTournament && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-amber-400" />
+                Edit Tournament
+              </h2>
+              <button onClick={() => setEditingTournament(null)} className="text-gray-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3.5">
+              <div>
+                <label className="text-xs font-semibold text-gray-400">Tournament Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-400">Format</label>
+                <div className="grid grid-cols-3 gap-2 mt-1">
+                  {FORMAT_OPTIONS.map(opt => (
+                    <button
+                      type="button"
+                      key={opt.value}
+                      onClick={() => setEditFormat(opt.value)}
+                      className={`p-2.5 rounded-lg border text-left transition-all ${
+                        editFormat === opt.value
+                          ? 'border-amber-500 bg-amber-500/10 text-amber-300'
+                          : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600'
+                      }`}
+                    >
+                      <div className="font-semibold text-xs">{opt.label}</div>
+                      <div className="text-[10px] opacity-70 mt-0.5">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingTournament(null)}
+                className="flex-1 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-800 text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEditTournament}
+                disabled={!editName.trim()}
+                className="flex-1 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 text-white text-xs font-semibold"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirm delete overlay */}
       {confirmDelete && (

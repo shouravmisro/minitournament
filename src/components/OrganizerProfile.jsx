@@ -1,17 +1,26 @@
 import React, { useState } from 'react';
 import { useTournament } from '../context/TournamentContext';
+import { useGlobal } from '../context/GlobalContext';
 import {
   MapPin, Phone, FileText, Globe, Building2, Edit3, Save, X, ExternalLink
 } from 'lucide-react';
 
 export default function OrganizerProfile({ editable = false }) {
   const { state, updateOrganizer } = useTournament();
+  const { global, updateTournamentMeta } = useGlobal();
   const org = state.organizer;
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ ...org });
 
   function handleSave() {
     updateOrganizer(form);
+    if (global?.activeTournamentId && updateTournamentMeta) {
+      updateTournamentMeta({
+        id: global.activeTournamentId,
+        name: form.name || 'Tournament',
+        format: form.format || 'HYBRID',
+      });
+    }
     setEditing(false);
   }
 
