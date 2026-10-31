@@ -30,7 +30,7 @@ export default function AdminPanel() {
     addCaptain, updateCaptain, deleteCaptain,
     addTeam, updateTeam, deleteTeam,
     exportState, importState, setAdminPin, resetState,
-    setDraftMode, setDefaultBudget,
+    setDraftMode, setDefaultBudget, recomputeStats,
   } = useTournament();
 
   const [showWizard, setShowWizard] = useState(false);
@@ -80,7 +80,7 @@ export default function AdminPanel() {
       status: 'UNDRAFTED',
       teamId: null,
       availability: 'AVAILABLE',
-      stats: { matches: 0, goals: 0, assists: 0, cleanSheets: 0, mvpCount: 0 },
+      stats: { matches: 0, goals: 0, assists: 0, cleanSheets: 0, saves: 0, avgRating: 0, mvpCount: 0 },
     };
     addPlayer(player);
     handleStartEditPlayer(player);
@@ -103,6 +103,8 @@ export default function AdminPanel() {
         goals: player.stats?.goals ?? 0,
         assists: player.stats?.assists ?? 0,
         cleanSheets: player.stats?.cleanSheets ?? 0,
+        saves: player.stats?.saves ?? 0,
+        avgRating: player.stats?.avgRating ?? 0,
         mvpCount: player.stats?.mvpCount ?? 0,
       },
     });
@@ -284,14 +286,27 @@ export default function AdminPanel() {
                 {showPins ? 'Hide' : 'Show'} PINs
               </button>
               {state.players.length > 0 && (
-                <button
-                  onClick={copyPlayerPins}
-                  className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1.5 rounded-lg border border-amber-500/30 transition-colors"
-                  title="Copy player PINs list to clipboard"
-                >
-                  {copiedPlayerPins ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedPlayerPins ? 'Copied list!' : 'Copy Player PINs'}</span>
-                </button>
+                <>
+                  <button
+                    onClick={copyPlayerPins}
+                    className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1.5 rounded-lg border border-amber-500/30 transition-colors"
+                    title="Copy player PINs list to clipboard"
+                  >
+                    {copiedPlayerPins ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedPlayerPins ? 'Copied list!' : 'Copy Player PINs'}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      recomputeStats();
+                      alert('Player stats recomputed from all completed matches!');
+                    }}
+                    className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-2.5 py-1.5 rounded-lg border border-purple-500/30 transition-colors"
+                    title="Recalculate player stats from match events"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Sync Match Stats</span>
+                  </button>
+                </>
               )}
             </div>
             <button
@@ -435,19 +450,23 @@ export default function AdminPanel() {
                       {/* Performance Stats */}
                       <div className="bg-gray-900/60 p-2.5 rounded-lg border border-gray-700">
                         <label className="text-[11px] font-semibold text-gray-400 block mb-1">Career / Tournament Stats</label>
-                        <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 text-center text-xs">
                           {[
                             { key: 'matches', label: 'Matches' },
                             { key: 'goals', label: 'Goals' },
                             { key: 'assists', label: 'Assists' },
                             { key: 'cleanSheets', label: 'Clean Sheets' },
+                            { key: 'saves', label: 'GK Saves' },
+                            { key: 'avgRating', label: 'Avg Rating' },
                             { key: 'mvpCount', label: 'MVPs' },
                           ].map(s => (
                             <div key={s.key}>
                               <span className="text-[10px] text-gray-500 block truncate">{s.label}</span>
                               <input
-                                type="number"
+                                type={s.key === 'avgRating' ? 'number' : 'number'}
+                                step={s.key === 'avgRating' ? '0.1' : '1'}
                                 min="0"
+                                max={s.key === 'avgRating' ? '10' : '999'}
                                 value={playerForm.stats?.[s.key] ?? 0}
                                 onChange={e => setPlayerForm({
                                   ...playerForm,

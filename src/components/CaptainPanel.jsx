@@ -3,7 +3,7 @@ import { useTournament } from '../context/TournamentContext';
 import { useAuth } from '../context/AuthContext';
 import {
   Crown, Users, Edit3, Save, X, Palette, Shield, User,
-  Type, Smile, ChevronDown, ChevronUp, Dices
+  Type, Smile, ChevronDown, ChevronUp, Dices, Key, Eye, EyeOff, Check
 } from 'lucide-react';
 
 export default function CaptainPanel() {
@@ -19,6 +19,13 @@ export default function CaptainPanel() {
   const [editingTeam, setEditingTeam] = useState(false);
   const [teamForm, setTeamForm] = useState({});
   const [showRoster, setShowRoster] = useState(true);
+
+  // PIN change state
+  const [showPin, setShowPin] = useState(false);
+  const [editingPin, setEditingPin] = useState(false);
+  const [newPin, setNewPin] = useState('');
+  const [pinSuccessMsg, setPinSuccessMsg] = useState('');
+  const [pinErrorMsg, setPinErrorMsg] = useState('');
 
   if (!captain) {
     return (
@@ -37,6 +44,21 @@ export default function CaptainPanel() {
     FWD: 'bg-red-500/20 text-red-300',
     FLEX: 'bg-purple-500/20 text-purple-300',
   };
+
+  function handleSavePin(e) {
+    e.preventDefault();
+    setPinErrorMsg('');
+    const cleanPin = newPin.replace(/\D/g, '');
+    if (cleanPin.length !== 4) {
+      setPinErrorMsg('PIN must be exactly 4 digits');
+      return;
+    }
+    updateCaptain({ ...captain, pin: cleanPin });
+    setEditingPin(false);
+    setNewPin('');
+    setPinSuccessMsg(`PIN successfully updated to ${cleanPin}!`);
+    setTimeout(() => setPinSuccessMsg(''), 4000);
+  }
 
   return (
     <div className="space-y-4">
@@ -82,6 +104,96 @@ export default function CaptainPanel() {
             <div className="text-xs text-gray-400">Played</div>
           </div>
         </div>
+      </div>
+
+      {/* Security & PIN Change Card */}
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <Key className="w-4 h-4 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Captain Login PIN</p>
+              <p className="text-xs text-gray-400">Use this 4-digit PIN to login as team captain</p>
+            </div>
+          </div>
+
+          {!editingPin && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-xl font-mono text-sm text-amber-400 font-bold">
+                <span>{showPin ? captain.pin : '••••'}</span>
+                <button
+                  type="button"
+                  onClick={() => setShowPin(!showPin)}
+                  className="text-gray-400 hover:text-white ml-1"
+                  title={showPin ? 'Hide PIN' : 'Show PIN'}
+                >
+                  {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setEditingPin(true); setNewPin(''); setPinErrorMsg(''); }}
+                className="text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-xl transition-colors font-medium"
+              >
+                Change PIN
+              </button>
+            </div>
+          )}
+        </div>
+
+        {pinSuccessMsg && (
+          <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs px-3 py-2 rounded-xl">
+            <Check className="w-4 h-4 shrink-0" />
+            <span>{pinSuccessMsg}</span>
+          </div>
+        )}
+
+        {editingPin && (
+          <form onSubmit={handleSavePin} className="bg-gray-800/80 border border-amber-500/30 rounded-xl p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-amber-400">Set New 4-Digit PIN</span>
+              <button
+                type="button"
+                onClick={() => setEditingPin(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                pattern="[0-9]*"
+                maxLength={4}
+                value={newPin}
+                onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))}
+                placeholder="e.g. 5432"
+                className="w-32 bg-gray-900 border border-gray-600 rounded-lg px-3 py-1.5 text-white font-mono text-center tracking-widest text-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
+              >
+                <Save className="w-3.5 h-3.5" /> Save New PIN
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingPin(false)}
+                className="text-gray-400 hover:text-white text-xs px-2.5 py-1.5 rounded-lg"
+              >
+                Cancel
+              </button>
+            </div>
+
+            {pinErrorMsg && (
+              <p className="text-xs text-red-400">{pinErrorMsg}</p>
+            )}
+          </form>
+        )}
       </div>
 
       {/* Draft CTA */}
@@ -216,4 +328,3 @@ export default function CaptainPanel() {
     </div>
   );
 }
-

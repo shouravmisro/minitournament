@@ -2,7 +2,7 @@ import React from 'react';
 import { useTournament } from '../context/TournamentContext';
 import {
   X, Crown, Shield, Target, Zap, Calendar, Award,
-  Heart, AlertTriangle, CircleDot, User
+  Heart, AlertTriangle, CircleDot, User, Star, Trophy
 } from 'lucide-react';
 
 const POS_BADGE = {
@@ -21,12 +21,18 @@ export default function PlayerProfileModal({ player, onClose }) {
   const awards = state.awards.filter(a => a.winnerPlayerId === player.id);
   const isCap = state.captains.some(c => c.name === player.name);
 
+  // Recent match performances
+  const playerMatches = state.matches
+    .filter(m => m.status === 'COMPLETED' && Array.isArray(m.playerPerformance) && m.playerPerformance.some(p => p.playerId === player.id))
+    .slice(-4)
+    .reverse();
+
   return (
     <div
       className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto shadow-2xl">
 
         {/* ── Top stripe (team color) ── */}
         <div
@@ -118,21 +124,54 @@ export default function PlayerProfileModal({ player, onClose }) {
         )}
 
         {/* ── Stats grid ── */}
-        <div className="mx-5 mb-4 grid grid-cols-5 gap-1.5">
+        <div className="mx-5 mb-4 grid grid-cols-4 sm:grid-cols-7 gap-1.5">
           {[
-            { label: 'MP', value: player.stats.matches, icon: Calendar },
-            { label: 'G', value: player.stats.goals, icon: Target },
-            { label: 'A', value: player.stats.assists, icon: Zap },
-            { label: 'CS', value: player.stats.cleanSheets, icon: Shield },
-            { label: 'MVP', value: player.stats.mvpCount, icon: Award },
+            { label: 'MP', value: player.stats?.matches ?? 0, icon: Calendar },
+            { label: 'G', value: player.stats?.goals ?? 0, icon: Target },
+            { label: 'A', value: player.stats?.assists ?? 0, icon: Zap },
+            { label: 'CS', value: player.stats?.cleanSheets ?? 0, icon: Shield },
+            { label: 'Saves', value: player.stats?.saves ?? 0, icon: Shield },
+            { label: 'Rating', value: player.stats?.avgRating ? `${player.stats.avgRating}★` : '–', icon: Star },
+            { label: 'MVP', value: player.stats?.mvpCount ?? 0, icon: Trophy },
           ].map(s => (
             <div key={s.label} className="bg-gray-800 rounded-xl p-2 text-center">
               <s.icon className="w-3.5 h-3.5 text-gray-500 mx-auto mb-0.5" />
-              <div className="text-lg font-black text-white">{s.value}</div>
-              <div className="text-[9px] text-gray-500 font-semibold tracking-wide">{s.label}</div>
+              <div className="text-base font-black text-white">{s.value}</div>
+              <div className="text-[9px] text-gray-400 font-semibold tracking-wide">{s.label}</div>
             </div>
           ))}
         </div>
+
+        {/* ── Recent match ratings history ── */}
+        {playerMatches.length > 0 && (
+          <div className="mx-5 mb-4 space-y-1.5">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Recent Match Ratings</p>
+            <div className="space-y-1">
+              {playerMatches.map(m => {
+                const perf = m.playerPerformance.find(p => p.playerId === player.id);
+                const oppTeamId = m.teamAId === player.teamId ? m.teamBId : m.teamAId;
+                const oppTeam = state.teams.find(t => t.id === oppTeamId);
+                return (
+                  <div key={m.id} className="flex items-center justify-between text-xs bg-gray-800/60 px-2.5 py-1.5 rounded-lg">
+                    <span className="text-gray-300 truncate">
+                      vs {oppTeam?.logo} {oppTeam?.name || 'Opponent'}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {perf?.cleanSheet && (
+                        <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded font-mono">
+                          CS
+                        </span>
+                      )}
+                      <span className="font-mono font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded">
+                        {perf?.rating ? `${perf.rating}★` : '–'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── Availability ── */}
         <div className="mx-5 mb-4 flex items-center gap-2">
@@ -180,4 +219,3 @@ export default function PlayerProfileModal({ player, onClose }) {
     </div>
   );
 }
-

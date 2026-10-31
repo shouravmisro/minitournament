@@ -3,7 +3,8 @@ import { useTournament } from '../context/TournamentContext';
 import { useAuth } from '../context/AuthContext';
 import {
   User, Edit3, Save, X, Shield, Calendar, MapPin, Phone,
-  Heart, AlertTriangle, CircleDot, Trophy, Target, Zap, Award
+  Heart, AlertTriangle, CircleDot, Trophy, Target, Zap, Award,
+  Key, Eye, EyeOff, Check
 } from 'lucide-react';
 
 const POSITION_COLORS = {
@@ -32,6 +33,13 @@ export default function PlayerPanel() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
 
+  // PIN change state
+  const [showPin, setShowPin] = useState(false);
+  const [editingPin, setEditingPin] = useState(false);
+  const [newPin, setNewPin] = useState('');
+  const [pinSuccessMsg, setPinSuccessMsg] = useState('');
+  const [pinErrorMsg, setPinErrorMsg] = useState('');
+
   if (!player) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -46,6 +54,21 @@ export default function PlayerPanel() {
     (m.teamAId === player.teamId || m.teamBId === player.teamId) &&
     m.status !== 'COMPLETED'
   );
+
+  function handleSavePin(e) {
+    e.preventDefault();
+    setPinErrorMsg('');
+    const cleanPin = newPin.replace(/\D/g, '');
+    if (cleanPin.length !== 4) {
+      setPinErrorMsg('PIN must be exactly 4 digits');
+      return;
+    }
+    updatePlayer({ id: player.id, pin: cleanPin });
+    setEditingPin(false);
+    setNewPin('');
+    setPinSuccessMsg(`PIN successfully updated to ${cleanPin}!`);
+    setTimeout(() => setPinSuccessMsg(''), 4000);
+  }
 
   return (
     <div className="space-y-4">
@@ -101,13 +124,14 @@ export default function PlayerPanel() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-5 gap-2 mt-4">
+          <div className="grid grid-cols-6 gap-2 mt-4">
             {[
               { label: 'Matches', value: player.stats.matches, icon: Calendar },
               { label: 'Goals', value: player.stats.goals, icon: Target },
               { label: 'Assists', value: player.stats.assists, icon: Zap },
               { label: 'Clean S.', value: player.stats.cleanSheets, icon: Shield },
-              { label: 'MVP', value: player.stats.mvpCount, icon: Trophy },
+              { label: 'Saves', value: player.stats.saves || 0, icon: Shield },
+              { label: 'Rating', value: player.stats.avgRating ? `${player.stats.avgRating}★` : '–', icon: Trophy },
             ].map(s => (
               <div key={s.label} className="bg-gray-800/60 rounded-lg p-2 text-center">
                 <s.icon className="w-3.5 h-3.5 text-gray-500 mx-auto mb-0.5" />
@@ -117,6 +141,96 @@ export default function PlayerPanel() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Security & PIN Change Card */}
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <Key className="w-4 h-4 text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Player Login PIN</p>
+              <p className="text-xs text-gray-400">Use this 4-digit PIN to login to your player profile</p>
+            </div>
+          </div>
+
+          {!editingPin && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-xl font-mono text-sm text-blue-400 font-bold">
+                <span>{showPin ? player.pin : '••••'}</span>
+                <button
+                  type="button"
+                  onClick={() => setShowPin(!showPin)}
+                  className="text-gray-400 hover:text-white ml-1"
+                  title={showPin ? 'Hide PIN' : 'Show PIN'}
+                >
+                  {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setEditingPin(true); setNewPin(''); setPinErrorMsg(''); }}
+                className="text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-xl transition-colors font-medium"
+              >
+                Change PIN
+              </button>
+            </div>
+          )}
+        </div>
+
+        {pinSuccessMsg && (
+          <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs px-3 py-2 rounded-xl">
+            <Check className="w-4 h-4 shrink-0" />
+            <span>{pinSuccessMsg}</span>
+          </div>
+        )}
+
+        {editingPin && (
+          <form onSubmit={handleSavePin} className="bg-gray-800/80 border border-blue-500/30 rounded-xl p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-blue-400">Set New 4-Digit PIN</span>
+              <button
+                type="button"
+                onClick={() => setEditingPin(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                pattern="[0-9]*"
+                maxLength={4}
+                value={newPin}
+                onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))}
+                placeholder="e.g. 1234"
+                className="w-32 bg-gray-900 border border-gray-600 rounded-lg px-3 py-1.5 text-white font-mono text-center tracking-widest text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
+              >
+                <Save className="w-3.5 h-3.5" /> Save New PIN
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingPin(false)}
+                className="text-gray-400 hover:text-white text-xs px-2.5 py-1.5 rounded-lg"
+              >
+                Cancel
+              </button>
+            </div>
+
+            {pinErrorMsg && (
+              <p className="text-xs text-red-400">{pinErrorMsg}</p>
+            )}
+          </form>
+        )}
       </div>
 
       {/* Availability Toggle */}
@@ -236,6 +350,15 @@ export default function PlayerPanel() {
                 />
               </div>
               <div>
+                <label className="text-xs text-gray-400">4-Digit PIN</label>
+                <input
+                  maxLength={4}
+                  value={form.pin || ''}
+                  onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })}
+                  className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-blue-400 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
                 <label className="text-xs text-gray-400">Avatar URL</label>
                 <input
                   value={form.avatar || ''}
@@ -303,4 +426,3 @@ export default function PlayerPanel() {
     </div>
   );
 }
-

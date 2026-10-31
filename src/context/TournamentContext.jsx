@@ -26,7 +26,23 @@ const DEFAULT_STATE = {
 function loadState(storageKey) {
   try {
     const raw = localStorage.getItem(storageKey);
-    if (raw) return { ...DEFAULT_STATE, ...JSON.parse(raw) };
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const players = (parsed.players || []).map(p => ({
+        ...p,
+        stats: {
+          matches: 0,
+          goals: 0,
+          assists: 0,
+          cleanSheets: 0,
+          saves: 0,
+          avgRating: 0,
+          mvpCount: 0,
+          ...(p.stats || {}),
+        },
+      }));
+      return { ...DEFAULT_STATE, ...parsed, players };
+    }
   } catch (e) {
     console.warn('Failed to load state', e);
   }
@@ -170,8 +186,6 @@ export function buildFromParsed(parsedList, defaultBudget = 1000) {
   const captains = [];
   const teams    = [];
 
-  const TEAM_EMOJIS = ['lightning','fire','star','target','rocket','gem','lion','dragon','eagle','wolf'];
-  const EMOJI_MAP   = { lightning:'⚡', fire:'🔥', star:'🌟', target:'🎯', rocket:'🚀', gem:'💎', lion:'🦁', dragon:'🐉', eagle:'🦅', wolf:'🐺' };
   const LOGOS = ['⚡','🔥','🌟','🎯','🚀','💎','🦁','🐉','🦅','🐺'];
   const COLORS = ['#10B981','#EF4444','#3B82F6','#F59E0B','#8B5CF6','#EC4899','#14B8A6','#F97316'];
 
@@ -206,7 +220,7 @@ export function buildFromParsed(parsedList, defaultBudget = 1000) {
       status:       entry.isCaptain ? 'DRAFTED' : 'UNDRAFTED',
       teamId:       entry.isCaptain ? teamId : null,
       availability: 'AVAILABLE',
-      stats:        { matches: 0, goals: 0, assists: 0, cleanSheets: 0, mvpCount: 0 },
+      stats:        { matches: 0, goals: 0, assists: 0, cleanSheets: 0, saves: 0, avgRating: 0, mvpCount: 0 },
     };
 
     players.push(player);
@@ -261,7 +275,7 @@ export function buildFromTeamRoster(teamsData, defaultBudget = 1000) {
         status:       'DRAFTED',
         teamId,
         availability: 'AVAILABLE',
-        stats:        { matches: 0, goals: 0, assists: 0, cleanSheets: 0, mvpCount: 0 },
+        stats:        { matches: 0, goals: 0, assists: 0, cleanSheets: 0, saves: 0, avgRating: 0, mvpCount: 0 },
       };
 
       players.push(player);
@@ -271,6 +285,106 @@ export function buildFromTeamRoster(teamsData, defaultBudget = 1000) {
   });
 
   return { players, captains, teams };
+}
+
+// ── Recompute Player Stats from All Completed Matches ──
+export function recomputePlayerStats(players, matches) {
+  const statsMap = {};
+  players.forEach(p => {
+    statsMap[p.id] = {
+      matches: 0,
+      goals: 0,
+      assists: 0,
+      cleanSheets: 0,
+      saves: 0,
+      ratings: [],
+      mvpCount: 0,
+    };
+  });
+
+  const completedMatches = matches.filter(m => m.status === 'COMPLETED');
+
+  completedMatches.forEach(match => {
+    // 1. Process goal events
+    if (Array.isArray(match.events)) {
+      match.events.forEach(ev => {
+        if (!ev.type || ev.type === 'GOAL') {
+          if (ev.scorerId && statsMap[ev.scorerId]) {
+            statsMap[ev.scorerId].goals += 1;
+          }
+          if (ev.assistId && statsMap[ev.assistId]) {
+            statsMap[ev.assistId].assists += 1;
+          }
+        }
+      });
+    }
+
+    // 2. Process player performance records
+    if (Array.isArray(match.playerPerformance) && match.playerPerformance.length > 0) {
+      match.playerPerformance.forEach(perf => {
+        const pStats = statsMap[perf.playerId];
+        if (!pStats) return;
+
+        if (perf.played !== false) {
+          pStats.matches += 1;
+        }
+        if (perf.saves !== undefined && perf.saves !== null && perf.saves !== '') {
+          pStats.saves += Number(perf.saves);
+        }
+        if (perf.cleanSheet) {
+          pStats.cleanSheets += 1;
+        }
+        if (perf.rating !== undefined && perf.rating !== null && perf.rating !== '' && Number(perf.rating) > 0) {
+          pStats.ratings.push(Number(perf.rating));
+        }
+      });
+    }
+
+    // 3. Match MVP
+    if (match.mvpPlayerId && statsMap[match.mvpPlayerId]) {
+      statsMap[match.mvpPlayerId].mvpCount += 1;
+    }
+  });
+
+  const hasAnyLoggedMatchData = completedMatches.some(m =>
+    (Array.isArray(m.events) && m.events.length > 0) ||
+    (Array.isArray(m.playerPerformance) && m.playerPerformance.length > 0)
+  );
+
+  return players.map(p => {
+    const calc = statsMap[p.id];
+    if (!calc) return p;
+
+    const currentStats = p.stats || {};
+    const avgRating = calc.ratings.length > 0
+      ? Number((calc.ratings.reduce((a, b) => a + b, 0) / calc.ratings.length).toFixed(1))
+      : (currentStats.avgRating || 0);
+
+    // If match events or performance records have been logged, use recalculated metrics.
+    // Otherwise preserve baseline/manual values.
+    const newStats = hasAnyLoggedMatchData ? {
+      matches: calc.matches > 0 ? calc.matches : (currentStats.matches || 0),
+      goals: calc.goals,
+      assists: calc.assists,
+      cleanSheets: calc.cleanSheets,
+      saves: calc.saves,
+      avgRating,
+      mvpCount: calc.mvpCount > 0 ? calc.mvpCount : (currentStats.mvpCount || 0),
+    } : {
+      matches: currentStats.matches || 0,
+      goals: currentStats.goals || 0,
+      assists: currentStats.assists || 0,
+      cleanSheets: currentStats.cleanSheets || 0,
+      saves: currentStats.saves || 0,
+      avgRating: currentStats.avgRating || 0,
+      mvpCount: currentStats.mvpCount || 0,
+    };
+
+    return {
+      ...p,
+      stats: newStats,
+    };
+  });
 }
 
 // ── Reducer ──
@@ -320,9 +434,19 @@ function tournamentReducer(state, action) {
           return { ...t, rosterIds: rIds };
         });
       }
+
+      // If player changed name or PIN, and is also captain, keep captain in sync
+      const syncedCaptains = state.captains.map(c => {
+        if (oldPlayer && c.name === oldPlayer.name) {
+          return { ...c, name: updatedPlayer.name, pin: updatedPlayer.pin || c.pin };
+        }
+        return c;
+      });
+
       return {
         ...state,
         teams: newTeams,
+        captains: syncedCaptains,
         players: state.players.map(p =>
           p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
         ),
@@ -351,7 +475,9 @@ function tournamentReducer(state, action) {
           c.id === updatedCap.id ? { ...c, ...updatedCap } : c
         ),
         players: state.players.map(p =>
-          oldCap && p.name === oldCap.name ? { ...p, name: updatedCap.name || p.name } : p
+          oldCap && p.name === oldCap.name
+            ? { ...p, name: updatedCap.name || p.name, pin: updatedCap.pin || p.pin }
+            : p
         ),
       };
     }
@@ -392,7 +518,7 @@ function tournamentReducer(state, action) {
         return {
           ...state,
           captains: [...state.captains, {
-            id: capId, name: player.name, pin: generatePin(), teamId, avatar: player.avatar || '',
+            id: capId, name: player.name, pin: player.pin || generatePin(), teamId, avatar: player.avatar || '',
           }],
           teams: [...state.teams, {
             id: teamId, name: `Team ${player.name}`, captainId: capId,
@@ -455,34 +581,62 @@ function tournamentReducer(state, action) {
       };
     }
 
-    case 'ADD_MATCH':
-      return { ...state, matches: [...state.matches, action.payload] };
-
-    case 'UPDATE_MATCH':
+    case 'ADD_MATCH': {
+      const newMatches = [...state.matches, action.payload];
       return {
         ...state,
-        matches: state.matches.map(m =>
-          m.id === action.payload.id ? { ...m, ...action.payload } : m
-        ),
+        matches: newMatches,
+        players: recomputePlayerStats(state.players, newMatches),
       };
+    }
 
-    case 'DELETE_MATCH':
-      return { ...state, matches: state.matches.filter(m => m.id !== action.payload) };
+    case 'UPDATE_MATCH': {
+      const updatedMatches = state.matches.map(m =>
+        m.id === action.payload.id ? { ...m, ...action.payload } : m
+      );
+      return {
+        ...state,
+        matches: updatedMatches,
+        players: recomputePlayerStats(state.players, updatedMatches),
+      };
+    }
 
-    case 'SET_MATCHES':
-      return { ...state, matches: action.payload };
+    case 'DELETE_MATCH': {
+      const remainingMatches = state.matches.filter(m => m.id !== action.payload);
+      return {
+        ...state,
+        matches: remainingMatches,
+        players: recomputePlayerStats(state.players, remainingMatches),
+      };
+    }
+
+    case 'SET_MATCHES': {
+      return {
+        ...state,
+        matches: action.payload,
+        players: recomputePlayerStats(state.players, action.payload),
+      };
+    }
 
     case 'UPDATE_ROUND_MATCHES': {
       const { round, updates } = action.payload;
+      const updated = state.matches.map(m =>
+        m.round === round && m.stage === 'LEAGUE'
+          ? { ...m, ...updates }
+          : m
+      );
       return {
         ...state,
-        matches: state.matches.map(m =>
-          m.round === round && m.stage === 'LEAGUE'
-            ? { ...m, ...updates }
-            : m
-        ),
+        matches: updated,
+        players: recomputePlayerStats(state.players, updated),
       };
     }
+
+    case 'RECOMPUTE_STATS':
+      return {
+        ...state,
+        players: recomputePlayerStats(state.players, state.matches),
+      };
 
     case 'ADD_AWARD':
       return { ...state, awards: [...state.awards, action.payload] };
@@ -540,6 +694,7 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
     deleteMatch:        useCallback((id)             => dispatch({ type: 'DELETE_MATCH',          payload: id }),                       []),
     setMatches:         useCallback((matches)        => dispatch({ type: 'SET_MATCHES',           payload: matches }),                  []),
     updateRoundMatches: useCallback((round, updates) => dispatch({ type: 'UPDATE_ROUND_MATCHES', payload: { round, updates } }),       []),
+    recomputeStats:     useCallback(()               => dispatch({ type: 'RECOMPUTE_STATS' }),                           []),
     addAward:         useCallback((a)    => dispatch({ type: 'ADD_AWARD',          payload: a }),                        []),
     updateAward:      useCallback((a)    => dispatch({ type: 'UPDATE_AWARD',       payload: a }),                        []),
     deleteAward:      useCallback((id)   => dispatch({ type: 'DELETE_AWARD',       payload: id }),                       []),
