@@ -6,7 +6,7 @@ import AwardsSystem     from './AwardsSystem';
 import {
   Shield, Users, UserPlus, Crown, Trash2, Sparkles, Download, Upload,
   Key, Eye, EyeOff, Edit3, Save, X, AlertCircle, ChevronDown, ChevronUp,
-  Settings, Dices, Trophy, Calendar
+  Settings, Dices, Trophy, Calendar, Copy, Check
 } from 'lucide-react';
 
 const POSITION_COLORS = {
@@ -33,6 +33,27 @@ export default function AdminPanel() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [newAdminPin, setNewAdminPin] = useState('');
   const [showAdminPinEdit, setShowAdminPinEdit] = useState(false);
+  const [copiedCapPins, setCopiedCapPins] = useState(false);
+  const [copiedPlayerPins, setCopiedPlayerPins] = useState(false);
+
+  function copyCaptainPins() {
+    if (state.captains.length === 0) return;
+    const text = state.captains.map(c => {
+      const team = state.teams.find(t => t.id === c.teamId);
+      return `👑 ${team?.name || 'Team'}: ${c.name} → PIN: ${c.pin}`;
+    }).join('\n');
+    navigator.clipboard.writeText(text);
+    setCopiedCapPins(true);
+    setTimeout(() => setCopiedCapPins(false), 2000);
+  }
+
+  function copyPlayerPins() {
+    if (state.players.length === 0) return;
+    const text = state.players.map(p => `⚽ ${p.name} (${p.position}) → PIN: ${p.pin}`).join('\n');
+    navigator.clipboard.writeText(text);
+    setCopiedPlayerPins(true);
+    setTimeout(() => setCopiedPlayerPins(false), 2000);
+  }
 
   function handleAddPlayer() {
     const player = {
@@ -133,13 +154,25 @@ export default function AdminPanel() {
       {expandedSection === 'players' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => setShowPins(!showPins)}
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
-            >
-              {showPins ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              {showPins ? 'Hide' : 'Show'} PINs
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowPins(!showPins)}
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                {showPins ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPins ? 'Hide' : 'Show'} PINs
+              </button>
+              {state.players.length > 0 && (
+                <button
+                  onClick={copyPlayerPins}
+                  className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-1 rounded transition-colors"
+                  title="Copy player PINs list to clipboard"
+                >
+                  {copiedPlayerPins ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedPlayerPins ? 'Copied list!' : 'Copy Player PINs'}</span>
+                </button>
+              )}
+            </div>
             <button
               onClick={handleAddPlayer}
               className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
@@ -408,11 +441,21 @@ export default function AdminPanel() {
             </div>
           </div>
           {/* PIN reference sheet */}
-          {state.players.length > 0 && (
+          {state.captains.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Key className="w-3.5 h-3.5" /> Captain PIN Reference
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5" /> Captain PIN Reference
+                </p>
+                <button
+                  onClick={copyCaptainPins}
+                  className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg transition-colors"
+                  title="Copy all captain PINs to clipboard for WhatsApp"
+                >
+                  {copiedCapPins ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedCapPins ? 'Copied PIN list!' : 'Copy for WhatsApp'}</span>
+                </button>
+              </div>
               <div className="space-y-1">
                 {state.captains.map(cap => {
                   const team = state.teams.find(t => t.id === cap.teamId);
