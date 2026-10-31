@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
+import {
+  subscribeGlobal, saveGlobalCloud,
+  subscribeOrganizer, saveOrganizerCloud,
+  isFirebaseConfigured
+} from '../services/firebase';
 
 /* ─────────────────────────────────────────────
    Global state that lives OUTSIDE tournaments:
@@ -43,6 +48,14 @@ function saveOrganizer(o){ try { localStorage.setItem(ORG_KEY, JSON.stringify(o)
 // Reducer
 function globalReducer(state, action) {
   switch (action.type) {
+    case 'SET_GLOBAL_STATE':
+      return {
+        ...state,
+        ...action.payload,
+        // preserve activeTournamentId if not provided in cloud
+        activeTournamentId: action.payload.activeTournamentId ?? state.activeTournamentId,
+      };
+
     case 'CREATE_TOURNAMENT': {
       const t = {
         id:        `t_${Date.now().toString(36)}`,
@@ -53,7 +66,6 @@ function globalReducer(state, action) {
       return { ...state, tournaments: [...state.tournaments, t], activeTournamentId: t.id };
     }
     case 'DELETE_TOURNAMENT': {
-      // Also wipe the tournament's localStorage entry
       try { localStorage.removeItem(`mt_state_${action.payload}`); } catch {}
       return {
         ...state,
@@ -83,11 +95,63 @@ const GlobalContext    = createContext(null);
 const OrganizerContext = createContext(null);
 
 export function GlobalProvider({ children }) {
-  const [global, dispatch]      = useReducer(globalReducer, null, loadGlobal);
+  const [global, dispatch]        = useReducer(globalReducer, null, loadGlobal);
   const [organizer, setOrganizer] = React.useState(loadOrganizer);
 
-  useEffect(() => { saveGlobal(global); },     [global]);
-  useEffect(() => { saveOrganizer(organizer); }, [organizer]);
+  const isRemoteGlobalUpdate    = useRef(false);
+  const isRemoteOrganizerUpdate = useRef(false);
+
+  // Realtime Cloud Listener for Global tournaments
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+
+    const unsubscribe = subscribeGlobal((cloudData) => {
+      if (cloudData && Array.isArray(cloudData.tournaments)) {
+        isRemoteGlobalUpdate.current = true;
+        dispatch({ type: 'SET_GLOBAL_STATE', payload: cloudData });
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Realtime Cloud Listener for Organizer profile
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+
+    const unsubscribe = subscribeOrganizer((cloudData) => {
+      if (cloudData) {
+        isRemoteOrganizerUpdate.current = true;
+        setOrganizer(prev => ({ ...prev, ...cloudData }));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Persist Global State
+  useEffect(() => {
+    saveGlobal(global);
+    if (isFirebaseConfigured()) {
+      if (isRemoteGlobalUpdate.current) {
+        isRemoteGlobalUpdate.current = false;
+      } else {
+        saveGlobalCloud(global);
+      }
+    }
+  }, [global]);
+
+  // Persist Organizer State
+  useEffect(() => {
+    saveOrganizer(organizer);
+    if (isFirebaseConfigured()) {
+      if (isRemoteOrganizerUpdate.current) {
+        isRemoteOrganizerUpdate.current = false;
+      } else {
+        saveOrganizerCloud(organizer);
+      }
+    }
+  }, [organizer]);
 
   const updateOrganizer = useCallback((patch) => {
     setOrganizer(prev => ({ ...prev, ...patch }));
@@ -115,4 +179,3 @@ export function GlobalProvider({ children }) {
 
 export function useGlobal()     { return useContext(GlobalContext); }
 export function useOrganizer()  { return useContext(OrganizerContext); }
-

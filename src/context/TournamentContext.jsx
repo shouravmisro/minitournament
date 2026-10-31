@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
+import {
+  subscribeTournament,
+  saveTournamentCloud,
+  isFirebaseConfigured
+} from '../services/firebase';
 
 // ── Default tournament state (Section 3 schema) ──
 const DEFAULT_STATE = {
@@ -670,7 +675,38 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
     () => loadState(storageKey)
   );
 
-  useEffect(() => { saveState(storageKey, state); }, [state, storageKey]);
+  const tournamentId = storageKey.startsWith('mt_state_')
+    ? storageKey.replace('mt_state_', '')
+    : storageKey;
+
+  const isRemoteUpdate = useRef(false);
+
+  // Realtime Cloud Listener for active tournament
+  useEffect(() => {
+    if (!isFirebaseConfigured() || !tournamentId) return;
+
+    const unsubscribe = subscribeTournament(tournamentId, (cloudData) => {
+      if (cloudData && cloudData.organizer) {
+        isRemoteUpdate.current = true;
+        dispatch({ type: 'SET_STATE', payload: cloudData });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [tournamentId]);
+
+  // Persist state to local storage and Cloud
+  useEffect(() => {
+    saveState(storageKey, state);
+
+    if (isFirebaseConfigured() && tournamentId) {
+      if (isRemoteUpdate.current) {
+        isRemoteUpdate.current = false;
+      } else {
+        saveTournamentCloud(tournamentId, state);
+      }
+    }
+  }, [state, storageKey, tournamentId]);
 
   const value = {
     state,

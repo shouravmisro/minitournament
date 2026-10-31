@@ -3,10 +3,12 @@ import { useTournament, generateId, generatePin } from '../context/TournamentCon
 import OrganizerProfile from './OrganizerProfile';
 import BulkDumpWizard   from './BulkDumpWizard';
 import AwardsSystem     from './AwardsSystem';
+import FirebaseSyncModal from './FirebaseSyncModal';
+import { isFirebaseConfigured } from '../services/firebase';
 import {
   Shield, Users, UserPlus, Crown, Trash2, Sparkles, Download, Upload,
   Key, Eye, EyeOff, Edit3, Save, X, AlertCircle, ChevronDown, ChevronUp,
-  Settings, Dices, Trophy, Calendar, Copy, Check, Palette, Coins, UserCheck
+  Settings, Dices, Trophy, Calendar, Copy, Check, Palette, Coins, UserCheck, Cloud
 } from 'lucide-react';
 
 const POSITION_COLORS = {
@@ -45,6 +47,7 @@ export default function AdminPanel() {
   const [showAdminPinEdit, setShowAdminPinEdit] = useState(false);
   const [copiedCapPins, setCopiedCapPins] = useState(false);
   const [copiedPlayerPins, setCopiedPlayerPins] = useState(false);
+  const [showCloudModal, setShowCloudModal] = useState(false);
 
   /* ── Copy PINs ── */
   function copyCaptainPins() {
@@ -932,6 +935,42 @@ export default function AdminPanel() {
             </div>
           </div>
 
+          {/* Firebase Cloud Live Sync Card */}
+          <div className="bg-gray-800/60 border border-gray-700/80 rounded-xl p-3.5 flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-xl ${isFirebaseConfigured() ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-gray-700 text-gray-400'}`}>
+                <Cloud className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white flex items-center gap-2">
+                  Firebase Cloud Live Sync
+                  {isFirebaseConfigured() ? (
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.2 rounded-full">
+                      ● Live Connected
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-gray-400 bg-gray-700 px-2 py-0.2 rounded-full">
+                      Offline / Standalone
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {isFirebaseConfigured()
+                    ? 'All friends see scores, goals, and ratings in real-time across devices.'
+                    : 'Connect a free Firebase project so everyone viewing your link gets live updates.'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowCloudModal(true)}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition-all shadow-md shadow-emerald-950"
+            >
+              <Cloud className="w-3.5 h-3.5" />
+              {isFirebaseConfigured() ? 'Cloud Sync Settings' : 'Connect Firebase Cloud'}
+            </button>
+          </div>
+
           {/* Backup / Export / Reset Actions */}
           <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-700">
             <button
@@ -997,6 +1036,9 @@ export default function AdminPanel() {
 
       {/* Quick-Start Wizard Modal */}
       {showWizard && <BulkDumpWizard onClose={() => setShowWizard(false)} />}
+
+      {/* Cloud Sync Settings Modal */}
+      {showCloudModal && <FirebaseSyncModal onClose={() => setShowCloudModal(false)} />}
     </div>
   );
 }
