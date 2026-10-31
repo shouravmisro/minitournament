@@ -207,3 +207,4 @@ export async function pushAllLocalToCloud(activeTournamentId, tournamentState, g
   }
   return true;
 }
+
