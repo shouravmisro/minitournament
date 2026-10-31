@@ -9,7 +9,18 @@ import {
 
 export const FIREBASE_CONFIG_KEY = 'mt_firebase_config';
 
-// Retrieve stored Firebase configuration (from localStorage or import.meta.env)
+// Pre-configured default project settings for mini-tournament
+export const DEFAULT_FIREBASE_CONFIG = {
+  projectId: "mini-tournament-45ac1",
+  appId: "1:59126420385:web:23c6cb578b39f06873f1e0",
+  storageBucket: "mini-tournament-45ac1.firebasestorage.app",
+  apiKey: "AIzaSyDie7ksu20tsyzFeYfuxU7GUhs3iy9EORI",
+  authDomain: "mini-tournament-45ac1.firebaseapp.com",
+  messagingSenderId: "59126420385",
+  measurementId: "G-H2R40PWBHR"
+};
+
+// Retrieve stored Firebase configuration (from localStorage, env, or default project)
 export function getFirebaseConfig() {
   try {
     const raw = localStorage.getItem(FIREBASE_CONFIG_KEY);
@@ -35,7 +46,7 @@ export function getFirebaseConfig() {
     };
   }
 
-  return null;
+  return DEFAULT_FIREBASE_CONFIG;
 }
 
 export function saveFirebaseConfig(config) {
@@ -207,4 +218,3 @@ export async function pushAllLocalToCloud(activeTournamentId, tournamentState, g
   }
   return true;
 }
-
