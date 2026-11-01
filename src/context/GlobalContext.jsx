@@ -15,6 +15,19 @@ import {
 const GM_KEY = 'mt_global';           // localStorage key for global meta
 const ORG_KEY = 'mt_organizer';        // localStorage key for organizer profile
 
+export function getUrlTournamentId() {
+  try {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    const paramId = params.get('t') || params.get('tournament');
+    if (paramId) return paramId;
+
+    const hash = window.location.hash.replace(/^#\/?/, '').replace(/^tournament\//, '');
+    if (hash && (hash.startsWith('t_') || hash === 'default')) return hash;
+  } catch {}
+  return null;
+}
+
 const DEFAULT_ORGANIZER = {
   name: '',
   avatar: '',
@@ -24,15 +37,47 @@ const DEFAULT_ORGANIZER = {
 };
 
 const DEFAULT_GLOBAL = {
-  tournaments: [],        // [{ id, name, createdAt, format }]
-  activeTournamentId: null,
+  tournaments: [
+    {
+      id: 'default',
+      name: 'Local Champions League',
+      format: 'HYBRID',
+      createdAt: '2026-11-01T00:00:00.000Z',
+    }
+  ],
+  activeTournamentId: 'default',
+  showManager: false,
 };
 
 function loadGlobal() {
   try {
+    const urlId = getUrlTournamentId();
     const raw = localStorage.getItem(GM_KEY);
-    return raw ? { ...DEFAULT_GLOBAL, ...JSON.parse(raw) } : DEFAULT_GLOBAL;
-  } catch { return DEFAULT_GLOBAL; }
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const tournaments = Array.isArray(parsed.tournaments) && parsed.tournaments.length > 0
+        ? parsed.tournaments
+        : DEFAULT_GLOBAL.tournaments;
+      const activeTournamentId = urlId || parsed.activeTournamentId || tournaments[0]?.id || 'default';
+      return {
+        ...DEFAULT_GLOBAL,
+        ...parsed,
+        tournaments,
+        activeTournamentId,
+        showManager: parsed.showManager || false,
+      };
+    }
+    if (urlId) {
+      return {
+        ...DEFAULT_GLOBAL,
+        activeTournamentId: urlId,
+        tournaments: [{ id: urlId, name: 'Local Champions League', format: 'HYBRID', createdAt: new Date().toISOString() }],
+      };
+    }
+  } catch {
+    return DEFAULT_GLOBAL;
+  }
+  return DEFAULT_GLOBAL;
 }
 
 function loadOrganizer() {
@@ -48,13 +93,25 @@ function saveOrganizer(o){ try { localStorage.setItem(ORG_KEY, JSON.stringify(o)
 // Reducer
 function globalReducer(state, action) {
   switch (action.type) {
-    case 'SET_GLOBAL_STATE':
+    case 'SET_GLOBAL_STATE': {
+      const incomingTournaments = Array.isArray(action.payload.tournaments) ? action.payload.tournaments : [];
+      const currentTournaments = state.tournaments || [];
+      const tournaments = incomingTournaments.length > 0 ? incomingTournaments : currentTournaments;
+
+      // URL tournament ID has highest priority, then cloud active, then current, then first
+      const urlId = getUrlTournamentId();
+      let activeId = urlId || action.payload.activeTournamentId || state.activeTournamentId;
+      if (!activeId && tournaments.length > 0) {
+        activeId = tournaments[0].id;
+      }
+
       return {
         ...state,
-        ...action.payload,
-        // preserve activeTournamentId if not provided in cloud
-        activeTournamentId: action.payload.activeTournamentId ?? state.activeTournamentId,
+        tournaments,
+        activeTournamentId: activeId || 'default',
+        _updatedAt: action.payload._updatedAt || Date.now(),
       };
+    }
 
     case 'CREATE_TOURNAMENT': {
       const t = {
@@ -63,21 +120,26 @@ function globalReducer(state, action) {
         format:    action.payload.format || 'HYBRID',
         createdAt: new Date().toISOString(),
       };
-      return { ...state, tournaments: [...state.tournaments, t], activeTournamentId: t.id };
+      return {
+        ...state,
+        tournaments: [...state.tournaments.filter(item => item.id !== t.id), t],
+        activeTournamentId: t.id,
+        showManager: false,
+      };
     }
     case 'DELETE_TOURNAMENT': {
       try { localStorage.removeItem(`mt_state_${action.payload}`); } catch {}
+      const remaining = state.tournaments.filter(t => t.id !== action.payload);
       return {
         ...state,
-        tournaments: state.tournaments.filter(t => t.id !== action.payload),
-        activeTournamentId:
-          state.activeTournamentId === action.payload ? null : state.activeTournamentId,
+        tournaments: remaining,
+        activeTournamentId: state.activeTournamentId === action.payload ? (remaining[0]?.id || 'default') : state.activeTournamentId,
       };
     }
     case 'SELECT_TOURNAMENT':
-      return { ...state, activeTournamentId: action.payload };
+      return { ...state, activeTournamentId: action.payload, showManager: false };
     case 'DESELECT_TOURNAMENT':
-      return { ...state, activeTournamentId: null };
+      return { ...state, showManager: true };
     case 'UPDATE_TOURNAMENT_META':
       return {
         ...state,
@@ -99,14 +161,27 @@ export function GlobalProvider({ children }) {
   const [organizer, setOrganizer] = React.useState(loadOrganizer);
 
   const isRemoteGlobalUpdate    = useRef(false);
+  const hasLocalGlobalChanges   = useRef(false);
   const isRemoteOrganizerUpdate = useRef(false);
+  const hasLocalOrganizerChanges = useRef(false);
+
+  // Wrapped local dispatch that marks changes as local
+  const dispatchLocal = useCallback((action) => {
+    hasLocalGlobalChanges.current = true;
+    dispatch(action);
+  }, []);
+
+  const updateOrganizerLocal = useCallback((patch) => {
+    hasLocalOrganizerChanges.current = true;
+    setOrganizer(prev => ({ ...prev, ...patch }));
+  }, []);
 
   // Realtime Cloud Listener for Global tournaments
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
 
     const unsubscribe = subscribeGlobal((cloudData) => {
-      if (cloudData && Array.isArray(cloudData.tournaments)) {
+      if (cloudData && Array.isArray(cloudData.tournaments) && cloudData.tournaments.length > 0) {
         isRemoteGlobalUpdate.current = true;
         dispatch({ type: 'SET_GLOBAL_STATE', payload: cloudData });
       }
@@ -120,7 +195,7 @@ export function GlobalProvider({ children }) {
     if (!isFirebaseConfigured()) return;
 
     const unsubscribe = subscribeOrganizer((cloudData) => {
-      if (cloudData) {
+      if (cloudData && typeof cloudData === 'object' && cloudData.name) {
         isRemoteOrganizerUpdate.current = true;
         setOrganizer(prev => ({ ...prev, ...cloudData }));
       }
@@ -135,7 +210,9 @@ export function GlobalProvider({ children }) {
     if (isFirebaseConfigured()) {
       if (isRemoteGlobalUpdate.current) {
         isRemoteGlobalUpdate.current = false;
-      } else {
+        hasLocalGlobalChanges.current = false;
+      } else if (hasLocalGlobalChanges.current) {
+        hasLocalGlobalChanges.current = false;
         saveGlobalCloud(global);
       }
     }
@@ -147,26 +224,37 @@ export function GlobalProvider({ children }) {
     if (isFirebaseConfigured()) {
       if (isRemoteOrganizerUpdate.current) {
         isRemoteOrganizerUpdate.current = false;
-      } else {
+        hasLocalOrganizerChanges.current = false;
+      } else if (hasLocalOrganizerChanges.current) {
+        hasLocalOrganizerChanges.current = false;
         saveOrganizerCloud(organizer);
       }
     }
   }, [organizer]);
 
-  const updateOrganizer = useCallback((patch) => {
-    setOrganizer(prev => ({ ...prev, ...patch }));
-  }, []);
+  // Sync URL parameter if activeTournamentId changes
+  useEffect(() => {
+    if (global.activeTournamentId && typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('t') !== global.activeTournamentId) {
+          url.searchParams.set('t', global.activeTournamentId);
+          window.history.replaceState(null, '', url.toString());
+        }
+      } catch {}
+    }
+  }, [global.activeTournamentId]);
 
   const globalValue = {
     global,
-    createTournament:      useCallback((name, format) => dispatch({ type: 'CREATE_TOURNAMENT', payload: { name, format } }), []),
-    deleteTournament:      useCallback((id)            => dispatch({ type: 'DELETE_TOURNAMENT',  payload: id }),             []),
-    selectTournament:      useCallback((id)            => dispatch({ type: 'SELECT_TOURNAMENT',  payload: id }),             []),
-    deselectTournament:    useCallback(()              => dispatch({ type: 'DESELECT_TOURNAMENT' }),                         []),
-    updateTournamentMeta:  useCallback((meta)          => dispatch({ type: 'UPDATE_TOURNAMENT_META', payload: meta }),       []),
+    createTournament:      useCallback((name, format) => dispatchLocal({ type: 'CREATE_TOURNAMENT', payload: { name, format } }), [dispatchLocal]),
+    deleteTournament:      useCallback((id)            => dispatchLocal({ type: 'DELETE_TOURNAMENT',  payload: id }),             [dispatchLocal]),
+    selectTournament:      useCallback((id)            => dispatchLocal({ type: 'SELECT_TOURNAMENT',  payload: id }),             [dispatchLocal]),
+    deselectTournament:    useCallback(()              => dispatchLocal({ type: 'DESELECT_TOURNAMENT' }),                         [dispatchLocal]),
+    updateTournamentMeta:  useCallback((meta)          => dispatchLocal({ type: 'UPDATE_TOURNAMENT_META', payload: meta }),       [dispatchLocal]),
   };
 
-  const orgValue = { organizer, updateOrganizer };
+  const orgValue = { organizer, updateOrganizer: updateOrganizerLocal };
 
   return (
     <GlobalContext.Provider value={globalValue}>

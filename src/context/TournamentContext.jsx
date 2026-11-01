@@ -787,6 +787,13 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
     : storageKey;
 
   const isRemoteUpdate = useRef(false);
+  const hasLocalChanges = useRef(false);
+
+  // Local dispatch wrapper: only local user-initiated actions trigger a Firestore upload
+  const dispatchLocal = useCallback((action) => {
+    hasLocalChanges.current = true;
+    dispatch(action);
+  }, []);
 
   // Realtime Cloud Listener for active tournament
   useEffect(() => {
@@ -802,14 +809,16 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
     return () => unsubscribe();
   }, [tournamentId]);
 
-  // Persist state to local storage and Cloud
+  // Persist state to local storage and Cloud (only when modified locally)
   useEffect(() => {
     saveState(storageKey, state);
 
     if (isFirebaseConfigured() && tournamentId) {
       if (isRemoteUpdate.current) {
         isRemoteUpdate.current = false;
-      } else {
+        hasLocalChanges.current = false;
+      } else if (hasLocalChanges.current) {
+        hasLocalChanges.current = false;
         saveTournamentCloud(tournamentId, state);
       }
     }
@@ -817,41 +826,41 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
 
   const value = {
     state,
-    dispatch,
-    updateOrganizer:  useCallback((d)    => dispatch({ type: 'UPDATE_ORGANIZER',   payload: d }),                        []),
-    bulkImport:       useCallback((d)    => dispatch({ type: 'BULK_IMPORT',        payload: d }),                        []),
-    addPlayer:        useCallback((p)    => dispatch({ type: 'ADD_PLAYER',         payload: p }),                        []),
-    updatePlayer:     useCallback((p)    => dispatch({ type: 'UPDATE_PLAYER',      payload: p }),                        []),
-    deletePlayer:     useCallback((id)   => dispatch({ type: 'DELETE_PLAYER',      payload: id }),                       []),
-    addCaptain:       useCallback((c)    => dispatch({ type: 'ADD_CAPTAIN',        payload: c }),                        []),
-    updateCaptain:    useCallback((c)    => dispatch({ type: 'UPDATE_CAPTAIN',     payload: c }),                        []),
-    deleteCaptain:    useCallback((id)   => dispatch({ type: 'DELETE_CAPTAIN',     payload: id }),                       []),
-    toggleCaptain:    useCallback((id)   => dispatch({ type: 'TOGGLE_CAPTAIN',     payload: id }),                       []),
-    addTeam:          useCallback((t)    => dispatch({ type: 'ADD_TEAM',           payload: t }),                        []),
-    updateTeam:       useCallback((t)    => dispatch({ type: 'UPDATE_TEAM',        payload: t }),                        []),
-    deleteTeam:       useCallback((id)   => dispatch({ type: 'DELETE_TEAM',        payload: id }),                       []),
-    draftPlayer:      useCallback((pid, tid) => dispatch({ type: 'DRAFT_PLAYER',   payload: { playerId: pid, teamId: tid } }), []),
-    undraftPlayer:    useCallback((pid)  => dispatch({ type: 'UNDRAFT_PLAYER',     payload: { playerId: pid } }),         []),
-    addMatch:           useCallback((m)              => dispatch({ type: 'ADD_MATCH',             payload: m }),                        []),
-    updateMatch:        useCallback((m)              => dispatch({ type: 'UPDATE_MATCH',          payload: m }),                        []),
-    deleteMatch:        useCallback((id)             => dispatch({ type: 'DELETE_MATCH',          payload: id }),                       []),
-    setMatches:         useCallback((matches)        => dispatch({ type: 'SET_MATCHES',           payload: matches }),                  []),
-    updateRoundMatches: useCallback((round, updates) => dispatch({ type: 'UPDATE_ROUND_MATCHES', payload: { round, updates } }),       []),
-    recomputeStats:     useCallback(()               => dispatch({ type: 'RECOMPUTE_STATS' }),                           []),
-    addAward:         useCallback((a)    => dispatch({ type: 'ADD_AWARD',          payload: a }),                        []),
-    updateAward:      useCallback((a)    => dispatch({ type: 'UPDATE_AWARD',       payload: a }),                        []),
-    deleteAward:      useCallback((id)   => dispatch({ type: 'DELETE_AWARD',       payload: id }),                       []),
-    setAdminPin:      useCallback((pin)  => dispatch({ type: 'SET_ADMIN_PIN',      payload: pin }),                      []),
-    setDraftMode:     useCallback((mode) => dispatch({ type: 'SET_DRAFT_MODE',     payload: mode }),                     []),
-    setDefaultBudget: useCallback((n)    => dispatch({ type: 'SET_DEFAULT_BUDGET', payload: n }),                        []),
-    resetState:       useCallback(()     => dispatch({ type: 'RESET_STATE' }),                                           []),
+    dispatch: dispatchLocal,
+    updateOrganizer:  useCallback((d)    => dispatchLocal({ type: 'UPDATE_ORGANIZER',   payload: d }),                        [dispatchLocal]),
+    bulkImport:       useCallback((d)    => dispatchLocal({ type: 'BULK_IMPORT',        payload: d }),                        [dispatchLocal]),
+    addPlayer:        useCallback((p)    => dispatchLocal({ type: 'ADD_PLAYER',         payload: p }),                        [dispatchLocal]),
+    updatePlayer:     useCallback((p)    => dispatchLocal({ type: 'UPDATE_PLAYER',      payload: p }),                        [dispatchLocal]),
+    deletePlayer:     useCallback((id)   => dispatchLocal({ type: 'DELETE_PLAYER',      payload: id }),                       [dispatchLocal]),
+    addCaptain:       useCallback((c)    => dispatchLocal({ type: 'ADD_CAPTAIN',        payload: c }),                        [dispatchLocal]),
+    updateCaptain:    useCallback((c)    => dispatchLocal({ type: 'UPDATE_CAPTAIN',     payload: c }),                        [dispatchLocal]),
+    deleteCaptain:    useCallback((id)   => dispatchLocal({ type: 'DELETE_CAPTAIN',     payload: id }),                       [dispatchLocal]),
+    toggleCaptain:    useCallback((id)   => dispatchLocal({ type: 'TOGGLE_CAPTAIN',     payload: id }),                       [dispatchLocal]),
+    addTeam:          useCallback((t)    => dispatchLocal({ type: 'ADD_TEAM',           payload: t }),                        [dispatchLocal]),
+    updateTeam:       useCallback((t)    => dispatchLocal({ type: 'UPDATE_TEAM',        payload: t }),                        [dispatchLocal]),
+    deleteTeam:       useCallback((id)   => dispatchLocal({ type: 'DELETE_TEAM',        payload: id }),                       [dispatchLocal]),
+    draftPlayer:      useCallback((pid, tid) => dispatchLocal({ type: 'DRAFT_PLAYER',   payload: { playerId: pid, teamId: tid } }), [dispatchLocal]),
+    undraftPlayer:    useCallback((pid)  => dispatchLocal({ type: 'UNDRAFT_PLAYER',     payload: { playerId: pid } }),         [dispatchLocal]),
+    addMatch:           useCallback((m)              => dispatchLocal({ type: 'ADD_MATCH',             payload: m }),                        [dispatchLocal]),
+    updateMatch:        useCallback((m)              => dispatchLocal({ type: 'UPDATE_MATCH',          payload: m }),                        [dispatchLocal]),
+    deleteMatch:        useCallback((id)             => dispatchLocal({ type: 'DELETE_MATCH',          payload: id }),                       [dispatchLocal]),
+    setMatches:         useCallback((matches)        => dispatchLocal({ type: 'SET_MATCHES',           payload: matches }),                  [dispatchLocal]),
+    updateRoundMatches: useCallback((round, updates) => dispatchLocal({ type: 'UPDATE_ROUND_MATCHES', payload: { round, updates } }),       [dispatchLocal]),
+    recomputeStats:     useCallback(()               => dispatchLocal({ type: 'RECOMPUTE_STATS' }),                           [dispatchLocal]),
+    addAward:         useCallback((a)    => dispatchLocal({ type: 'ADD_AWARD',          payload: a }),                        [dispatchLocal]),
+    updateAward:      useCallback((a)    => dispatchLocal({ type: 'UPDATE_AWARD',       payload: a }),                        [dispatchLocal]),
+    deleteAward:      useCallback((id)   => dispatchLocal({ type: 'DELETE_AWARD',       payload: id }),                       [dispatchLocal]),
+    setAdminPin:      useCallback((pin)  => dispatchLocal({ type: 'SET_ADMIN_PIN',      payload: pin }),                      [dispatchLocal]),
+    setDraftMode:     useCallback((mode) => dispatchLocal({ type: 'SET_DRAFT_MODE',     payload: mode }),                     [dispatchLocal]),
+    setDefaultBudget: useCallback((n)    => dispatchLocal({ type: 'SET_DEFAULT_BUDGET', payload: n }),                        [dispatchLocal]),
+    resetState:       useCallback(()     => dispatchLocal({ type: 'RESET_STATE' }),                                           [dispatchLocal]),
     exportState:      useCallback(()     => JSON.stringify(state, null, 2), [state]),
     importState:      useCallback((json) => {
       try {
-        dispatch({ type: 'SET_STATE', payload: { ...DEFAULT_STATE, ...JSON.parse(json) } });
+        dispatchLocal({ type: 'SET_STATE', payload: { ...DEFAULT_STATE, ...JSON.parse(json) } });
         return true;
       } catch { return false; }
-    }, []),
+    }, [dispatchLocal]),
   };
 
   return (

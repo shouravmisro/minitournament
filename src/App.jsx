@@ -156,7 +156,8 @@ function AppContent() {
 function AppRouter() {
   const { global } = useGlobal();
 
-  if (!global.activeTournamentId) {
+  // If user explicitly clicked "Back to All Tournaments", show the manager
+  if (global.showManager) {
     return (
       <ErrorBoundary>
         <TournamentManager />
@@ -164,11 +165,14 @@ function AppRouter() {
     );
   }
 
+  // Active tournament: always resolves to a valid tournament ID
+  const activeId = global.activeTournamentId || (global.tournaments?.[0]?.id) || 'default';
+
   return (
     // key prop forces TournamentProvider to remount (fresh localStorage load) on tournament switch
     <TournamentProvider
-      key={global.activeTournamentId}
-      storageKey={`mt_state_${global.activeTournamentId}`}
+      key={activeId}
+      storageKey={`mt_state_${activeId}`}
     >
       <AuthProvider>
         <ErrorBoundary>

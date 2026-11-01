@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useGlobal, useOrganizer } from '../context/GlobalContext';
 import {
   Trophy, Shield, Users, User, Menu, X, LogOut, Lock,
-  Crown, Home, ChevronLeft, Settings, Cloud,
+  Crown, Home, ChevronLeft, Settings, Cloud, Share2, Check
 } from 'lucide-react';
 import { isFirebaseConfigured } from '../services/firebase';
 import FirebaseSyncModal from './FirebaseSyncModal';
@@ -22,6 +22,26 @@ export default function Navbar() {
   const [selectList,      setSelectList]      = useState(null);
   const [selectedEntityId, setSelectedEntityId] = useState(null);
   const [showCloudModal,  setShowCloudModal]  = useState(false);
+  const [copiedShare,     setCopiedShare]     = useState(false);
+
+  async function handleShare() {
+    const tournamentId = global.activeTournamentId || 'default';
+    const base = window.location.origin + window.location.pathname;
+    const url = `${base}?t=${tournamentId}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: tournamentName,
+          text: `Follow ${tournamentName} live fixtures, scores and standings!`,
+          url,
+        });
+        return;
+      } catch {}
+    }
+    navigator.clipboard.writeText(url);
+    setCopiedShare(true);
+    setTimeout(() => setCopiedShare(false), 2500);
+  }
 
   const roleBadge = {
     PUBLIC:  { label: 'Public Hub',    icon: Home,   color: 'bg-gray-600'  },
@@ -124,6 +144,18 @@ export default function Navbar() {
 
           {/* Right: Cloud Sync Pill + Logout + Menu */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Share Tournament Pill */}
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-all shadow-sm"
+              title="Share live link to this tournament"
+            >
+              {copiedShare ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5 text-amber-400" />}
+              <span className="text-[11px] font-bold">
+                {copiedShare ? 'Copied!' : 'Share'}
+              </span>
+            </button>
+
             {/* Cloud Sync Status Indicator */}
             <button
               onClick={() => setShowCloudModal(true)}
