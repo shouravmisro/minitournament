@@ -53,7 +53,7 @@ export default function LeagueStandings() {
   );
 
   const hasLeague = state.matches.some(m => m.stage === 'LEAGUE');
-  const colBase = 'text-right text-sm font-mono';
+  const colBase = 'text-right text-xs sm:text-sm font-mono';
 
   // Leaders calculations
   const topScorers = useMemo(() =>
@@ -92,143 +92,150 @@ export default function LeagueStandings() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 animate-in fade-in duration-700">
       {/* Header with View Toggle */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-emerald-400" />
-          League Table & Statistics
+      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-dashed border-amber-900/40 pb-4">
+        <h2 className="text-2xl font-serif text-amber-200 flex items-center gap-3">
+          <TrendingUp className="w-6 h-6 text-emerald-400 stroke-[1.5]" />
+          Championship Ledger & Honors
         </h2>
 
-        <div className="flex bg-gray-800 p-1 rounded-xl border border-gray-700 text-xs">
+        <div className="flex bg-[#050814] p-1 rounded-xl border border-amber-900/40 text-xs">
           <button
             onClick={() => setViewTab('TABLE')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg font-serif transition-all ${
               viewTab === 'TABLE'
-                ? 'bg-emerald-600 text-white shadow'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-amber-950/50 text-amber-300 border border-amber-500/30 shadow-[0_0_8px_rgba(217,119,6,0.2)]'
+                : 'text-amber-500/60 hover:text-amber-200'
             }`}
           >
-            Standings Table
+            Standings Ledger
           </button>
           <button
             onClick={() => setViewTab('LEADERBOARD')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg font-serif transition-all ${
               viewTab === 'LEADERBOARD'
-                ? 'bg-purple-600 text-white shadow'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-amber-950/50 text-amber-300 border border-amber-500/30 shadow-[0_0_8px_rgba(217,119,6,0.2)]'
+                : 'text-amber-500/60 hover:text-amber-200'
             }`}
           >
-            Player Leaderboards
+            Warrior Honors
           </button>
         </div>
       </div>
 
       {viewTab === 'TABLE' ? (
         !hasLeague || table.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-gray-700 rounded-2xl text-gray-500">
-            <TrendingUp className="w-10 h-10 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No league data yet. Generate fixtures and enter scores first.</p>
+          <div className="text-center py-16 sketch-border rounded-2xl flex flex-col items-center">
+            <TrendingUp className="w-12 h-12 mb-3 text-amber-900/40" />
+            <p className="font-serif text-amber-500/60 text-lg">No league battles recorded yet.</p>
+            <p className="text-xs font-mono tracking-widest uppercase text-amber-500/40 mt-1">
+              Generate fixtures and chronicled match scores in the Fixtures ledger.
+            </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="text-gray-500 text-xs uppercase tracking-wider">
-                  <th className="text-left py-2 px-2 w-8">#</th>
-                  <th className="text-left py-2 px-2">Team</th>
-                  <th className={colBase + ' px-2'}>P</th>
-                  <th className={colBase + ' px-2'}>W</th>
-                  <th className={colBase + ' px-2'}>D</th>
-                  <th className={colBase + ' px-2'}>L</th>
-                  <th className={colBase + ' px-2 hidden sm:table-cell'}>GF</th>
-                  <th className={colBase + ' px-2 hidden sm:table-cell'}>GA</th>
-                  <th className={colBase + ' px-2'}>GD</th>
-                  <th className={colBase + ' px-2 font-bold text-white'}>Pts</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {table.map((row, idx) => {
-                  const isTop = idx === 0;
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`transition-colors hover:bg-gray-800/40 ${
-                        isTop ? 'bg-amber-500/5' : ''
-                      }`}
-                    >
-                      <td className="py-3 px-2">
-                        <span className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${
-                          idx === 0 ? 'bg-amber-500 text-gray-900' :
-                          idx === 1 ? 'bg-gray-500 text-white' :
-                          idx === 2 ? 'bg-orange-700 text-white' :
-                                      'text-gray-500'
-                        }`}>
-                          {idx + 1}
-                        </span>
-                      </td>
+          <div className="sketch-border bg-[#0b132b]/60 rounded-2xl overflow-hidden shadow-2xl p-4 sm:p-6">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="text-amber-500/60 font-mono text-[10px] tracking-widest uppercase border-b border-dashed border-amber-900/40">
+                    <th className="text-left py-3 px-2.5 w-8">Rank</th>
+                    <th className="text-left py-3 px-2.5">Faction</th>
+                    <th className={colBase + ' px-2.5'}>P</th>
+                    <th className={colBase + ' px-2.5'}>W</th>
+                    <th className={colBase + ' px-2.5'}>D</th>
+                    <th className={colBase + ' px-2.5'}>L</th>
+                    <th className={colBase + ' px-2.5 hidden sm:table-cell'}>GF</th>
+                    <th className={colBase + ' px-2.5 hidden sm:table-cell'}>GA</th>
+                    <th className={colBase + ' px-2.5'}>GD</th>
+                    <th className={colBase + ' px-2.5 font-bold text-amber-300'}>Pts</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-amber-900/20">
+                  {table.map((row, idx) => {
+                    const isTop = idx === 0;
+                    return (
+                      <tr
+                        key={row.id}
+                        className={`transition-colors hover:bg-amber-950/20 ${
+                          isTop ? 'bg-amber-500/5' : ''
+                        }`}
+                      >
+                        <td className="py-3 px-2.5">
+                          <span className={`text-[11px] font-mono font-bold w-6 h-6 rounded-full flex items-center justify-center border ${
+                            idx === 0 ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_8px_rgba(251,191,36,0.3)]' :
+                            idx === 1 ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' :
+                            idx === 2 ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
+                                        'text-amber-500/40 border-amber-900/30'
+                          }`}>
+                            {idx + 1}
+                          </span>
+                        </td>
 
-                      <td className="py-3 px-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">{row.logo}</span>
-                          <div>
-                            <p className="font-semibold text-white text-sm leading-tight truncate max-w-[120px]">
-                              {row.name}
-                            </p>
+                        <td className="py-3 px-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-lg">{row.logo}</span>
+                            <div>
+                              <p className="font-serif font-semibold text-amber-100 text-sm leading-tight truncate max-w-[140px] sm:max-w-none">
+                                {row.name}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className={colBase + ' px-2 text-gray-400'}>{row.P}</td>
-                      <td className={colBase + ' px-2 text-emerald-400'}>{row.W}</td>
-                      <td className={colBase + ' px-2 text-yellow-400'}>{row.D}</td>
-                      <td className={colBase + ' px-2 text-red-400'}>{row.L}</td>
-                      <td className={colBase + ' px-2 text-gray-400 hidden sm:table-cell'}>{row.GF}</td>
-                      <td className={colBase + ' px-2 text-gray-400 hidden sm:table-cell'}>{row.GA}</td>
-                      <td className={colBase + ' px-2 ' + (row.GD > 0 ? 'text-emerald-400' : row.GD < 0 ? 'text-red-400' : 'text-gray-400')}>
-                        {row.GD > 0 ? '+' : ''}{row.GD}
-                      </td>
-                      <td className={colBase + ' px-2 font-black text-white text-base'}>{row.Pts}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        <td className={colBase + ' px-2.5 text-amber-100/70'}>{row.P}</td>
+                        <td className={colBase + ' px-2.5 text-emerald-400 font-bold'}>{row.W}</td>
+                        <td className={colBase + ' px-2.5 text-amber-300/80'}>{row.D}</td>
+                        <td className={colBase + ' px-2.5 text-red-400'}>{row.L}</td>
+                        <td className={colBase + ' px-2.5 text-amber-100/50 hidden sm:table-cell'}>{row.GF}</td>
+                        <td className={colBase + ' px-2.5 text-amber-100/50 hidden sm:table-cell'}>{row.GA}</td>
+                        <td className={colBase + ' px-2.5 font-bold ' + (row.GD > 0 ? 'text-emerald-400' : row.GD < 0 ? 'text-red-400' : 'text-amber-100/60')}>
+                          {row.GD > 0 ? `+${row.GD}` : row.GD}
+                        </td>
+                        <td className={colBase + ' px-2.5 font-bold text-amber-200 text-base drop-shadow-[0_0_6px_rgba(251,191,36,0.3)]'}>
+                          {row.Pts}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-4 mt-3 px-2 text-xs text-gray-600">
+            <div className="flex items-center gap-4 mt-5 pt-3 border-t border-dashed border-amber-900/30 px-2 text-[10px] font-mono tracking-widest uppercase text-amber-500/50">
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> 1st Place
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.5)]" /> 1st Place (Apex)
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-gray-500" /> 2nd Place
+                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" /> 2nd Place (Silver)
               </span>
-              <span className="ml-auto">P W D L GD Pts</span>
+              <span className="ml-auto hidden sm:inline">P: Played • W: Won • D: Draw • L: Lost • GD: Goal Diff • Pts: Points</span>
             </div>
           </div>
         )
       ) : (
         /* ── Player Stats Leaderboards View ── */
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* 1. Golden Boot (Top Goals) */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
-            <h3 className="font-bold text-sm text-white flex items-center gap-2 border-b border-gray-800 pb-2">
-              <Target className="w-4 h-4 text-emerald-400" /> Top Goal Scorers
+          <div className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 space-y-4 shadow-xl">
+            <h3 className="font-serif text-base text-amber-200 flex items-center gap-2.5 border-b border-dashed border-amber-900/40 pb-3">
+              <Target className="w-4 h-4 text-emerald-400" /> Golden Boot (Top Scorers)
             </h3>
             {topScorers.length === 0 ? (
-              <p className="text-xs text-gray-500 py-4 text-center">No goals recorded yet.</p>
+              <p className="text-xs font-serif text-amber-500/40 py-6 text-center italic">No goals chronicled yet.</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {topScorers.map((p, idx) => {
                   const team = state.teams.find(t => t.id === p.teamId);
                   return (
-                    <div key={p.id} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-gray-500 w-4 font-bold">{idx + 1}.</span>
-                        <span className="text-white font-semibold">{p.name}</span>
-                        <span className="text-[11px] text-gray-400">{team?.logo}</span>
+                    <div key={p.id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-[#050814]/40 border border-amber-900/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-mono text-amber-600 w-4 font-bold">{idx + 1}.</span>
+                        <span className="font-serif font-semibold text-amber-100">{p.name}</span>
+                        <span className="text-xs">{team?.logo}</span>
                       </div>
-                      <span className="font-black text-emerald-400 font-mono text-sm">
+                      <span className="font-bold text-emerald-400 font-mono text-sm">
                         {p.stats.goals} ⚽
                       </span>
                     </div>
@@ -239,24 +246,24 @@ export default function LeagueStandings() {
           </div>
 
           {/* 2. Playmaker Kings (Top Assists) */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
-            <h3 className="font-bold text-sm text-white flex items-center gap-2 border-b border-gray-800 pb-2">
-              <Zap className="w-4 h-4 text-amber-400" /> Top Assists
+          <div className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 space-y-4 shadow-xl">
+            <h3 className="font-serif text-base text-amber-200 flex items-center gap-2.5 border-b border-dashed border-amber-900/40 pb-3">
+              <Zap className="w-4 h-4 text-amber-400" /> Crown Architects (Top Assists)
             </h3>
             {topAssisters.length === 0 ? (
-              <p className="text-xs text-gray-500 py-4 text-center">No assists recorded yet.</p>
+              <p className="text-xs font-serif text-amber-500/40 py-6 text-center italic">No assists chronicled yet.</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {topAssisters.map((p, idx) => {
                   const team = state.teams.find(t => t.id === p.teamId);
                   return (
-                    <div key={p.id} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-gray-500 w-4 font-bold">{idx + 1}.</span>
-                        <span className="text-white font-semibold">{p.name}</span>
-                        <span className="text-[11px] text-gray-400">{team?.logo}</span>
+                    <div key={p.id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-[#050814]/40 border border-amber-900/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-mono text-amber-600 w-4 font-bold">{idx + 1}.</span>
+                        <span className="font-serif font-semibold text-amber-100">{p.name}</span>
+                        <span className="text-xs">{team?.logo}</span>
                       </div>
-                      <span className="font-black text-amber-400 font-mono text-sm">
+                      <span className="font-bold text-amber-300 font-mono text-sm">
                         {p.stats.assists} ⚡
                       </span>
                     </div>
@@ -267,27 +274,27 @@ export default function LeagueStandings() {
           </div>
 
           {/* 3. Golden Glove (Clean Sheets & Saves) */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
-            <h3 className="font-bold text-sm text-white flex items-center gap-2 border-b border-gray-800 pb-2">
-              <Shield className="w-4 h-4 text-yellow-400" /> Goalkeepers (Clean Sheets & Saves)
+          <div className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 space-y-4 shadow-xl">
+            <h3 className="font-serif text-base text-amber-200 flex items-center gap-2.5 border-b border-dashed border-amber-900/40 pb-3">
+              <Shield className="w-4 h-4 text-cyan-400" /> Golden Glove (Defenders & Goalkeepers)
             </h3>
             {topGKs.length === 0 ? (
-              <p className="text-xs text-gray-500 py-4 text-center">No goalkeeping stats recorded yet.</p>
+              <p className="text-xs font-serif text-amber-500/40 py-6 text-center italic">No sentinel stats recorded yet.</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {topGKs.map((p, idx) => {
                   const team = state.teams.find(t => t.id === p.teamId);
                   return (
-                    <div key={p.id} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-gray-500 w-4 font-bold">{idx + 1}.</span>
-                        <span className="text-white font-semibold">{p.name}</span>
-                        <span className="text-[11px] text-gray-400">{team?.logo}</span>
+                    <div key={p.id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-[#050814]/40 border border-amber-900/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-mono text-amber-600 w-4 font-bold">{idx + 1}.</span>
+                        <span className="font-serif font-semibold text-amber-100">{p.name}</span>
+                        <span className="text-xs">{team?.logo}</span>
                       </div>
-                      <div className="flex items-center gap-2 font-mono">
+                      <div className="flex items-center gap-2 font-mono text-xs">
                         <span className="text-emerald-400 font-bold">{p.stats?.cleanSheets || 0} CS</span>
-                        <span className="text-gray-500">|</span>
-                        <span className="text-yellow-400 font-bold">{p.stats?.saves || 0} sv</span>
+                        <span className="text-amber-900/60">|</span>
+                        <span className="text-cyan-300 font-bold">{p.stats?.saves || 0} sv</span>
                       </div>
                     </div>
                   );
@@ -296,26 +303,26 @@ export default function LeagueStandings() {
             )}
           </div>
 
-          {/* 4. Top Rated Players (MID / DEF / FWD) */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
-            <h3 className="font-bold text-sm text-white flex items-center gap-2 border-b border-gray-800 pb-2">
-              <Star className="w-4 h-4 text-purple-400" /> Highest Match Ratings
+          {/* 4. Top Rated Players */}
+          <div className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 space-y-4 shadow-xl">
+            <h3 className="font-serif text-base text-amber-200 flex items-center gap-2.5 border-b border-dashed border-amber-900/40 pb-3">
+              <Star className="w-4 h-4 text-purple-400" /> Grand Valuations (Highest Ratings)
             </h3>
             {topRated.length === 0 ? (
-              <p className="text-xs text-gray-500 py-4 text-center">No match ratings recorded yet.</p>
+              <p className="text-xs font-serif text-amber-500/40 py-6 text-center italic">No match valuations recorded yet.</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {topRated.map((p, idx) => {
                   const team = state.teams.find(t => t.id === p.teamId);
                   return (
-                    <div key={p.id} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-gray-500 w-4 font-bold">{idx + 1}.</span>
-                        <span className="text-white font-semibold">{p.name}</span>
-                        <span className="text-[10px] text-gray-400">({p.position})</span>
-                        <span className="text-[11px] text-gray-400">{team?.logo}</span>
+                    <div key={p.id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-[#050814]/40 border border-amber-900/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-mono text-amber-600 w-4 font-bold">{idx + 1}.</span>
+                        <span className="font-serif font-semibold text-amber-100">{p.name}</span>
+                        <span className="text-[10px] font-mono text-amber-500/60 uppercase">({p.position})</span>
+                        <span className="text-xs">{team?.logo}</span>
                       </div>
-                      <span className="font-black text-purple-400 font-mono text-sm">
+                      <span className="font-bold text-purple-400 font-mono text-sm">
                         {p.stats.avgRating}★
                       </span>
                     </div>

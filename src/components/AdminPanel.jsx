@@ -243,18 +243,18 @@ export default function AdminPanel() {
     return (
       <button
         onClick={() => setExpandedSection(isOpen ? null : id)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-800/80 hover:bg-gray-800 rounded-xl transition-colors border border-gray-700/60"
+        className="w-full flex items-center justify-between px-5 py-3.5 sketch-border bg-[#0b132b]/70 hover:bg-[#0b132b]/90 rounded-2xl transition-all shadow-md font-serif"
       >
         <div className="flex items-center gap-2.5">
           <Icon className="w-5 h-5 text-amber-400" />
-          <span className="font-semibold text-white text-sm">{label}</span>
+          <span className="font-serif text-amber-200 text-base">{label}</span>
           {count !== undefined && (
-            <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full font-mono">
+            <span className="text-xs bg-[#050814] text-amber-400 border border-amber-900/40 px-2.5 py-0.5 rounded-full font-mono text-[10px] uppercase">
               {count}
             </span>
           )}
         </div>
-        {isOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        {isOpen ? <ChevronUp className="w-4 h-4 text-amber-500/60" /> : <ChevronDown className="w-4 h-4 text-amber-500/60" />}
       </button>
     );
   }
@@ -262,22 +262,22 @@ export default function AdminPanel() {
   return (
     <div className="space-y-4">
       {/* Admin Panel Header */}
-      <div className="bg-gradient-to-r from-red-950/40 via-gray-900 to-amber-950/30 border border-red-500/20 rounded-2xl p-5">
+      <div className="sketch-border bg-[#0b132b]/80 rounded-2xl p-6 shadow-xl">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-xl">
               <Shield className="w-6 h-6 text-red-400" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white">Admin Command Center</h1>
-              <p className="text-xs text-gray-400">
+              <h1 className="text-2xl font-serif text-amber-200">Magistrate's Grand Console</h1>
+              <p className="text-xs text-amber-500/60">
                 Full management: edit tournament, teams, captains, players, and match schedules.
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowWizard(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-all shadow-lg shadow-amber-900/20"
+            className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 font-serif text-amber-100 px-4 py-2 rounded-xl text-sm transition-all shadow-lg shadow-amber-900/20"
           >
             <Sparkles className="w-4 h-4" /> Quick-Start Wizard
           </button>
@@ -299,7 +299,7 @@ export default function AdminPanel() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowPins(!showPins)}
-                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors bg-gray-800 px-2.5 py-1.5 rounded-lg border border-gray-700"
+                className="flex items-center gap-1.5 text-xs text-amber-500/60 hover:text-white transition-colors bg-[#050814] px-2.5 py-1.5 rounded-lg border border-amber-900/30"
               >
                 {showPins ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 {showPins ? 'Hide' : 'Show'} PINs
@@ -337,7 +337,7 @@ export default function AdminPanel() {
           </div>
 
           {state.players.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-amber-500/40">
               <Users className="w-10 h-10 mx-auto mb-2 opacity-40" />
               <p className="text-sm">No players added yet. Use Quick-Start to bulk dump!</p>
             </div>
@@ -349,42 +349,42 @@ export default function AdminPanel() {
 
                 if (isEditing) {
                   return (
-                    <div key={player.id} className="bg-gray-800 border-2 border-amber-500/50 rounded-xl p-4 space-y-3.5 shadow-lg">
-                      <div className="flex items-center justify-between border-b border-gray-700 pb-2">
+                    <div key={player.id} className="sketch-border bg-[#0b132b]/90 rounded-2xl p-5 space-y-4 shadow-2xl">
+                      <div className="flex items-center justify-between border-b border-amber-900/30 pb-2">
                         <span className="font-bold text-amber-400 text-sm flex items-center gap-1.5">
                           <Edit3 className="w-4 h-4" /> Edit Player: {player.name}
                         </span>
-                        <button onClick={() => setEditingPlayer(null)} className="text-gray-400 hover:text-white">
+                        <button onClick={() => setEditingPlayer(null)} className="text-amber-500/60 hover:text-white">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                         <div>
-                          <label className="text-[11px] font-semibold text-gray-400">Full Name</label>
+                          <label className="text-[11px] font-semibold text-amber-500/60">Full Name</label>
                           <input
                             type="text"
                             value={playerForm.name || ''}
                             onChange={(e) => setPlayerForm({ ...playerForm, name: e.target.value })}
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-gray-400">4-Digit PIN</label>
+                          <label className="text-[11px] font-semibold text-amber-500/60">4-Digit PIN</label>
                           <input
                             type="text"
                             maxLength={4}
                             value={playerForm.pin || ''}
                             onChange={(e) => setPlayerForm({ ...playerForm, pin: e.target.value.replace(/\D/g, '') })}
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-amber-400 font-mono text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-amber-400 font-mono text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-gray-400">Primary Position</label>
+                          <label className="text-[11px] font-semibold text-amber-500/60">Primary Position</label>
                           <select
                             value={playerForm.position || 'FLEX'}
                             onChange={(e) => setPlayerForm({ ...playerForm, position: e.target.value })}
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           >
                             {['GK', 'DEF', 'MID', 'FWD', 'FLEX'].map(p => (
                               <option key={p} value={p}>{p}</option>
@@ -395,11 +395,11 @@ export default function AdminPanel() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                         <div>
-                          <label className="text-[11px] font-semibold text-gray-400">Assigned Team</label>
+                          <label className="text-[11px] font-semibold text-amber-500/60">Assigned Team</label>
                           <select
                             value={playerForm.teamId || ''}
                             onChange={(e) => setPlayerForm({ ...playerForm, teamId: e.target.value })}
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           >
                             <option value="">None (Free Agent / Undrafted)</option>
                             {state.teams.map(t => (
@@ -408,22 +408,22 @@ export default function AdminPanel() {
                           </select>
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-gray-400">Status</label>
+                          <label className="text-[11px] font-semibold text-amber-500/60">Status</label>
                           <select
                             value={playerForm.status || 'UNDRAFTED'}
                             onChange={(e) => setPlayerForm({ ...playerForm, status: e.target.value })}
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           >
                             <option value="UNDRAFTED">UNDRAFTED</option>
                             <option value="DRAFTED">DRAFTED</option>
                           </select>
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-gray-400">Availability</label>
+                          <label className="text-[11px] font-semibold text-amber-500/60">Availability</label>
                           <select
                             value={playerForm.availability || 'AVAILABLE'}
                             onChange={(e) => setPlayerForm({ ...playerForm, availability: e.target.value })}
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           >
                             <option value="AVAILABLE">🟢 Available</option>
                             <option value="INJURED">🔴 Injured</option>
@@ -434,41 +434,41 @@ export default function AdminPanel() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                         <div>
-                          <label className="text-[11px] font-semibold text-gray-400">Jersey Number</label>
+                          <label className="text-[11px] font-semibold text-amber-500/60">Jersey Number</label>
                           <input
                             type="number"
                             value={playerForm.jerseyNumber || ''}
                             onChange={(e) => setPlayerForm({ ...playerForm, jerseyNumber: e.target.value ? Number(e.target.value) : '' })}
                             placeholder="e.g. 10"
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           />
                         </div>
                         <div className="sm:col-span-2">
-                          <label className="text-[11px] font-semibold text-gray-400">Sub-positions (comma separated)</label>
+                          <label className="text-[11px] font-semibold text-amber-500/60">Sub-positions (comma separated)</label>
                           <input
                             type="text"
                             value={playerForm.rawPositionsInput ?? ''}
                             onChange={(e) => setPlayerForm({ ...playerForm, rawPositionsInput: e.target.value })}
                             placeholder="e.g. CM, ATM, CDM"
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-semibold text-gray-400">Avatar Image URL</label>
+                        <label className="text-[11px] font-semibold text-amber-500/60">Avatar Image URL</label>
                         <input
                           type="text"
                           value={playerForm.avatar || ''}
                           onChange={(e) => setPlayerForm({ ...playerForm, avatar: e.target.value })}
                           placeholder="https://images.unsplash.com/..."
-                          className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                          className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                         />
                       </div>
 
                       {/* Performance Stats */}
-                      <div className="bg-gray-900/60 p-2.5 rounded-lg border border-gray-700">
-                        <label className="text-[11px] font-semibold text-gray-400 block mb-1">Career / Tournament Stats</label>
+                      <div className="bg-[#050814]/60 p-2.5 rounded-lg border border-amber-900/30">
+                        <label className="text-[11px] font-semibold text-amber-500/60 block mb-1">Career / Tournament Stats</label>
                         <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 text-center text-xs">
                           {[
                             { key: 'matches', label: 'Matches' },
@@ -480,7 +480,7 @@ export default function AdminPanel() {
                             { key: 'mvpCount', label: 'MVPs' },
                           ].map(s => (
                             <div key={s.key}>
-                              <span className="text-[10px] text-gray-500 block truncate">{s.label}</span>
+                              <span className="text-[10px] text-amber-500/40 block truncate">{s.label}</span>
                               <input
                                 type={s.key === 'avgRating' ? 'number' : 'number'}
                                 step={s.key === 'avgRating' ? '0.1' : '1'}
@@ -491,18 +491,18 @@ export default function AdminPanel() {
                                   ...playerForm,
                                   stats: { ...playerForm.stats, [s.key]: Number(e.target.value) }
                                 })}
-                                className="w-full bg-gray-800 border border-gray-600 rounded text-center py-1 text-white font-mono"
+                                className="w-full bg-[#050814] border border-amber-900/40 rounded text-center py-1 text-white font-mono"
                               />
                             </div>
                           ))}
                         </div>
                       </div>
 
-                      <div className="flex justify-end gap-2 pt-1 border-t border-gray-700">
+                      <div className="flex justify-end gap-2 pt-1 border-t border-amber-900/30">
                         <button
                           type="button"
                           onClick={() => setEditingPlayer(null)}
-                          className="px-3 py-1.5 text-xs text-gray-400 hover:text-white"
+                          className="px-3 py-1.5 text-xs text-amber-500/60 hover:text-white"
                         >
                           Cancel
                         </button>
@@ -519,9 +519,9 @@ export default function AdminPanel() {
                 }
 
                 return (
-                  <div key={player.id} className="flex items-center justify-between px-3.5 py-2.5 bg-gray-800/40 border border-gray-700/60 rounded-xl hover:border-gray-600 transition-colors">
+                  <div key={player.id} className="flex items-center justify-between px-3.5 py-2.5 sketch-border bg-[#050814]/60 rounded-xl border border-amber-900/30 hover:border-amber-700/50 transition-colors">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center font-bold text-xs text-white shrink-0 overflow-hidden">
+                      <div className="w-8 h-8 rounded-lg bg-[#0b132b] flex items-center justify-center font-bold text-xs text-white shrink-0 overflow-hidden">
                         {player.avatar ? (
                           <img src={player.avatar} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -530,15 +530,15 @@ export default function AdminPanel() {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-semibold text-white text-sm truncate">{player.name}</span>
+                          <span className="font-serif text-amber-200 text-base truncate">{player.name}</span>
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${POSITION_COLORS[player.position] || POSITION_COLORS.FLEX}`}>
                             {player.position}
                           </span>
                           {player.jerseyNumber && (
-                            <span className="text-[10px] text-gray-500 font-mono">#{player.jerseyNumber}</span>
+                            <span className="text-[10px] text-amber-500/40 font-mono">#{player.jerseyNumber}</span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-amber-500/60">
                           {showPins && (
                             <span className="font-mono text-amber-400 bg-amber-500/10 px-1 py-0.2 rounded text-[11px]">
                               PIN: {player.pin}
@@ -552,7 +552,7 @@ export default function AdminPanel() {
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => handleStartEditPlayer(player)}
-                        className="p-1.5 text-gray-400 hover:text-amber-400 rounded-lg hover:bg-gray-700 transition-colors"
+                        className="p-1.5 text-amber-500/60 hover:text-amber-400 rounded-lg hover:bg-[#0b132b] transition-colors"
                         title="Edit Player Profile"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -561,8 +561,8 @@ export default function AdminPanel() {
                         onClick={() => toggleCaptain(player.id)}
                         className={`p-1.5 rounded-lg transition-colors ${
                           state.captains.some(c => c.name === player.name)
-                            ? 'text-amber-400 hover:text-gray-400 hover:bg-gray-700'
-                            : 'text-gray-600 hover:text-amber-400 hover:bg-gray-700'
+                            ? 'text-amber-400 hover:text-amber-500/60 hover:bg-[#0b132b]'
+                            : 'text-gray-600 hover:text-amber-400 hover:bg-[#0b132b]'
                         }`}
                         title="Toggle Captain Status"
                       >
@@ -570,7 +570,7 @@ export default function AdminPanel() {
                       </button>
                       <button
                         onClick={() => deletePlayer(player.id)}
-                        className="p-1.5 text-gray-600 hover:text-red-400 rounded-lg hover:bg-gray-700 transition-colors"
+                        className="p-1.5 text-gray-600 hover:text-red-400 rounded-lg hover:bg-[#0b132b] transition-colors"
                         title="Delete Player"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -589,7 +589,7 @@ export default function AdminPanel() {
       {expandedSection === 'captains' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-amber-500/60">
               Manage captain credentials, team branding, logo emoji, and budget.
             </span>
             <button
@@ -601,7 +601,7 @@ export default function AdminPanel() {
           </div>
 
           {state.captains.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-amber-500/40">
               <Crown className="w-10 h-10 mx-auto mb-2 opacity-40" />
               <p className="text-sm">No teams or captains yet. Click "Add Team & Captain" above!</p>
             </div>
@@ -613,12 +613,12 @@ export default function AdminPanel() {
 
                 if (isEditing) {
                   return (
-                    <div key={cap.id} className="bg-gray-800 border-2 border-amber-500/50 rounded-xl p-4 space-y-4 shadow-xl">
-                      <div className="flex items-center justify-between border-b border-gray-700 pb-2">
+                    <div key={cap.id} className="sketch-border bg-[#0b132b]/90 rounded-2xl p-5 space-y-4 shadow-2xl">
+                      <div className="flex items-center justify-between border-b border-amber-900/30 pb-2">
                         <span className="font-bold text-amber-400 text-sm flex items-center gap-2">
                           <Crown className="w-4 h-4" /> Edit Team: {team.name || cap.name}
                         </span>
-                        <button onClick={() => setEditingCaptainId(null)} className="text-gray-400 hover:text-white">
+                        <button onClick={() => setEditingCaptainId(null)} className="text-amber-500/60 hover:text-white">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -626,22 +626,22 @@ export default function AdminPanel() {
                       {/* Captain info */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="text-xs font-semibold text-gray-300">Captain Name</label>
+                          <label className="text-xs font-semibold text-amber-100">Captain Name</label>
                           <input
                             type="text"
                             value={captainForm.captainName || ''}
                             onChange={e => setCaptainForm({ ...captainForm, captainName: e.target.value })}
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold text-gray-300">Captain PIN</label>
+                          <label className="text-xs font-semibold text-amber-100">Captain PIN</label>
                           <input
                             type="text"
                             maxLength={4}
                             value={captainForm.captainPin || ''}
                             onChange={e => setCaptainForm({ ...captainForm, captainPin: e.target.value.replace(/\D/g, '') })}
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-amber-400 font-mono text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-amber-400 font-mono text-sm"
                           />
                         </div>
                       </div>
@@ -649,58 +649,58 @@ export default function AdminPanel() {
                       {/* Team branding */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                          <label className="text-xs font-semibold text-gray-300">Team Name</label>
+                          <label className="text-xs font-semibold text-amber-100">Team Name</label>
                           <input
                             type="text"
                             value={captainForm.teamName || ''}
                             onChange={e => setCaptainForm({ ...captainForm, teamName: e.target.value })}
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold text-gray-300">Team Logo (Emoji)</label>
+                          <label className="text-xs font-semibold text-amber-100">Team Logo (Emoji)</label>
                           <input
                             type="text"
                             maxLength={4}
                             value={captainForm.teamLogo || ''}
                             onChange={e => setCaptainForm({ ...captainForm, teamLogo: e.target.value })}
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-center text-lg"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-center text-lg"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold text-gray-300">Team Motto</label>
+                          <label className="text-xs font-semibold text-amber-100">Team Motto</label>
                           <input
                             type="text"
                             value={captainForm.teamMotto || ''}
                             onChange={e => setCaptainForm({ ...captainForm, teamMotto: e.target.value })}
                             placeholder="Victory or nothing"
-                            className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                            className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           />
                         </div>
                       </div>
 
                       {/* Team Photo URL */}
                       <div>
-                        <label className="text-xs font-semibold text-gray-300">Team Photo / Squad Picture (Image URL)</label>
+                        <label className="text-xs font-semibold text-amber-100">Team Photo / Squad Picture (Image URL)</label>
                         <input
                           type="text"
                           value={captainForm.teamPhoto || ''}
                           onChange={e => setCaptainForm({ ...captainForm, teamPhoto: e.target.value })}
                           placeholder="https://example.com/team-squad.jpg"
-                          className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm font-mono"
+                          className="w-full mt-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm font-mono"
                         />
                       </div>
 
                       {/* Color Picker & Presets */}
                       <div>
-                        <label className="text-xs font-semibold text-gray-300 block mb-1.5">Team Primary Color</label>
+                        <label className="text-xs font-semibold text-amber-100 block mb-1.5">Team Primary Color</label>
                         <div className="flex items-center gap-2 flex-wrap">
                           {COLOR_PRESETS.map(c => (
                             <button
                               type="button"
                               key={c}
                               onClick={() => setCaptainForm({ ...captainForm, teamColor: c })}
-                              className="w-6 h-6 rounded-full border border-gray-600 hover:scale-110 transition-transform"
+                              className="w-6 h-6 rounded-full border border-amber-900/40 hover:scale-110 transition-transform"
                               style={{ backgroundColor: c }}
                             />
                           ))}
@@ -710,14 +710,14 @@ export default function AdminPanel() {
                             onChange={e => setCaptainForm({ ...captainForm, teamColor: e.target.value })}
                             className="w-8 h-8 rounded-lg bg-transparent cursor-pointer"
                           />
-                          <span className="text-xs font-mono text-gray-400">{captainForm.teamColor}</span>
+                          <span className="text-xs font-mono text-amber-500/60">{captainForm.teamColor}</span>
                         </div>
                       </div>
 
                       {/* Budget and Spent Coins */}
-                      <div className="grid grid-cols-2 gap-3 bg-gray-900/60 p-3 rounded-xl border border-gray-700">
+                      <div className="grid grid-cols-2 gap-3 bg-[#050814]/60 p-3 rounded-xl border border-amber-900/30">
                         <div>
-                          <label className="text-xs font-semibold text-gray-300 flex items-center gap-1">
+                          <label className="text-xs font-semibold text-amber-100 flex items-center gap-1">
                             <Coins className="w-3.5 h-3.5 text-amber-400" /> Auction Budget (coins)
                           </label>
                           <input
@@ -725,26 +725,26 @@ export default function AdminPanel() {
                             min="0"
                             value={captainForm.teamBudget ?? 1000}
                             onChange={e => setCaptainForm({ ...captainForm, teamBudget: Number(e.target.value) })}
-                            className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white font-mono text-sm"
+                            className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white font-mono text-sm"
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-semibold text-gray-300">Spent in Auction</label>
+                          <label className="text-xs font-semibold text-amber-100">Spent in Auction</label>
                           <input
                             type="number"
                             min="0"
                             value={captainForm.teamSpent ?? 0}
                             onChange={e => setCaptainForm({ ...captainForm, teamSpent: Number(e.target.value) })}
-                            className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white font-mono text-sm"
+                            className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white font-mono text-sm"
                           />
                         </div>
                       </div>
 
-                      <div className="flex justify-end gap-2 pt-2 border-t border-gray-700">
+                      <div className="flex justify-end gap-2 pt-2 border-t border-amber-900/30">
                         <button
                           type="button"
                           onClick={() => setEditingCaptainId(null)}
-                          className="px-3 py-1.5 text-xs text-gray-400 hover:text-white"
+                          className="px-3 py-1.5 text-xs text-amber-500/60 hover:text-white"
                         >
                           Cancel
                         </button>
@@ -761,7 +761,7 @@ export default function AdminPanel() {
                 }
 
                 return (
-                  <div key={cap.id} className="flex items-center justify-between px-4 py-3 bg-gray-800/50 border border-amber-500/20 rounded-xl hover:border-amber-500/40 transition-colors">
+                  <div key={cap.id} className="flex items-center justify-between px-4 py-3 sketch-border bg-[#050814]/60 rounded-xl border border-amber-700/40 hover:border-amber-500/50 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center text-xl border shrink-0"
@@ -774,12 +774,12 @@ export default function AdminPanel() {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-white text-sm truncate">{team.name || cap.name}</span>
+                          <span className="font-serif text-amber-100 text-sm truncate">{team.name || cap.name}</span>
                           <span className="text-xs text-amber-400 font-semibold flex items-center gap-1">
                             <Crown className="w-3 h-3" /> {cap.name}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
+                        <div className="flex items-center gap-3 text-xs text-amber-500/60 mt-0.5">
                           <span>{team.rosterIds?.length || 0} players</span>
                           <span className="text-emerald-400 font-mono">
                             💰 {(team.budget ?? 1000) - (team.spent ?? 0)} / {team.budget ?? 1000} coins
@@ -796,7 +796,7 @@ export default function AdminPanel() {
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => handleStartEditCaptain(cap)}
-                        className="p-1.5 text-gray-400 hover:text-amber-400 rounded-lg hover:bg-gray-700 transition-colors"
+                        className="p-1.5 text-amber-500/60 hover:text-amber-400 rounded-lg hover:bg-[#0b132b] transition-colors"
                         title="Edit Captain & Team"
                       >
                         <Edit3 className="w-4 h-4" />
@@ -807,7 +807,7 @@ export default function AdminPanel() {
                             deleteCaptain(cap.id);
                           }
                         }}
-                        className="p-1.5 text-gray-500 hover:text-red-400 rounded-lg hover:bg-gray-700 transition-colors"
+                        className="p-1.5 text-amber-500/40 hover:text-red-400 rounded-lg hover:bg-[#0b132b] transition-colors"
                         title="Delete Team & Captain"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -824,12 +824,12 @@ export default function AdminPanel() {
       {/* ── 4. Draft Engine Section ── */}
       <SectionToggle id="draft" label="Draft Engine & Auction Rules" icon={Dices} />
       {expandedSection === 'draft' && (
-        <div className="bg-gradient-to-br from-amber-600/10 to-orange-600/5 border border-amber-500/20 rounded-2xl p-5 space-y-4">
+        <div className="sketch-border bg-[#0b132b]/70 rounded-2xl p-6 border-dashed border-amber-900/30 space-y-4">
           <div className="flex items-start gap-4">
             <Dices className="w-10 h-10 text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-bold text-white text-base">Draft Engine Settings</h3>
-              <p className="text-sm text-gray-400 mt-0.5">
+              <h3 className="font-serif text-xl text-amber-200">Draft Engine Settings</h3>
+              <p className="text-sm text-amber-500/60 mt-0.5">
                 Switch between Auction Draft mode and Free Pick mode. Head to the <span className="text-amber-400 font-semibold">Draft</span> tab in the navbar to spin the wheel.
               </p>
             </div>
@@ -837,7 +837,7 @@ export default function AdminPanel() {
 
           {/* Mode Toggle */}
           <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Draft Mode</p>
+            <p className="text-xs font-semibold text-amber-500/40 uppercase tracking-wider">Draft Mode</p>
             <div className="flex gap-2">
               {[
                 { id: 'AUCTION', label: '🪙 Auction', desc: 'Captains bid from budget' },
@@ -849,7 +849,7 @@ export default function AdminPanel() {
                   className={`flex-1 p-3 rounded-xl border text-left transition-all ${
                     state.draftMode === opt.id
                       ? 'border-amber-500 bg-amber-500/10 text-amber-300'
-                      : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-500'
+                      : 'border-amber-900/30 bg-[#050814] text-amber-500/60 hover:border-gray-500'
                   }`}
                 >
                   <p className="font-semibold text-sm">{opt.label}</p>
@@ -862,7 +862,7 @@ export default function AdminPanel() {
           {/* Budget Setting */}
           {state.draftMode === 'AUCTION' && (
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Default Starting Budget</p>
+              <p className="text-xs font-semibold text-amber-500/40 uppercase tracking-wider">Default Starting Budget</p>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -871,18 +871,18 @@ export default function AdminPanel() {
                   step={50}
                   value={state.defaultBudget ?? 1000}
                   onChange={e => setDefaultBudget && setDefaultBudget(Number(e.target.value))}
-                  className="w-28 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-28 bg-[#050814] border border-amber-900/40 rounded-lg px-3 py-2 text-white text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
-                <span className="text-sm text-gray-400">coins</span>
+                <span className="text-sm text-amber-500/60">coins</span>
               </div>
             </div>
           )}
 
           {/* Captain PIN Reference */}
           {state.captains.length > 0 && (
-            <div className="border-t border-gray-700/60 pt-3">
+            <div className="border-t border-amber-900/30/60 pt-3">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <p className="text-xs font-semibold text-amber-500/60 uppercase tracking-wider flex items-center gap-1.5">
                   <Key className="w-3.5 h-3.5 text-amber-400" /> Captain PIN Reference
                 </p>
                 <button
@@ -898,7 +898,7 @@ export default function AdminPanel() {
                 {state.captains.map(cap => {
                   const team = state.teams.find(t => t.id === cap.teamId);
                   return (
-                    <div key={cap.id} className="flex items-center justify-between bg-gray-800/80 rounded-lg px-3 py-2 border border-gray-700">
+                    <div key={cap.id} className="flex items-center justify-between bg-[#050814]/60 rounded-lg px-3 py-2 border border-amber-900/30">
                       <span className="text-xs text-white truncate">{team?.logo} {cap.name}</span>
                       <span className="font-mono text-amber-400 text-xs bg-amber-500/10 px-2 py-0.5 rounded font-bold">
                         {cap.pin}
@@ -915,10 +915,10 @@ export default function AdminPanel() {
       {/* ── 5. Admin Settings & Master Controls ── */}
       <SectionToggle id="settings" label="Admin Master PIN & Data Management" icon={Key} />
       {expandedSection === 'settings' && (
-        <div className="space-y-4 bg-gray-800/50 rounded-xl p-5 border border-gray-700">
+        <div className="space-y-4 sketch-border bg-[#0b132b]/70 rounded-2xl p-6 border-dashed border-amber-900/30">
           {/* Admin Master PIN */}
           <div>
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Admin Master PIN</label>
+            <label className="text-xs font-semibold text-amber-500/60 uppercase tracking-wider">Admin Master PIN</label>
             <div className="flex items-center gap-2 mt-1.5">
               {showAdminPinEdit ? (
                 <>
@@ -928,7 +928,7 @@ export default function AdminPanel() {
                     value={newAdminPin}
                     onChange={(e) => setNewAdminPin(e.target.value.replace(/\D/g, ''))}
                     placeholder="New 4-digit PIN"
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white text-sm font-mono w-32 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="bg-[#0b132b] border border-amber-900/40 rounded-lg px-3 py-1.5 text-white text-sm font-mono w-32 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                   <button
                     onClick={() => {
@@ -939,11 +939,11 @@ export default function AdminPanel() {
                       }
                     }}
                     disabled={newAdminPin.length !== 4}
-                    className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 text-white text-xs font-semibold px-3 py-2 rounded-lg"
+                    className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-[#0b132b] text-white text-xs font-semibold px-3 py-2 rounded-lg"
                   >
                     Save
                   </button>
-                  <button onClick={() => setShowAdminPinEdit(false)} className="text-gray-400 hover:text-white text-xs px-2">
+                  <button onClick={() => setShowAdminPinEdit(false)} className="text-amber-500/60 hover:text-white text-xs px-2">
                     Cancel
                   </button>
                 </>
@@ -964,9 +964,9 @@ export default function AdminPanel() {
           </div>
 
           {/* Firebase Cloud Live Sync Card */}
-          <div className="bg-gray-800/60 border border-gray-700/80 rounded-xl p-3.5 flex items-center justify-between flex-wrap gap-3">
+          <div className="sketch-border bg-[#050814]/80 rounded-xl p-4 border border-amber-900/40 flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${isFirebaseConfigured() ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-gray-700 text-gray-400'}`}>
+              <div className={`p-2 rounded-xl ${isFirebaseConfigured() ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-[#0b132b] text-amber-500/60'}`}>
                 <Cloud className="w-5 h-5" />
               </div>
               <div>
@@ -977,12 +977,12 @@ export default function AdminPanel() {
                       ● Live Connected
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold text-gray-400 bg-gray-700 px-2 py-0.2 rounded-full">
+                    <span className="text-[10px] font-bold text-amber-500/60 bg-[#0b132b] px-2 py-0.2 rounded-full">
                       Offline / Standalone
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-amber-500/60">
                   {isFirebaseConfigured()
                     ? 'All friends see scores, goals, and ratings in real-time across devices.'
                     : 'Connect a free Firebase project so everyone viewing your link gets live updates.'}
@@ -1000,16 +1000,16 @@ export default function AdminPanel() {
           </div>
 
           {/* Backup / Export / Reset Actions */}
-          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-700">
+          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-amber-900/30">
             <button
               onClick={handleExport}
-              className="flex items-center gap-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 bg-[#0b132b] hover:bg-gray-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
             >
               <Download className="w-3.5 h-3.5" /> Export JSON
             </button>
             <button
               onClick={handleImport}
-              className="flex items-center gap-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 bg-[#0b132b] hover:bg-gray-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
             >
               <Upload className="w-3.5 h-3.5" /> Import JSON
             </button>
@@ -1046,7 +1046,7 @@ export default function AdminPanel() {
                 </button>
                 <button
                   onClick={() => setShowResetConfirm(false)}
-                  className="text-gray-400 hover:text-white text-xs px-3 py-1.5 rounded-lg hover:bg-gray-700"
+                  className="text-amber-500/60 hover:text-white text-xs px-3 py-1.5 rounded-lg hover:bg-[#0b132b]"
                 >
                   Cancel
                 </button>

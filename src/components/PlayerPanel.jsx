@@ -8,17 +8,17 @@ import {
 } from 'lucide-react';
 
 const POSITION_COLORS = {
-  GK:   'bg-yellow-500/20 text-yellow-300 border-yellow-500/40',
-  DEF:  'bg-blue-500/20   text-blue-300   border-blue-500/40',
-  MID:  'bg-green-500/20  text-green-300  border-green-500/40',
-  FWD:  'bg-red-500/20    text-red-300    border-red-500/40',
-  FLEX: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+  GK:   'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30',
+  DEF:  'bg-blue-500/10   text-blue-400   border border-blue-500/30',
+  MID:  'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30',
+  FWD:  'bg-red-500/10    text-red-400    border border-red-500/30',
+  FLEX: 'bg-purple-500/10 text-purple-400 border border-purple-500/30',
 };
 
 const AVAILABILITY_OPTIONS = [
-  { value: 'AVAILABLE', label: 'Available', icon: Heart,         color: 'bg-emerald-600 hover:bg-emerald-500' },
-  { value: 'INJURED',   label: 'Injured',   icon: AlertTriangle, color: 'bg-red-600    hover:bg-red-500'    },
-  { value: 'DOUBTFUL',  label: 'Doubtful',  icon: CircleDot,     color: 'bg-yellow-600 hover:bg-yellow-500' },
+  { value: 'AVAILABLE', label: 'Combat Ready', icon: Heart,         color: 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/40' },
+  { value: 'INJURED',   label: 'Wounded',      icon: AlertTriangle, color: 'bg-red-950/40 text-red-300 border border-red-500/40'       },
+  { value: 'DOUBTFUL',  label: 'Uncertain',    icon: CircleDot,     color: 'bg-yellow-950/40 text-yellow-300 border border-yellow-500/40' },
 ];
 
 const AVATAR_PRESETS = [
@@ -57,17 +57,17 @@ export default function PlayerPanel() {
 
   if (!player) {
     return (
-      <div className="text-center py-14 bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-500 max-w-md mx-auto space-y-3">
-        <User className="w-12 h-12 mx-auto mb-2 text-blue-400/50" />
-        <h3 className="text-lg font-bold text-white">Player Session Expired or Not Selected</h3>
-        <p className="text-xs text-gray-400">
-          Please select your player profile from the top-right menu and enter your 4-digit PIN.
+      <div className="text-center py-16 sketch-border rounded-2xl flex flex-col items-center max-w-md mx-auto p-6 space-y-3">
+        <User className="w-12 h-12 mx-auto mb-2 text-amber-500/50" />
+        <h3 className="text-xl font-serif text-amber-200">Warrior Scroll Not Selected</h3>
+        <p className="text-xs font-serif text-amber-500/60">
+          Please select your warrior title from the navigation menu and enter your 4-digit cipher.
         </p>
         <button
           onClick={logout}
-          className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold"
+          className="mt-2 px-4 py-2 bg-[#050814] border border-amber-500/40 hover:bg-amber-950/40 text-amber-300 rounded-xl text-xs font-serif transition-colors"
         >
-          Return to Public Hub
+          Return to Grand Hub
         </button>
       </div>
     );
@@ -125,7 +125,7 @@ export default function PlayerPanel() {
 
     updatePlayer(cleaned);
     setEditing(false);
-    setSaveMsg('Profile saved!');
+    setSaveMsg('Warrior scroll updated!');
     setTimeout(() => setSaveMsg(''), 3000);
   }
 
@@ -140,84 +140,82 @@ export default function PlayerPanel() {
     updatePlayer({ id: player.id, pin: cleanPin });
     setEditingPin(false);
     setNewPin('');
-    setPinSuccessMsg(`PIN updated to ${cleanPin}!`);
+    setPinSuccessMsg(`Cipher updated to ${cleanPin}!`);
     setTimeout(() => setPinSuccessMsg(''), 4000);
   }
 
   // Avatar display helper
-  function AvatarDisplay({ avatar, name, size = 'w-16 h-16', textSize = 'text-2xl' }) {
+  function AvatarDisplay({ avatar, name, size = 'w-16 h-16 sm:w-20 sm:h-20', textSize = 'text-2xl sm:text-3xl' }) {
     const isUrl = avatar && (avatar.startsWith('http') || avatar.startsWith('data:image'));
     const isEmoji = avatar && !isUrl;
     if (isUrl) return (
       <img src={avatar} alt={name}
-        className={`${size} rounded-2xl object-cover border-2 border-gray-600 shadow-md shrink-0`} />
+        className={`${size} rounded-2xl object-cover border border-amber-500/40 shadow-[0_0_15px_rgba(217,119,6,0.15)] shrink-0`} />
     );
     if (isEmoji) return (
-      <div className={`${size} rounded-2xl flex items-center justify-center ${textSize} border-2 border-gray-600 shadow-md shrink-0`}
-        style={{ backgroundColor: (team?.primaryColor || '#3B82F6') + '30' }}>
+      <div className={`${size} rounded-2xl flex items-center justify-center ${textSize} border border-amber-500/40 shadow-[0_0_15px_rgba(217,119,6,0.15)] shrink-0 bg-[#050814]`}>
         {avatar}
       </div>
     );
     return (
-      <div className={`${size} rounded-2xl flex items-center justify-center text-2xl font-bold text-white border-2 border-gray-600 shadow-md shrink-0`}
-        style={{ backgroundColor: (team?.primaryColor || '#3B82F6') + '30' }}>
-        {name.charAt(0).toUpperCase()}
+      <div className={`${size} rounded-2xl flex items-center justify-center ${textSize} font-serif font-bold text-amber-200 border border-amber-500/40 shadow-[0_0_15px_rgba(217,119,6,0.15)] shrink-0 bg-[#050814]`}>
+        {name ? name.charAt(0).toUpperCase() : 'W'}
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 animate-in fade-in duration-700">
 
       {/* ── Player Card ── */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl overflow-hidden">
-        <div className="h-2" style={{ backgroundColor: team?.primaryColor || '#3B82F6' }} />
+      <div className="sketch-border bg-[#0b132b]/80 rounded-2xl overflow-hidden shadow-xl" style={{ borderRadius: '1.5rem 0.5rem 1.5rem 0.5rem' }}>
+        <div className="h-1.5" style={{ backgroundColor: team?.primaryColor || '#d97706' }} />
 
-        <div className="p-5">
-          <div className="flex items-start gap-4">
+        <div className="p-6">
+          <div className="flex items-start gap-4 sm:gap-5">
             <AvatarDisplay avatar={player.avatar} name={player.name} />
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-white truncate">{player.name}</h1>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${POSITION_COLORS[player.position] || POSITION_COLORS.FLEX}`}>
+              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-amber-100 truncate">{player.name}</h1>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className={`text-[9px] font-mono tracking-widest uppercase px-2 py-0.5 rounded border font-semibold ${POSITION_COLORS[player.position] || POSITION_COLORS.FLEX}`}>
                   {player.position}
                 </span>
                 {player.rawPositions?.filter(r => r !== 'ANY').map((rp, i) => (
-                  <span key={i} className="text-xs px-1.5 py-0.5 rounded bg-gray-700 text-gray-400 font-mono">{rp}</span>
+                  <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-[#050814] text-amber-500/60 font-mono border border-amber-900/30">{rp}</span>
                 ))}
                 {player.jerseyNumber && (
                   <span className="text-xs text-amber-400 font-mono font-bold">#{player.jerseyNumber}</span>
                 )}
               </div>
               {player.bio && (
-                <p className="text-xs text-gray-400 mt-1 italic line-clamp-2">"{player.bio}"</p>
+                <p className="text-xs font-serif text-amber-500/60 mt-1.5 italic line-clamp-2">"{player.bio}"</p>
               )}
             </div>
 
             <button
               onClick={openEdit}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-600/30 to-orange-600/30 hover:from-amber-600/50 hover:to-orange-600/50 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all shrink-0"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#050814] hover:bg-amber-950/40 text-amber-300 border border-amber-500/40 rounded-xl font-serif text-xs font-bold transition-all shadow-[0_0_10px_rgba(217,119,6,0.15)] shrink-0"
             >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Edit</span>
+              <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+              <span>Modify</span>
             </button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-4">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-5 pt-4 border-t border-dashed border-amber-900/30">
             {[
-              { label: 'Matches', value: player.stats?.matches ?? 0,    icon: Calendar },
-              { label: 'Goals',   value: player.stats?.goals   ?? 0,    icon: Target   },
-              { label: 'Assists', value: player.stats?.assists  ?? 0,    icon: Zap      },
-              { label: 'Clean S.',value: player.stats?.cleanSheets ?? 0, icon: Shield   },
-              { label: 'Saves',   value: player.stats?.saves    ?? 0,    icon: Shield   },
-              { label: 'Rating',  value: player.stats?.avgRating ? `${player.stats.avgRating}★` : '–', icon: Trophy },
+              { label: 'Clashes', value: player.stats?.matches ?? 0,    icon: Calendar, color: 'text-amber-200' },
+              { label: 'Strikes', value: player.stats?.goals   ?? 0,    icon: Target,   color: 'text-cyan-300' },
+              { label: 'Assists', value: player.stats?.assists  ?? 0,   icon: Zap,      color: 'text-emerald-300' },
+              { label: 'Clean S.',value: player.stats?.cleanSheets ?? 0, icon: Shield,   color: 'text-purple-300' },
+              { label: 'Saves',   value: player.stats?.saves    ?? 0,   icon: Shield,   color: 'text-blue-300' },
+              { label: 'Mastery', value: player.stats?.avgRating ? `${player.stats.avgRating}★` : '–', icon: Trophy, color: 'text-amber-400' },
             ].map(s => (
-              <div key={s.label} className="bg-gray-800/60 rounded-lg p-2 text-center">
-                <s.icon className="w-3.5 h-3.5 text-gray-500 mx-auto mb-0.5" />
-                <div className="text-lg font-bold text-white">{s.value}</div>
-                <div className="text-[10px] text-gray-500">{s.label}</div>
+              <div key={s.label} className="bg-[#050814]/40 border border-amber-900/20 rounded-xl p-2.5 text-center">
+                <s.icon className="w-3.5 h-3.5 text-amber-500/50 mx-auto mb-1" />
+                <div className={`text-lg font-mono font-bold ${s.color}`}>{s.value}</div>
+                <div className="text-[9px] font-mono tracking-widest uppercase text-amber-500/50">{s.label}</div>
               </div>
             ))}
           </div>
@@ -226,86 +224,78 @@ export default function PlayerPanel() {
 
       {/* Save success toast */}
       {saveMsg && (
-        <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs px-3 py-2 rounded-xl">
-          <Check className="w-4 h-4 shrink-0" />
+        <div className="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs px-3.5 py-2.5 rounded-xl font-serif shadow-sm">
+          <Check className="w-4 h-4 shrink-0 text-emerald-400" />
           <span>{saveMsg}</span>
         </div>
       )}
 
-      {/* ── Security & PIN ── */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <Key className="w-4 h-4 text-blue-400" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-white">Player Login PIN</p>
-              <p className="text-xs text-gray-400">Your 4-digit PIN for login</p>
-            </div>
+      {/* ── Security & Cipher PIN Card ── */}
+      <div className="sketch-border bg-[#050814]/60 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-cyan-950/40 border border-cyan-500/30 rounded-xl">
+            <Key className="w-5 h-5 text-cyan-400" />
           </div>
-
-          {!editingPin && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-xl font-mono text-sm text-blue-400 font-bold">
-                <span>{showPin ? player.pin : '••••'}</span>
-                <button type="button" onClick={() => setShowPin(!showPin)} className="text-gray-400 hover:text-white ml-1">
-                  {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setEditingPin(true); setNewPin(''); setPinErrorMsg(''); }}
-                className="text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-xl transition-colors font-medium"
-              >
-                Change PIN
-              </button>
-            </div>
-          )}
+          <div>
+            <p className="font-serif text-base text-amber-100 font-bold">Warrior Cipher (PIN)</p>
+            <p className="text-[10px] font-mono tracking-widest uppercase text-amber-500/50">Required for warrior login and scroll authentication</p>
+          </div>
         </div>
 
+        {!editingPin && (
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 bg-[#0b132b] border border-amber-900/50 px-3 py-1.5 rounded-xl font-mono text-sm text-cyan-300 font-bold">
+              <span>{showPin ? player.pin : '••••'}</span>
+              <button type="button" onClick={() => setShowPin(!showPin)} className="text-amber-500/60 hover:text-amber-300 ml-1 transition-colors">
+                {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setEditingPin(true); setNewPin(''); setPinErrorMsg(''); }}
+              className="text-xs font-mono uppercase tracking-widest bg-cyan-950/30 hover:bg-cyan-950/50 text-cyan-300 border border-cyan-500/30 px-3 py-1.5 rounded-xl transition-colors"
+            >
+              Change
+            </button>
+          </div>
+        )}
+
         {pinSuccessMsg && (
-          <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs px-3 py-2 rounded-xl">
-            <Check className="w-4 h-4 shrink-0" /><span>{pinSuccessMsg}</span>
+          <div className="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs px-3 py-2 rounded-xl">
+            <Check className="w-4 h-4 shrink-0 text-emerald-400" /><span>{pinSuccessMsg}</span>
           </div>
         )}
 
         {editingPin && (
-          <form onSubmit={handleSavePin} className="bg-gray-800/80 border border-blue-500/30 rounded-xl p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-blue-400">Set New 4-Digit PIN</span>
-              <button type="button" onClick={() => setEditingPin(false)} className="text-gray-400 hover:text-white">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={4}
-                value={newPin}
-                onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))}
-                placeholder="1234"
-                className="w-32 bg-gray-900 border border-gray-600 rounded-lg px-3 py-1.5 text-white font-mono text-center tracking-widest text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-              />
-              <button type="submit"
-                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
-                <Save className="w-3.5 h-3.5" /> Save PIN
-              </button>
-              <button type="button" onClick={() => setEditingPin(false)}
-                className="text-gray-400 hover:text-white text-xs px-2.5 py-1.5 rounded-lg">Cancel</button>
-            </div>
-            {pinErrorMsg && <p className="text-xs text-red-400">{pinErrorMsg}</p>}
+          <form onSubmit={handleSavePin} className="bg-[#0b132b] border border-cyan-500/30 rounded-xl p-3 flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={4}
+              value={newPin}
+              onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))}
+              placeholder="1234"
+              className="w-24 bg-[#050814] border border-cyan-900/60 rounded-lg px-2 py-1.5 text-cyan-200 font-mono text-center tracking-widest text-sm focus:outline-none focus:border-cyan-500"
+              autoFocus
+            />
+            <button type="submit"
+              className="flex items-center gap-1 bg-emerald-600/40 hover:bg-emerald-600/60 border border-emerald-500/40 text-emerald-200 text-xs font-serif px-3 py-1.5 rounded-lg transition-colors">
+              <Save className="w-3.5 h-3.5" /> Save
+            </button>
+            <button type="button" onClick={() => setEditingPin(false)}
+              className="text-amber-500/60 hover:text-amber-200 text-xs font-serif px-2 py-1.5">Cancel</button>
+            {pinErrorMsg && <p className="text-[10px] font-mono text-red-400 w-full">{pinErrorMsg}</p>}
           </form>
         )}
       </div>
 
       {/* ── Availability Toggle ── */}
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-gray-300">Matchday Availability</h3>
-        <div className="grid grid-cols-3 gap-2">
+      <div className="sketch-border bg-[#0b132b]/50 rounded-2xl p-5 space-y-3">
+        <h3 className="font-serif text-base text-amber-200 flex items-center gap-2">
+          <Heart className="w-4 h-4 text-emerald-400" /> Matchday Battle Status
+        </h3>
+        <div className="grid grid-cols-3 gap-2.5">
           {AVAILABILITY_OPTIONS.map(opt => {
             const Icon = opt.icon;
             const isActive = player.availability === opt.value;
@@ -313,12 +303,14 @@ export default function PlayerPanel() {
               <button
                 key={opt.value}
                 onClick={() => updatePlayer({ id: player.id, availability: opt.value })}
-                className={`flex flex-col items-center gap-1 py-3 rounded-xl text-sm font-medium transition-all ${
-                  isActive ? `${opt.color} text-white ring-2 ring-white/20` : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                className={`flex flex-col items-center gap-1.5 py-3 rounded-xl text-xs font-serif transition-all ${
+                  isActive
+                    ? `${opt.color} shadow-[0_0_12px_rgba(217,119,6,0.15)]`
+                    : 'bg-[#050814]/70 border border-amber-900/30 text-amber-500/50 hover:text-amber-200'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                {opt.label}
+                <Icon className="w-4 h-4" />
+                <span>{opt.label}</span>
               </button>
             );
           })}
@@ -327,22 +319,23 @@ export default function PlayerPanel() {
 
       {/* ── Team Info ── */}
       {team && (
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-300">Your Team</h3>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl border"
-              style={{ backgroundColor: team.primaryColor + '20', borderColor: team.primaryColor + '40' }}>
+        <div className="sketch-border bg-[#0b132b]/50 rounded-2xl p-5 space-y-3">
+          <h3 className="font-serif text-base text-amber-200 flex items-center gap-2">
+            <Shield className="w-4 h-4 text-cyan-400" /> Ordained Faction
+          </h3>
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl border border-amber-500/40 bg-[#050814]">
               {team.logo}
             </div>
             <div>
-              <p className="font-semibold text-white">{team.name}</p>
-              {team.motto && <p className="text-xs text-gray-400 italic">"{team.motto}"</p>}
+              <p className="font-serif font-bold text-base text-amber-100">{team.name}</p>
+              {team.motto && <p className="text-xs font-serif text-amber-500/60 italic">"{team.motto}"</p>}
             </div>
           </div>
           {captain && (
-            <div className="flex items-center gap-2 text-sm text-gray-400 bg-gray-800/50 rounded-lg px-3 py-2">
-              <Shield className="w-4 h-4 text-amber-400" />
-              <span>Captain: <span className="text-amber-300 font-medium">{captain.name}</span></span>
+            <div className="flex items-center gap-2 text-xs font-serif text-amber-200/80 bg-[#050814]/60 border border-amber-900/30 rounded-xl px-3 py-2">
+              <Crown className="w-3.5 h-3.5 text-amber-400" />
+              <span>Faction Leader: <span className="text-amber-300 font-bold">{captain.name}</span></span>
             </div>
           )}
         </div>
@@ -350,38 +343,40 @@ export default function PlayerPanel() {
 
       {/* ── Upcoming Matches ── */}
       {upcomingMatches.length > 0 && (
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-1.5">
-            <Calendar className="w-4 h-4 text-blue-400" /> Upcoming Matches
+        <div className="sketch-border bg-[#0b132b]/50 rounded-2xl p-5 space-y-3">
+          <h3 className="font-serif text-base text-amber-200 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-purple-400" /> Impending Clashes
           </h3>
-          {upcomingMatches.map(match => {
-            const teamA = state.teams.find(t => t.id === match.teamAId);
-            const teamB = state.teams.find(t => t.id === match.teamBId);
-            return (
-              <div key={match.id} className="flex items-center justify-between bg-gray-800/50 rounded-xl px-3 py-2.5">
-                <span className="text-sm text-white">{teamA?.logo} {teamA?.name || '?'}</span>
-                <span className="text-xs text-gray-500 font-medium bg-gray-700 px-2 py-0.5 rounded-full">
-                  {match.stage} R{match.round}
-                </span>
-                <span className="text-sm text-white">{teamB?.name || '?'} {teamB?.logo}</span>
-              </div>
-            );
-          })}
+          <div className="space-y-2">
+            {upcomingMatches.map(match => {
+              const teamA = state.teams.find(t => t.id === match.teamAId);
+              const teamB = state.teams.find(t => t.id === match.teamBId);
+              return (
+                <div key={match.id} className="flex items-center justify-between bg-[#050814]/70 border border-amber-900/30 rounded-xl px-3.5 py-2.5 font-serif text-xs">
+                  <span className="text-amber-100 font-medium">{teamA?.logo} {teamA?.name || '?'}</span>
+                  <span className="text-[9px] font-mono uppercase tracking-widest text-amber-400 bg-amber-950/40 border border-amber-900/50 px-2.5 py-0.5 rounded-full">
+                    {match.stage} • R{match.round}
+                  </span>
+                  <span className="text-amber-100 font-medium">{teamB?.name || '?'} {teamB?.logo}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
       {/* ── Awards ── */}
       {awards.length > 0 && (
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-1.5">
-            <Award className="w-4 h-4 text-amber-400" /> Your Awards
+        <div className="sketch-border bg-[#0b132b]/50 rounded-2xl p-5 space-y-3">
+          <h3 className="font-serif text-base text-amber-200 flex items-center gap-2">
+            <Award className="w-4 h-4 text-amber-400" /> Honored Relics
           </h3>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {awards.map(award => (
-              <div key={award.id} className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-xl p-3 text-center">
-                <div className="text-2xl mb-1">{award.icon}</div>
-                <p className="text-sm font-semibold text-amber-300">{award.title}</p>
-                {award.statNote && <p className="text-xs text-gray-400 mt-0.5">{award.statNote}</p>}
+              <div key={award.id} className="bg-[#050814]/70 border border-amber-500/30 rounded-xl p-3 text-center">
+                <div className="text-2xl mb-1 drop-shadow-[0_0_8px_rgba(251,191,36,0.3)]">{award.icon}</div>
+                <p className="font-serif text-xs font-bold text-amber-200">{award.title}</p>
+                {award.statNote && <p className="text-[10px] font-serif text-amber-500/50 italic mt-0.5">{award.statNote}</p>}
               </div>
             ))}
           </div>
@@ -390,26 +385,26 @@ export default function PlayerPanel() {
 
       {/* ── Edit Modal ── */}
       {editing && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-t-2xl sm:rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 bg-[#050814]/90 backdrop-blur-md z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="sketch-border bg-[#0b132b] rounded-t-2xl sm:rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[92vh]">
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 shrink-0">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <User className="w-4 h-4 text-blue-400" /> Edit Player Profile
+            <div className="flex items-center justify-between px-6 py-4 border-b border-dashed border-amber-900/40 shrink-0">
+              <h3 className="text-xl font-serif text-amber-200 flex items-center gap-2">
+                <User className="w-5 h-5 text-amber-400" /> Modify Warrior Scroll
               </h3>
-              <button onClick={() => setEditing(false)} className="text-gray-400 hover:text-white p-1">
+              <button onClick={() => setEditing(false)} className="text-amber-500/60 hover:text-amber-300 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
 
               {/* ── Avatar Section ── */}
-              <div className="bg-gray-950/60 border border-gray-800 rounded-xl p-3.5 space-y-3">
-                <label className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
-                  <Smile className="w-3.5 h-3.5 text-amber-400" /> Avatar / Photo
+              <div className="bg-[#050814]/70 border border-amber-900/30 rounded-xl p-4 space-y-3">
+                <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/70 flex items-center gap-1.5">
+                  <Smile className="w-3.5 h-3.5 text-amber-400" /> Avatar / Emblem Image
                 </label>
 
                 {/* Preview */}
@@ -421,23 +416,23 @@ export default function PlayerPanel() {
                         alt="Avatar"
                         onError={() => setAvatarUrlError(true)}
                         onLoad={() => setAvatarUrlError(false)}
-                        className="w-14 h-14 rounded-xl object-cover border-2 border-amber-500/50 shrink-0"
+                        className="w-14 h-14 rounded-xl object-cover border border-amber-500/40 shrink-0"
                       />
                     ) : (
-                      <div className="w-14 h-14 rounded-xl bg-gray-800 border-2 border-amber-500/50 flex items-center justify-center text-3xl shrink-0">
+                      <div className="w-14 h-14 rounded-xl bg-[#0b132b] border border-amber-500/40 flex items-center justify-center text-3xl shrink-0">
                         {form.avatar}
                       </div>
                     )
                   ) : (
-                    <div className="w-14 h-14 rounded-xl bg-gray-800 border-2 border-gray-700 flex items-center justify-center text-2xl font-bold text-white shrink-0">
-                      {(form.name || 'P').charAt(0).toUpperCase()}
+                    <div className="w-14 h-14 rounded-xl bg-[#0b132b] border border-amber-900/50 flex items-center justify-center text-2xl font-serif font-bold text-amber-200 shrink-0">
+                      {(form.name || 'W').charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="flex-1 space-y-1.5">
                     {/* URL input */}
                     <div>
-                      <label className="text-[11px] text-gray-400 block mb-1 flex items-center gap-1">
-                        <Link className="w-3 h-3" /> Paste Photo URL
+                      <label className="text-[10px] font-mono text-amber-500/60 block mb-1 flex items-center gap-1 uppercase tracking-wider">
+                        <Link className="w-3 h-3 text-amber-400" /> Direct Image Link
                       </label>
                       <input
                         value={form.avatar?.startsWith('data:') ? '' : (form.avatar?.startsWith('http') ? form.avatar : '')}
@@ -446,17 +441,17 @@ export default function PlayerPanel() {
                           setForm(f => ({ ...f, avatar: e.target.value.trim() }));
                         }}
                         placeholder="https://example.com/photo.jpg"
-                        className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono"
+                        className="w-full bg-[#0b132b] border border-amber-900/50 rounded-lg px-2.5 py-1.5 text-xs text-amber-100 focus:outline-none focus:border-amber-500 font-mono"
                       />
                       {avatarUrlError && (
-                        <p className="text-[11px] text-red-400 mt-0.5">Could not load image — check the URL</p>
+                        <p className="text-[10px] font-mono text-red-400 mt-1 uppercase">Could not reach image URL</p>
                       )}
                     </div>
                     {form.avatar && (
                       <button
                         type="button"
                         onClick={() => setForm(f => ({ ...f, avatar: '' }))}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-950/30 hover:bg-red-950/50 text-red-400 border border-red-500/30 rounded-lg text-xs font-mono uppercase tracking-wider transition-colors"
                       >
                         <Trash2 className="w-3 h-3" /> Clear
                       </button>
@@ -466,7 +461,7 @@ export default function PlayerPanel() {
 
                 {/* Emoji Presets */}
                 <div>
-                  <p className="text-[11px] font-semibold text-gray-400 mb-1.5">Or pick a sports emoji:</p>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-amber-500/60 mb-2">Or choose a symbol badge:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {AVATAR_PRESETS.map(emoji => (
                       <button
@@ -475,8 +470,8 @@ export default function PlayerPanel() {
                         onClick={() => setForm(f => ({ ...f, avatar: emoji }))}
                         className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all ${
                           form.avatar === emoji
-                            ? 'bg-amber-500/30 border-2 border-amber-400 scale-110 shadow-lg'
-                            : 'bg-gray-800 border border-gray-700 hover:bg-gray-700'
+                            ? 'bg-amber-950/60 border border-amber-400 scale-110 shadow-[0_0_10px_rgba(217,119,6,0.3)]'
+                            : 'bg-[#0b132b] border border-amber-900/30 hover:bg-amber-950/30'
                         }`}
                       >
                         {emoji}
@@ -487,36 +482,36 @@ export default function PlayerPanel() {
               </div>
 
               {/* ── Profile Fields ── */}
-              <div className="space-y-3">
+              <div className="space-y-4">
 
                 <div>
-                  <label className="text-xs text-gray-400 font-medium">Display Name</label>
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/70">Warrior Name / Title</label>
                   <input
                     value={form.name || ''}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="Your full name"
-                    className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Your battle name"
+                    className="w-full mt-1 bg-[#050814] border border-amber-900/50 rounded-xl px-3 py-2 text-amber-100 font-serif text-sm focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-gray-400 font-medium">Jersey Number</label>
+                    <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/70">Jersey Number</label>
                     <input
                       type="number"
                       min="1" max="99"
                       value={form.jerseyNumber ?? ''}
                       onChange={e => setForm(f => ({ ...f, jerseyNumber: e.target.value }))}
                       placeholder="e.g. 10"
-                      className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                      className="w-full mt-1 bg-[#050814] border border-amber-900/50 rounded-xl px-3 py-2 text-amber-300 font-mono text-sm focus:outline-none focus:border-amber-500"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-400 font-medium">Primary Position</label>
+                    <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/70">Primary Vocation</label>
                     <select
                       value={form.position || 'FLEX'}
                       onChange={e => setForm(f => ({ ...f, position: e.target.value }))}
-                      className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full mt-1 bg-[#050814] border border-amber-900/50 rounded-xl px-3 py-2 text-amber-100 font-serif text-sm focus:outline-none focus:border-amber-500"
                     >
                       {['GK', 'DEF', 'MID', 'FWD', 'FLEX'].map(p => (
                         <option key={p} value={p}>{p}</option>
@@ -526,31 +521,31 @@ export default function PlayerPanel() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-400 font-medium flex items-center justify-between">
-                    <span>Sub-positions / Roles <span className="text-gray-500 font-normal">(comma separated)</span></span>
-                    <span className="text-[10px] text-gray-500 font-mono">e.g. CAM, RW, ST</span>
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/70 flex items-center justify-between">
+                    <span>Sub-positions / Roles <span className="text-amber-500/40 font-normal">(comma separated)</span></span>
+                    <span className="text-[9px] font-mono text-amber-500/50">e.g. CAM, RW, ST</span>
                   </label>
                   <input
                     value={form.rawPositionsInput ?? ''}
                     onChange={e => setForm(f => ({ ...f, rawPositionsInput: e.target.value }))}
                     placeholder="e.g. CAM, CM, RW"
-                    className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    className="w-full mt-1 bg-[#050814] border border-amber-900/50 rounded-xl px-3 py-2 text-amber-200 font-mono text-sm focus:outline-none focus:border-amber-500"
                   />
-                  <p className="text-[11px] text-gray-500 mt-1">Separate multiple preferred positions with commas.</p>
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-amber-500/40 mt-1">Separate roles with commas.</p>
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-400 font-medium">Bio / Player Motto</label>
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/70">Warrior Motto / Battle Inscription</label>
                   <input
                     value={form.bio ?? ''}
                     onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
-                    placeholder="e.g. Speedster on the wings, set-piece specialist"
-                    className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g. Fleet of foot, decisive in the crucible"
+                    className="w-full mt-1 bg-[#050814] border border-amber-900/50 rounded-xl px-3 py-2 text-amber-100 font-serif text-sm focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-400 font-medium">4-Digit Login PIN</label>
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/70">4-Digit Warrior Cipher (PIN)</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -558,21 +553,21 @@ export default function PlayerPanel() {
                     value={form.pin ?? ''}
                     onChange={e => setForm(f => ({ ...f, pin: e.target.value.replace(/\D/g, '') }))}
                     placeholder="4 digits"
-                    className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-amber-400 font-mono text-sm tracking-wider focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full mt-1 bg-[#050814] border border-amber-900/50 rounded-xl px-3 py-2 text-amber-300 font-mono text-sm tracking-widest focus:outline-none focus:border-amber-500"
                   />
                   {form.pin && form.pin.length > 0 && form.pin.length < 4 && (
-                    <p className="text-[11px] text-red-400 mt-0.5">PIN must be exactly 4 digits</p>
+                    <p className="text-[10px] font-mono text-red-400 mt-1 uppercase">Cipher must be exactly 4 digits</p>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end gap-2 px-5 py-4 border-t border-gray-800 shrink-0">
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-dashed border-amber-900/40 shrink-0">
               <button
                 type="button"
                 onClick={() => setEditing(false)}
-                className="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-white rounded-xl hover:bg-gray-800 transition-colors"
+                className="px-4 py-2 text-xs font-serif text-amber-500/70 hover:text-amber-200 transition-colors"
               >
                 Cancel
               </button>
@@ -580,9 +575,9 @@ export default function PlayerPanel() {
                 type="button"
                 disabled={!form.name?.trim() || (form.pin && form.pin.length > 0 && form.pin.length < 4)}
                 onClick={handleSave}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md shadow-emerald-950"
+                className="flex items-center gap-2 bg-amber-600/40 hover:bg-amber-600/60 border border-amber-500/50 disabled:opacity-30 text-amber-100 text-xs font-serif font-bold px-5 py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(217,119,6,0.2)]"
               >
-                <Save className="w-3.5 h-3.5" /> Save Changes
+                <Save className="w-4 h-4 text-amber-300" /> Seal Changes
               </button>
             </div>
           </div>

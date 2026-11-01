@@ -103,20 +103,20 @@ export default function FirebaseSyncModal({ onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-[#050814]/85 backdrop-blur-md z-[200] flex items-center justify-center p-3 sm:p-4">
+      <div className="sketch-border bg-[#0b132b] rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl overflow-hidden text-amber-50">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between shrink-0 bg-gray-950/80">
+        <div className="px-5 py-4 border-b border-amber-900/30 border-dashed flex items-center justify-between shrink-0 bg-[#050814]/80">
           <div className="flex items-center gap-2.5">
-            <div className={`p-2 rounded-xl ${isConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-gray-800 text-gray-400 border border-gray-700'}`}>
+            <div className={`p-2 rounded-xl ${isConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-[#050814] text-amber-500/60 border border-amber-900/40'}`}>
               <Cloud className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-base">Firebase Cloud Live Sync</h3>
-              <p className="text-xs text-gray-400">Share your tournament live with friends on any device</p>
+              <h3 className="font-serif text-xl text-amber-200">Firebase Cloud Live Sync</h3>
+              <p className="text-xs text-amber-500/60">Share your tournament live with friends on any device</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-1 rounded-lg">
+          <button onClick={onClose} className="text-amber-500/60 hover:text-white p-1 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -127,15 +127,15 @@ export default function FirebaseSyncModal({ onClose }) {
           <div className={`p-4 rounded-xl border flex items-center justify-between gap-3 ${
             isConnected
               ? 'bg-emerald-500/10 border-emerald-500/30'
-              : 'bg-gray-800/50 border-gray-700'
+              : 'bg-[#050814]/60 border-amber-900/30'
           }`}>
             <div className="flex items-center gap-3">
               <span className={`w-3 h-3 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-gray-500'}`} />
               <div>
-                <p className="text-sm font-bold text-white">
+                <p className="font-serif text-sm font-bold text-amber-100">
                   {isConnected ? 'Cloud Live Sync Active' : 'Standalone Offline Mode'}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-amber-500/60">
                   {isConnected
                     ? `Project: ${currentConfig.projectId} • Realtime updates enabled`
                     : 'Data is stored only in this browser (localStorage)'}
@@ -160,13 +160,13 @@ export default function FirebaseSyncModal({ onClose }) {
 
           {/* Sync actions if connected */}
           {isConnected ? (
-            <div className="bg-gray-800/40 border border-gray-700 rounded-xl p-4 space-y-3">
+            <div className="bg-[#050814]/40 border border-amber-900/40 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-white flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Multi-Device Cloud Sync
                   </p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
+                  <p className="text-[11px] text-amber-500/60 mt-0.5">
                     Any score, goal, rating, or roster change is instantly pushed to Firebase Firestore.
                   </p>
                 </div>
@@ -186,7 +186,7 @@ export default function FirebaseSyncModal({ onClose }) {
             /* Connect Form */
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-gray-300 block mb-1">
+                <label className="text-xs font-semibold text-amber-100 block mb-1">
                   Paste your Firebase Configuration
                 </label>
                 <textarea
@@ -194,7 +194,7 @@ export default function FirebaseSyncModal({ onClose }) {
                   value={configInput}
                   onChange={e => setConfigInput(e.target.value)}
                   placeholder={`const firebaseConfig = {\n  apiKey: "AIzaSy...",\n  authDomain: "my-tourney.firebaseapp.com",\n  projectId: "my-tourney",\n  storageBucket: "my-tourney.appspot.com",\n  messagingSenderId: "...",\n  appId: "..."\n};`}
-                  className="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs font-mono text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full bg-gray-950 border border-amber-900/40 rounded-xl p-3 text-xs font-mono text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
@@ -209,7 +209,7 @@ export default function FirebaseSyncModal({ onClose }) {
           )}
 
           {/* Quick Setup Instructions Accordion */}
-          <div className="border-t border-gray-800 pt-3">
+          <div className="border-t border-amber-900/30 border-dashed pt-3">
             <button
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}
@@ -219,11 +219,11 @@ export default function FirebaseSyncModal({ onClose }) {
             </button>
 
             {showInstructions && (
-              <div className="mt-2.5 p-3.5 bg-gray-950 rounded-xl border border-gray-800 text-xs text-gray-300 space-y-2">
+              <div className="mt-2.5 p-3.5 bg-gray-950 rounded-xl border border-amber-900/30 border-dashed text-xs text-amber-100 space-y-2">
                 <p className="font-bold text-white flex items-center gap-1.5">
                   <ExternalLink className="w-3.5 h-3.5 text-amber-400" /> Free Setup Steps:
                 </p>
-                <ol className="list-decimal list-inside space-y-1 text-gray-400 text-[11px]">
+                <ol className="list-decimal list-inside space-y-1 text-amber-500/60 text-[11px]">
                   <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noreferrer" className="text-amber-400 underline">console.firebase.google.com</a> and click <strong>"Add project"</strong> (100% Free).</li>
                   <li>Click the Web icon <strong>(&lt;/&gt;)</strong> to register an app. Copy the <code>firebaseConfig</code> code snippet.</li>
                   <li>In the left sidebar, click <strong>Build → Firestore Database</strong> → <strong>Create database</strong>.</li>
@@ -236,11 +236,11 @@ export default function FirebaseSyncModal({ onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-gray-800 bg-gray-950 flex justify-end">
+        <div className="px-5 py-3 border-t border-amber-900/30 border-dashed bg-gray-950 flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xs font-semibold transition-colors"
+            className="px-4 py-1.5 bg-[#050814] hover:bg-[#0b132b] text-white rounded-xl text-xs font-semibold transition-colors"
           >
             Close
           </button>

@@ -42,11 +42,11 @@ const POS_BADGE = {
 
 function getRatingBadge(rating) {
   const num = Number(rating);
-  if (!num || isNaN(num)) return 'bg-gray-800 text-gray-500 border-gray-700';
+  if (!num || isNaN(num)) return 'bg-[#050814] text-amber-500/40 border-amber-900/40';
   if (num >= 8.5) return 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold';
   if (num >= 7.0) return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-semibold';
   if (num >= 6.0) return 'bg-blue-500/20 text-blue-300 border-blue-500/40';
-  return 'bg-gray-700 text-gray-400 border-gray-600';
+  return 'bg-[#0b132b] text-amber-500/60 border-amber-900/50';
 }
 
 /* ── Modal for Generating Dynamic League Fixtures ── */
@@ -81,21 +81,21 @@ function FixtureGeneratorModal({ onClose, onGenerate, teamCount }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-6 space-y-5">
-        <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+    <div className="fixed inset-0 bg-[#050814]/85 backdrop-blur-md z-[150] flex items-center justify-center p-4">
+      <div className="sketch-border bg-[#0b132b] rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-6 space-y-5 text-amber-50 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-amber-900/30 border-dashed pb-3">
+          <h3 className="text-2xl font-serif text-amber-200 flex items-center gap-2">
             <Shuffle className="w-5 h-5 text-purple-400" />
             Generate Dynamic League Schedule
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-amber-500/60 hover:text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-semibold text-gray-300 block mb-1.5">
+            <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60 block mb-1.5">
               Tournament Cadence
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -111,7 +111,7 @@ function FixtureGeneratorModal({ onClose, onGenerate, teamCount }) {
                   className={`p-3 rounded-xl border text-left transition-all ${
                     scheduleType === opt.id
                       ? 'border-purple-500 bg-purple-500/10 text-purple-300'
-                      : 'border-gray-800 bg-gray-800/50 text-gray-400 hover:border-gray-700'
+                      : 'border-amber-900/30 border-dashed bg-[#050814]/60 text-amber-500/60 hover:border-amber-900/40'
                   }`}
                 >
                   <p className="font-bold text-xs">{opt.label}</p>
@@ -123,7 +123,7 @@ function FixtureGeneratorModal({ onClose, onGenerate, teamCount }) {
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-semibold text-gray-300">
+              <label className="text-xs font-semibold text-amber-100">
                 {scheduleType === 'WEEKS' ? 'Number of Weeks (2 - 10 Weeks)' :
                  scheduleType === 'DAILY' ? 'Number of Days (1 - 10 Days)' :
                  'Number of Legs / Cycles (1 - 10)'}
@@ -140,7 +140,7 @@ function FixtureGeneratorModal({ onClose, onGenerate, teamCount }) {
               onChange={e => setDuration(Number(e.target.value))}
               className="w-full accent-purple-500 cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-gray-500 font-mono mt-0.5">
+            <div className="flex justify-between text-[10px] text-amber-500/40 font-mono mt-0.5">
               <span>{scheduleType === 'WEEKS' ? '2w' : '1d'}</span>
               <span>5</span>
               <span>10</span>
@@ -149,7 +149,7 @@ function FixtureGeneratorModal({ onClose, onGenerate, teamCount }) {
 
           {(scheduleType === 'WEEKS' || scheduleType === 'DAILY') && (
             <div>
-              <label className="text-xs font-semibold text-gray-300 block mb-1.5">
+              <label className="text-xs font-semibold text-amber-100 block mb-1.5">
                 Matches Pairing Format per {scheduleType === 'WEEKS' ? 'Week' : 'Day'}
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -159,7 +159,7 @@ function FixtureGeneratorModal({ onClose, onGenerate, teamCount }) {
                   className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
                     matchesStyle === 'FULL_CYCLE'
                       ? 'border-purple-500 bg-purple-500/10 text-purple-300'
-                      : 'border-gray-800 bg-gray-800/50 text-gray-400'
+                      : 'border-amber-900/30 border-dashed bg-[#050814]/60 text-amber-500/60'
                   }`}
                 >
                   <p className="font-bold">⚡ Full Round Each {scheduleType === 'WEEKS' ? 'Week' : 'Day'}</p>
@@ -171,7 +171,7 @@ function FixtureGeneratorModal({ onClose, onGenerate, teamCount }) {
                   className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
                     matchesStyle === 'DISTRIBUTED'
                       ? 'border-purple-500 bg-purple-500/10 text-purple-300'
-                      : 'border-gray-800 bg-gray-800/50 text-gray-400'
+                      : 'border-amber-900/30 border-dashed bg-[#050814]/60 text-amber-500/60'
                   }`}
                 >
                   <p className="font-bold">📅 1 Match per Team</p>
@@ -183,32 +183,32 @@ function FixtureGeneratorModal({ onClose, onGenerate, teamCount }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-gray-400">Start Date</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">Start Date</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
-                className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-400">First Match Kickoff Time</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">First Match Kickoff Time</label>
               <input
                 type="time"
                 value={startTime}
                 onChange={e => setStartTime(e.target.value)}
-                className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-gray-400">Match Gap Interval</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">Match Gap Interval</label>
               <select
                 value={intervalMins}
                 onChange={e => setIntervalMins(Number(e.target.value))}
-                className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="0">Same time (parallel pitches)</option>
                 <option value="30">30 minutes</option>
@@ -218,13 +218,13 @@ function FixtureGeneratorModal({ onClose, onGenerate, teamCount }) {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-400">Default Venue</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">Default Venue</label>
               <input
                 type="text"
                 value={defaultVenue}
                 onChange={e => setDefaultVenue(e.target.value)}
                 placeholder="Pitch / Arena"
-                className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
           </div>
@@ -233,14 +233,14 @@ function FixtureGeneratorModal({ onClose, onGenerate, teamCount }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-400 hover:bg-gray-800 text-sm font-semibold transition-colors"
+              className="flex-1 py-2.5 rounded-xl border border-amber-900/40 text-amber-500/60 hover:bg-[#050814] text-sm font-semibold transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={teamCount < 2}
-              className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:bg-[#050814] disabled:text-gray-600 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
             >
               <Shuffle className="w-4 h-4" />
               Generate Fixtures
@@ -294,14 +294,14 @@ function EditMatchModal({ match, onClose, onSave, onDelete }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[160] flex items-center justify-center p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-6 space-y-4">
+    <div className="fixed inset-0 bg-[#050814]/85 backdrop-blur-md z-[160] flex items-center justify-center p-4">
+      <div className="sketch-border bg-[#0b132b] rounded-2xl w-full max-w-md p-6 space-y-4 text-amber-50 shadow-2xl">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-white text-base flex items-center gap-2">
+          <h3 className="font-serif text-xl text-amber-200 flex items-center gap-2">
             <Edit3 className="w-4 h-4 text-amber-400" />
             Edit Match Fixture Details
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-amber-500/60 hover:text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -309,11 +309,11 @@ function EditMatchModal({ match, onClose, onSave, onDelete }) {
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-gray-400">Team A</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">Team A</label>
               <select
                 value={form.teamAId}
                 onChange={e => setForm({ ...form, teamAId: e.target.value })}
-                className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
               >
                 {state.teams.map(t => (
                   <option key={t.id} value={t.id} disabled={t.id === form.teamBId}>
@@ -323,11 +323,11 @@ function EditMatchModal({ match, onClose, onSave, onDelete }) {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-400">Team B</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">Team B</label>
               <select
                 value={form.teamBId}
                 onChange={e => setForm({ ...form, teamBId: e.target.value })}
-                className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1.5 text-white text-sm"
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-white text-sm"
               >
                 {state.teams.map(t => (
                   <option key={t.id} value={t.id} disabled={t.id === form.teamAId}>
@@ -340,49 +340,49 @@ function EditMatchModal({ match, onClose, onSave, onDelete }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-gray-400">Match Date</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">Match Date</label>
               <input
                 type="date"
                 value={form.date}
                 onChange={e => setForm({ ...form, date: e.target.value })}
-                className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white text-sm"
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-3 py-1.5 text-white text-sm"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-400">Kickoff Time</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">Kickoff Time</label>
               <input
                 type="time"
                 value={form.time}
                 onChange={e => setForm({ ...form, time: e.target.value })}
-                className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white text-sm"
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-3 py-1.5 text-white text-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-gray-400">Venue / Pitch</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">Venue / Pitch</label>
               <input
                 type="text"
                 value={form.venue}
                 onChange={e => setForm({ ...form, venue: e.target.value })}
                 placeholder="Pitch 1"
-                className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white text-sm"
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-3 py-1.5 text-white text-sm"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-400">Round Label</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">Round Label</label>
               <input
                 type="text"
                 value={form.roundLabel}
                 onChange={e => setForm({ ...form, roundLabel: e.target.value })}
                 placeholder="e.g. Week 1 or Day 1"
-                className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white text-sm"
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-3 py-1.5 text-white text-sm"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-gray-800">
+          <div className="flex items-center justify-between pt-2 border-t border-amber-900/30 border-dashed">
             <button
               type="button"
               onClick={() => {
@@ -399,7 +399,7 @@ function EditMatchModal({ match, onClose, onSave, onDelete }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300 text-xs"
+                className="px-3 py-1.5 rounded-lg border border-amber-900/40 text-amber-100 text-xs"
               >
                 Cancel
               </button>
@@ -590,20 +590,20 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[170] flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[94vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-[#050814]/85 backdrop-blur-md z-[170] flex items-center justify-center p-3 sm:p-4">
+      <div className="sketch-border bg-[#0b132b] rounded-2xl w-full max-w-2xl max-h-[94vh] flex flex-col shadow-2xl overflow-hidden text-amber-50">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-800 bg-gray-900/90 flex items-center justify-between shrink-0">
+        <div className="px-5 py-4 border-b border-amber-900/30 border-dashed bg-[#0b132b]/95 flex items-center justify-between shrink-0">
           <div>
-            <h3 className="font-bold text-white text-base flex items-center gap-2">
+            <h3 className="font-serif text-xl text-amber-200 flex items-center gap-2">
               <Activity className="w-5 h-5 text-emerald-400" />
               Match Center & Performance Sheet
             </h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-amber-500/60 mt-0.5">
               Log score, goal scorers, assists, GK saves, clean sheets & player ratings.
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-1 rounded-lg">
+          <button onClick={onClose} className="text-amber-500/60 hover:text-white p-1 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -611,12 +611,12 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
         {/* Content Body (scrollable) */}
         <form onSubmit={handleSaveAll} className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* ── 1. Match Scoreboard ── */}
-          <div className="bg-gradient-to-r from-gray-800/80 via-gray-900 to-gray-800/80 border border-gray-700 rounded-2xl p-4">
+          <div className="sketch-border bg-[#050814]/80 rounded-2xl p-4">
             <div className="flex items-center justify-between gap-3 text-center">
               {/* Team A */}
               <div className="flex-1 min-w-0">
                 <span className="text-2xl block mb-1">{teamA?.logo || '🛡️'}</span>
-                <p className="font-bold text-white text-sm sm:text-base truncate">{teamA?.name || 'Team A'}</p>
+                <p className="font-serif text-amber-100 text-sm sm:text-base truncate">{teamA?.name || 'Team A'}</p>
                 {teamACleanSheet && (
                   <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full mt-1">
                     <Shield className="w-2.5 h-2.5" /> Clean Sheet
@@ -633,10 +633,10 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                   value={scoreA}
                   onChange={e => setScoreA(e.target.value)}
                   placeholder="0"
-                  className="w-14 sm:w-16 h-12 bg-gray-950 border-2 border-gray-600 focus:border-amber-500 rounded-xl text-center text-2xl font-black text-white focus:outline-none"
+                  className="w-14 sm:w-16 h-12 bg-[#050814] border-2 border-amber-600/50 focus:border-amber-400 rounded-xl text-center text-2xl font-black font-mono text-amber-200 focus:outline-none shadow-inner"
                   autoFocus
                 />
-                <span className="text-gray-500 font-bold text-lg">–</span>
+                <span className="text-amber-500/40 font-bold text-lg">–</span>
                 <input
                   type="number"
                   min="0"
@@ -644,14 +644,14 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                   value={scoreB}
                   onChange={e => setScoreB(e.target.value)}
                   placeholder="0"
-                  className="w-14 sm:w-16 h-12 bg-gray-950 border-2 border-gray-600 focus:border-amber-500 rounded-xl text-center text-2xl font-black text-white focus:outline-none"
+                  className="w-14 sm:w-16 h-12 bg-[#050814] border-2 border-amber-600/50 focus:border-amber-400 rounded-xl text-center text-2xl font-black font-mono text-amber-200 focus:outline-none shadow-inner"
                 />
               </div>
 
               {/* Team B */}
               <div className="flex-1 min-w-0">
                 <span className="text-2xl block mb-1">{teamB?.logo || '🛡️'}</span>
-                <p className="font-bold text-white text-sm sm:text-base truncate">{teamB?.name || 'Team B'}</p>
+                <p className="font-serif text-amber-100 text-sm sm:text-base truncate">{teamB?.name || 'Team B'}</p>
                 {teamBCleanSheet && (
                   <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full mt-1">
                     <Shield className="w-2.5 h-2.5" /> Clean Sheet
@@ -661,13 +661,13 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
             </div>
 
             {/* Status and Match Details */}
-            <div className="flex items-center justify-between border-t border-gray-800 mt-4 pt-3 text-xs text-gray-400 flex-wrap gap-2">
+            <div className="flex items-center justify-between border-t border-amber-900/30 border-dashed mt-4 pt-3 text-xs text-amber-500/60 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <span>Match Status:</span>
                 <select
                   value={status}
                   onChange={e => setStatus(e.target.value)}
-                  className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-white text-xs"
+                  className="bg-[#050814] border border-amber-900/40 rounded-lg px-2 py-1 text-white text-xs"
                 >
                   <option value="COMPLETED">Completed</option>
                   <option value="LIVE">Live 🔴</option>
@@ -684,7 +684,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
           </div>
 
           {/* ── Sub Navigation Tabs ── */}
-          <div className="flex border-b border-gray-800 gap-2">
+          <div className="flex border-b border-amber-900/30 border-dashed gap-2">
             {[
               { id: 'GOALS', label: `⚽ Goals & Assists (${events.length})`, icon: Target },
               { id: 'GK', label: '🧤 GK Saves & Clean Sheet', icon: Shield },
@@ -697,7 +697,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                 className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all ${
                   activeTab === tab.id
                     ? 'border-amber-500 text-amber-400'
-                    : 'border-transparent text-gray-400 hover:text-gray-300'
+                    : 'border-transparent text-amber-500/60 hover:text-amber-100'
                 }`}
               >
                 <tab.icon className="w-3.5 h-3.5" />
@@ -710,7 +710,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
           {activeTab === 'GOALS' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-amber-500/60">
                   Record individual goals, scorers, assists, and minutes.
                 </span>
                 <div className="flex gap-2">
@@ -727,7 +727,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                   <button
                     type="button"
                     onClick={() => handleAddGoal(teamA?.id)}
-                    className="text-xs bg-gray-800 hover:bg-gray-700 text-white px-2.5 py-1 rounded-lg border border-gray-700 flex items-center gap-1"
+                    className="text-xs bg-[#050814] hover:bg-[#0b132b] text-white px-2.5 py-1 rounded-lg border border-amber-900/40 flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3 text-emerald-400" /> Add Goal
                   </button>
@@ -735,7 +735,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
               </div>
 
               {events.length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-gray-800 rounded-xl text-gray-500 text-xs space-y-1">
+                <div className="text-center py-8 border border-dashed border-amber-900/30 border-dashed rounded-xl text-amber-500/40 text-xs space-y-1">
                   <p>No goals logged yet for this match.</p>
                   <p className="text-[11px] text-gray-600">Click "+ Add Goal" or "Auto-Fill Slots" after entering score.</p>
                 </div>
@@ -747,10 +747,10 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                     return (
                       <div
                         key={ev.id || idx}
-                        className="flex items-center gap-2 bg-gray-800/60 border border-gray-700 rounded-xl p-2.5 flex-wrap sm:flex-nowrap"
+                        className="flex items-center gap-2 bg-[#050814]/60 border border-amber-900/40 rounded-xl p-2.5 flex-wrap sm:flex-nowrap"
                       >
                         {/* Goal number & icon */}
-                        <span className="text-xs font-mono font-bold text-gray-500 w-5 text-center shrink-0">
+                        <span className="text-xs font-mono font-bold text-amber-500/40 w-5 text-center shrink-0">
                           #{idx + 1}
                         </span>
 
@@ -758,7 +758,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                         <select
                           value={ev.teamId}
                           onChange={e => handleUpdateGoal(ev.id, 'teamId', e.target.value)}
-                          className="bg-gray-700 border border-gray-600 rounded-lg px-2 py-1 text-xs text-white shrink-0"
+                          className="bg-[#0b132b] border border-amber-900/50 rounded-lg px-2 py-1 text-xs text-white shrink-0"
                         >
                           <option value={teamA?.id}>{teamA?.logo} {teamA?.name}</option>
                           <option value={teamB?.id}>{teamB?.logo} {teamB?.name}</option>
@@ -769,7 +769,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                           <select
                             value={ev.scorerId || ''}
                             onChange={e => handleUpdateGoal(ev.id, 'scorerId', e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-2 py-1 text-xs text-emerald-300 font-semibold"
+                            className="w-full bg-[#0b132b] border border-amber-900/50 rounded-lg px-2 py-1 text-xs text-emerald-300 font-semibold"
                           >
                             <option value="">⚽ Select Scorer</option>
                             {availableRoster.map(p => (
@@ -785,7 +785,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                           <select
                             value={ev.assistId || ''}
                             onChange={e => handleUpdateGoal(ev.id, 'assistId', e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-2 py-1 text-xs text-amber-300"
+                            className="w-full bg-[#0b132b] border border-amber-900/50 rounded-lg px-2 py-1 text-xs text-amber-300"
                           >
                             <option value="">⚡ Assist: None / Solo</option>
                             {availableRoster.map(p => (
@@ -803,7 +803,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                             placeholder="Min '"
                             value={ev.minute || ''}
                             onChange={e => handleUpdateGoal(ev.id, 'minute', e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-2 py-1 text-xs text-white text-center font-mono"
+                            className="w-full bg-[#0b132b] border border-amber-900/50 rounded-lg px-2 py-1 text-xs text-white text-center font-mono"
                           />
                         </div>
 
@@ -811,7 +811,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                         <button
                           type="button"
                           onClick={() => handleRemoveGoal(ev.id)}
-                          className="text-gray-500 hover:text-red-400 p-1 rounded"
+                          className="text-amber-500/40 hover:text-red-400 p-1 rounded"
                           title="Remove goal"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -838,7 +838,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
               </div>
 
               {/* Team A Goalkeepers */}
-              <div className="bg-gray-800/40 border border-gray-700 rounded-xl p-3.5 space-y-3">
+              <div className="bg-[#050814]/40 border border-amber-900/40 rounded-xl p-3.5 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-white text-xs flex items-center gap-1.5">
                     {teamA?.logo} {teamA?.name} Goalkeeping
@@ -848,29 +848,29 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                       <Shield className="w-3 h-3" /> Auto Clean Sheet Active
                     </span>
                   ) : (
-                    <span className="text-[11px] text-gray-500">Conceded {numScoreB} goals</span>
+                    <span className="text-[11px] text-amber-500/40">Conceded {numScoreB} goals</span>
                   )}
                 </div>
 
                 <div className="space-y-2">
                   {rosterA.filter(p => p.position === 'GK' || (p.rawPositions && p.rawPositions.includes('GK'))).length === 0 ? (
-                    <p className="text-xs text-gray-500 italic">No designated GK in squad roster. Any squad member can record saves in Squad tab.</p>
+                    <p className="text-xs text-amber-500/40 italic">No designated GK in squad roster. Any squad member can record saves in Squad tab.</p>
                   ) : (
                     rosterA.filter(p => p.position === 'GK' || (p.rawPositions && p.rawPositions.includes('GK'))).map(gk => (
-                      <div key={gk.id} className="flex items-center justify-between bg-gray-800 rounded-lg p-2.5">
+                      <div key={gk.id} className="flex items-center justify-between bg-[#050814] rounded-lg p-2.5">
                         <div className="flex items-center gap-2">
                           <span className="text-xs px-1.5 py-0.5 rounded font-mono font-bold bg-yellow-500/20 text-yellow-300">GK</span>
                           <span className="text-sm font-semibold text-white">{gk.name}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1.5">
-                            <label className="text-xs text-gray-400">Saves Made:</label>
+                            <label className="text-xs text-amber-500/60">Saves Made:</label>
                             <input
                               type="number"
                               min="0"
                               value={perfMap[gk.id]?.saves ?? 0}
                               onChange={e => updatePlayerPerf(gk.id, { saves: e.target.value })}
-                              className="w-16 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-center font-bold text-xs"
+                              className="w-16 bg-[#0b132b] border border-amber-900/50 rounded px-2 py-1 text-white text-center font-bold text-xs"
                             />
                           </div>
                         </div>
@@ -881,7 +881,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
               </div>
 
               {/* Team B Goalkeepers */}
-              <div className="bg-gray-800/40 border border-gray-700 rounded-xl p-3.5 space-y-3">
+              <div className="bg-[#050814]/40 border border-amber-900/40 rounded-xl p-3.5 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-white text-xs flex items-center gap-1.5">
                     {teamB?.logo} {teamB?.name} Goalkeeping
@@ -891,29 +891,29 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                       <Shield className="w-3 h-3" /> Auto Clean Sheet Active
                     </span>
                   ) : (
-                    <span className="text-[11px] text-gray-500">Conceded {numScoreA} goals</span>
+                    <span className="text-[11px] text-amber-500/40">Conceded {numScoreA} goals</span>
                   )}
                 </div>
 
                 <div className="space-y-2">
                   {rosterB.filter(p => p.position === 'GK' || (p.rawPositions && p.rawPositions.includes('GK'))).length === 0 ? (
-                    <p className="text-xs text-gray-500 italic">No designated GK in squad roster. Any squad member can record saves in Squad tab.</p>
+                    <p className="text-xs text-amber-500/40 italic">No designated GK in squad roster. Any squad member can record saves in Squad tab.</p>
                   ) : (
                     rosterB.filter(p => p.position === 'GK' || (p.rawPositions && p.rawPositions.includes('GK'))).map(gk => (
-                      <div key={gk.id} className="flex items-center justify-between bg-gray-800 rounded-lg p-2.5">
+                      <div key={gk.id} className="flex items-center justify-between bg-[#050814] rounded-lg p-2.5">
                         <div className="flex items-center gap-2">
                           <span className="text-xs px-1.5 py-0.5 rounded font-mono font-bold bg-yellow-500/20 text-yellow-300">GK</span>
                           <span className="text-sm font-semibold text-white">{gk.name}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1.5">
-                            <label className="text-xs text-gray-400">Saves Made:</label>
+                            <label className="text-xs text-amber-500/60">Saves Made:</label>
                             <input
                               type="number"
                               min="0"
                               value={perfMap[gk.id]?.saves ?? 0}
                               onChange={e => updatePlayerPerf(gk.id, { saves: e.target.value })}
-                              className="w-16 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-center font-bold text-xs"
+                              className="w-16 bg-[#0b132b] border border-amber-900/50 rounded px-2 py-1 text-white text-center font-bold text-xs"
                             />
                           </div>
                         </div>
@@ -929,7 +929,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
           {activeTab === 'SQUADS' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-amber-500/60">
                   Rate each player's performance (1.0 - 10.0 scale) for MID, DEF, FWD & GK.
                 </span>
                 <span className="text-[11px] text-amber-400 font-mono">
@@ -939,14 +939,14 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
 
               {/* Team A Squad */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 border-b border-gray-800 pb-1">
+                <div className="flex items-center gap-2 border-b border-amber-900/30 border-dashed pb-1">
                   <span className="text-base">{teamA?.logo}</span>
                   <span className="font-bold text-white text-xs">{teamA?.name} Squad Ratings</span>
                 </div>
 
                 <div className="space-y-1.5">
                   {rosterA.length === 0 ? (
-                    <p className="text-xs text-gray-500 py-2">No players assigned to {teamA?.name}.</p>
+                    <p className="text-xs text-amber-500/40 py-2">No players assigned to {teamA?.name}.</p>
                   ) : (
                     rosterA.map(p => {
                       const perf = perfMap[p.id] || {};
@@ -954,7 +954,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                       return (
                         <div
                           key={p.id}
-                          className="flex items-center justify-between bg-gray-800/40 border border-gray-700/60 rounded-xl px-3 py-2 gap-2"
+                          className="flex items-center justify-between bg-[#050814]/40 border border-amber-900/40/60 rounded-xl px-3 py-2 gap-2"
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <input
@@ -978,7 +978,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                                   key={r}
                                   type="button"
                                   onClick={() => updatePlayerPerf(p.id, { rating: r })}
-                                  className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 font-mono"
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-[#0b132b] hover:bg-gray-600 text-amber-100 font-mono"
                                 >
                                   {r}
                                 </button>
@@ -1005,14 +1005,14 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
 
               {/* Team B Squad */}
               <div className="space-y-2 pt-2">
-                <div className="flex items-center gap-2 border-b border-gray-800 pb-1">
+                <div className="flex items-center gap-2 border-b border-amber-900/30 border-dashed pb-1">
                   <span className="text-base">{teamB?.logo}</span>
                   <span className="font-bold text-white text-xs">{teamB?.name} Squad Ratings</span>
                 </div>
 
                 <div className="space-y-1.5">
                   {rosterB.length === 0 ? (
-                    <p className="text-xs text-gray-500 py-2">No players assigned to {teamB?.name}.</p>
+                    <p className="text-xs text-amber-500/40 py-2">No players assigned to {teamB?.name}.</p>
                   ) : (
                     rosterB.map(p => {
                       const perf = perfMap[p.id] || {};
@@ -1020,7 +1020,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                       return (
                         <div
                           key={p.id}
-                          className="flex items-center justify-between bg-gray-800/40 border border-gray-700/60 rounded-xl px-3 py-2 gap-2"
+                          className="flex items-center justify-between bg-[#050814]/40 border border-amber-900/40/60 rounded-xl px-3 py-2 gap-2"
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <input
@@ -1043,7 +1043,7 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
                                   key={r}
                                   type="button"
                                   onClick={() => updatePlayerPerf(p.id, { rating: r })}
-                                  className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 font-mono"
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-[#0b132b] hover:bg-gray-600 text-amber-100 font-mono"
                                 >
                                   {r}
                                 </button>
@@ -1076,14 +1076,14 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
               <Trophy className="w-5 h-5 text-amber-400 shrink-0" />
               <div>
                 <p className="text-xs font-bold text-amber-300">Match MVP / Player of the Match</p>
-                <p className="text-[10px] text-gray-400">Awarded to the most impactful player</p>
+                <p className="text-[10px] text-amber-500/60">Awarded to the most impactful player</p>
               </div>
             </div>
 
             <select
               value={mvpPlayerId}
               onChange={e => setMvpPlayerId(e.target.value)}
-              className="bg-gray-800 border border-amber-500/40 rounded-lg px-3 py-1.5 text-xs text-amber-300 font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="bg-[#050814] border border-amber-500/40 rounded-lg px-3 py-1.5 text-xs text-amber-300 font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500"
             >
               <option value="">⭐ Select Match MVP (Optional)</option>
               <optgroup label={`${teamA?.name || 'Team A'}`}>
@@ -1104,11 +1104,11 @@ function MatchPerformanceModal({ match, onClose, onSave }) {
           </div>
 
           {/* Footer Submit */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-800">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-amber-900/30 border-dashed">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-gray-700 text-gray-300 text-xs hover:bg-gray-800 transition-colors"
+              className="px-4 py-2 rounded-xl border border-amber-900/40 text-amber-100 text-xs hover:bg-[#050814] transition-colors"
             >
               Cancel
             </button>
@@ -1149,17 +1149,17 @@ function MatchDetailsModal({ match, onClose }) {
   const perfs = match.playerPerformance || [];
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[180] flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-[#050814]/85 backdrop-blur-md z-[180] flex items-center justify-center p-3 sm:p-4">
+      <div className="sketch-border bg-[#0b132b] rounded-2xl w-full max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden text-amber-50">
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-gray-800 flex items-center justify-between shrink-0 bg-gray-950/60">
+        <div className="px-5 py-3.5 border-b border-amber-900/30 border-dashed flex items-center justify-between shrink-0 bg-[#050814]/70">
           <div className="flex items-center gap-2">
             <span className="text-xs font-mono font-bold text-purple-400 bg-purple-500/10 px-2.5 py-0.5 rounded-full">
               {match.roundLabel || `Round ${match.round}`}
             </span>
-            <span className="text-xs text-gray-400">Match Center</span>
+            <span className="text-xs text-amber-500/60">Match Center</span>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white p-1">
+          <button onClick={onClose} className="text-amber-500/60 hover:text-white p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -1167,12 +1167,12 @@ function MatchDetailsModal({ match, onClose }) {
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Big Score Header */}
-          <div className="bg-gradient-to-b from-gray-800/80 to-gray-900 border border-gray-700 rounded-2xl p-4 text-center">
+          <div className="sketch-border bg-[#050814]/80 rounded-2xl p-4 text-center">
             <div className="flex items-center justify-between">
               {/* Team A */}
               <div className="flex-1">
                 <span className="text-3xl block mb-1">{teamA?.logo || '🛡️'}</span>
-                <p className="font-bold text-white text-sm sm:text-base">{teamA?.name}</p>
+                <p className="font-serif text-amber-100 text-sm sm:text-base">{teamA?.name}</p>
               </div>
 
               {/* Score */}
@@ -1189,7 +1189,7 @@ function MatchDetailsModal({ match, onClose }) {
                     </div>
                   </div>
                 ) : (
-                  <span className="text-xs text-gray-400 font-mono bg-gray-800 px-3 py-1 rounded-full">
+                  <span className="text-xs text-amber-500/60 font-mono bg-[#050814] px-3 py-1 rounded-full">
                     Upcoming
                   </span>
                 )}
@@ -1198,11 +1198,11 @@ function MatchDetailsModal({ match, onClose }) {
               {/* Team B */}
               <div className="flex-1">
                 <span className="text-3xl block mb-1">{teamB?.logo || '🛡️'}</span>
-                <p className="font-bold text-white text-sm sm:text-base">{teamB?.name}</p>
+                <p className="font-serif text-amber-100 text-sm sm:text-base">{teamB?.name}</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-4 mt-3 text-xs text-gray-400 border-t border-gray-800/80 pt-2 font-mono">
+            <div className="flex items-center justify-center gap-4 mt-3 text-xs text-amber-500/60 border-t border-amber-900/30 border-dashed/80 pt-2 font-mono">
               {match.date && <span>📅 {match.date}</span>}
               {match.time && <span>⏰ {match.time}</span>}
               {match.venue && <span>📍 {match.venue}</span>}
@@ -1228,10 +1228,10 @@ function MatchDetailsModal({ match, onClose }) {
           {/* Goal Scorers Timeline */}
           {events.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+              <h4 className="text-xs font-bold text-amber-500/60 uppercase tracking-wider flex items-center gap-1.5">
                 <Target className="w-3.5 h-3.5 text-emerald-400" /> Goal Scorers & Assists
               </h4>
-              <div className="bg-gray-800/50 border border-gray-700/60 rounded-xl divide-y divide-gray-700/40">
+              <div className="bg-[#050814]/60 border border-amber-900/40/60 rounded-xl divide-y divide-amber-900/20">
                 {events.map((ev, i) => {
                   const team = state.teams.find(t => t.id === ev.teamId);
                   const scorer = state.players.find(p => p.id === ev.scorerId);
@@ -1242,11 +1242,11 @@ function MatchDetailsModal({ match, onClose }) {
                         <span className="text-sm">⚽</span>
                         <span className="font-semibold text-white">{scorer?.name || 'Unassigned Scorer'}</span>
                         {assist && (
-                          <span className="text-gray-400 text-[11px]">(assist: {assist.name})</span>
+                          <span className="text-amber-500/60 text-[11px]">(assist: {assist.name})</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400 font-mono text-[11px]">{team?.logo} {team?.name}</span>
+                        <span className="text-amber-500/60 font-mono text-[11px]">{team?.logo} {team?.name}</span>
                         {ev.minute && (
                           <span className="font-mono text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded text-[10px]">
                             {ev.minute}'
@@ -1262,14 +1262,14 @@ function MatchDetailsModal({ match, onClose }) {
 
           {/* Player Ratings & Lineups */}
           <div className="space-y-2">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+            <h4 className="text-xs font-bold text-amber-500/60 uppercase tracking-wider flex items-center gap-1.5">
               <Star className="w-3.5 h-3.5 text-amber-400" /> Squad Match Ratings
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Team A Roster & Ratings */}
-              <div className="bg-gray-800/40 border border-gray-700 rounded-xl p-3 space-y-2">
-                <p className="font-bold text-xs text-white flex items-center gap-1.5 border-b border-gray-700/60 pb-1.5">
+              <div className="bg-[#050814]/40 border border-amber-900/40 rounded-xl p-3 space-y-2">
+                <p className="font-bold text-xs text-white flex items-center gap-1.5 border-b border-amber-900/40/60 pb-1.5">
                   <span>{teamA?.logo}</span> {teamA?.name}
                 </p>
                 <div className="space-y-1">
@@ -1281,7 +1281,7 @@ function MatchDetailsModal({ match, onClose }) {
                           <span className={`text-[9px] px-1 py-0.2 rounded font-bold ${POS_BADGE[p.position] || POS_BADGE.FLEX}`}>
                             {p.position}
                           </span>
-                          <span className="text-gray-200 truncate">{p.name}</span>
+                          <span className="text-amber-50 truncate">{p.name}</span>
                           {perf?.cleanSheet && <Shield className="w-3 h-3 text-emerald-400 shrink-0" title="Clean Sheet" />}
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -1301,8 +1301,8 @@ function MatchDetailsModal({ match, onClose }) {
               </div>
 
               {/* Team B Roster & Ratings */}
-              <div className="bg-gray-800/40 border border-gray-700 rounded-xl p-3 space-y-2">
-                <p className="font-bold text-xs text-white flex items-center gap-1.5 border-b border-gray-700/60 pb-1.5">
+              <div className="bg-[#050814]/40 border border-amber-900/40 rounded-xl p-3 space-y-2">
+                <p className="font-bold text-xs text-white flex items-center gap-1.5 border-b border-amber-900/40/60 pb-1.5">
                   <span>{teamB?.logo}</span> {teamB?.name}
                 </p>
                 <div className="space-y-1">
@@ -1314,7 +1314,7 @@ function MatchDetailsModal({ match, onClose }) {
                           <span className={`text-[9px] px-1 py-0.2 rounded font-bold ${POS_BADGE[p.position] || POS_BADGE.FLEX}`}>
                             {p.position}
                           </span>
-                          <span className="text-gray-200 truncate">{p.name}</span>
+                          <span className="text-amber-50 truncate">{p.name}</span>
                           {perf?.cleanSheet && <Shield className="w-3 h-3 text-emerald-400 shrink-0" title="Clean Sheet" />}
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -1362,29 +1362,29 @@ function MatchRow({ match, editable, onOpenPerformance, onEditMatch, onOpenDetai
     <div
       className={`flex flex-col gap-2 px-3.5 py-3 rounded-xl border transition-all ${
         isCompleted
-          ? 'bg-gray-800/30 border-gray-700/40 hover:border-gray-600'
+          ? 'bg-[#0b132b]/50 border-amber-900/40/40 hover:border-amber-900/50'
           : match.status === 'LIVE'
           ? 'bg-red-950/20 border-red-500/40'
-          : 'bg-gray-800/60 border-gray-700 hover:border-gray-600'
+          : 'bg-[#050814]/60 border-amber-900/40 hover:border-amber-900/50'
       }`}
     >
       {/* Top Strip: Date, Time & Venue */}
-      <div className="flex items-center justify-between text-xs text-gray-400 font-mono">
+      <div className="flex items-center justify-between text-xs text-amber-500/60 font-mono">
         <div className="flex items-center gap-3">
           {match.date && (
-            <span className="flex items-center gap-1 text-gray-300">
+            <span className="flex items-center gap-1 text-amber-100">
               <Calendar className="w-3 h-3 text-purple-400" />
               {match.date}
             </span>
           )}
           {match.time && (
-            <span className="flex items-center gap-1 text-gray-300">
+            <span className="flex items-center gap-1 text-amber-100">
               <Clock className="w-3 h-3 text-amber-400" />
               {match.time}
             </span>
           )}
           {match.venue && (
-            <span className="hidden sm:flex items-center gap-1 text-gray-500 truncate max-w-[140px]">
+            <span className="hidden sm:flex items-center gap-1 text-amber-500/40 truncate max-w-[140px]">
               <MapPin className="w-3 h-3 text-emerald-400" />
               {match.venue}
             </span>
@@ -1410,7 +1410,7 @@ function MatchRow({ match, editable, onOpenPerformance, onEditMatch, onOpenDetai
         {/* Team A */}
         <div className={`flex items-center gap-2 flex-1 min-w-0 ${aWon ? '' : isCompleted ? 'opacity-60' : ''}`}>
           <span className="text-xl shrink-0">{teamA?.logo || '🛡️'}</span>
-          <span className={`text-sm font-semibold truncate ${aWon ? 'text-white' : 'text-gray-300'}`}>
+          <span className={`text-sm font-semibold truncate ${aWon ? 'text-white' : 'text-amber-100'}`}>
             {teamA?.name ?? 'TBD'}
           </span>
         </div>
@@ -1418,17 +1418,17 @@ function MatchRow({ match, editable, onOpenPerformance, onEditMatch, onOpenDetai
         {/* Score Display */}
         <div className="flex items-center gap-2 shrink-0 px-2">
           {isCompleted ? (
-            <div className="flex items-center gap-2 font-mono bg-gray-900/80 px-3 py-1 rounded-xl border border-gray-700/80">
-              <span className={`text-lg font-black ${aWon ? 'text-emerald-400' : 'text-gray-300'}`}>
+            <div className="flex items-center gap-2 font-mono bg-gray-900/80 px-3 py-1 rounded-xl border border-amber-900/40/80">
+              <span className={`text-lg font-black ${aWon ? 'text-emerald-400' : 'text-amber-100'}`}>
                 {match.scoreA}
               </span>
               <span className="text-gray-600 text-xs">–</span>
-              <span className={`text-lg font-black ${bWon ? 'text-emerald-400' : 'text-gray-300'}`}>
+              <span className={`text-lg font-black ${bWon ? 'text-emerald-400' : 'text-amber-100'}`}>
                 {match.scoreB}
               </span>
             </div>
           ) : (
-            <span className="text-gray-400 text-xs font-mono px-2.5 py-1 rounded-lg bg-gray-800 border border-gray-700">
+            <span className="text-amber-500/60 text-xs font-mono px-2.5 py-1 rounded-lg bg-[#050814] border border-amber-900/40">
               vs
             </span>
           )}
@@ -1436,7 +1436,7 @@ function MatchRow({ match, editable, onOpenPerformance, onEditMatch, onOpenDetai
 
         {/* Team B */}
         <div className={`flex items-center gap-2 flex-1 min-w-0 justify-end ${bWon ? '' : isCompleted ? 'opacity-60' : ''}`}>
-          <span className={`text-sm font-semibold truncate text-right ${bWon ? 'text-white' : 'text-gray-300'}`}>
+          <span className={`text-sm font-semibold truncate text-right ${bWon ? 'text-white' : 'text-amber-100'}`}>
             {teamB?.name ?? 'TBD'}
           </span>
           <span className="text-xl shrink-0">{teamB?.logo || '🛡️'}</span>
@@ -1445,13 +1445,13 @@ function MatchRow({ match, editable, onOpenPerformance, onEditMatch, onOpenDetai
 
       {/* Goal Summary Pills (if any goals logged) */}
       {isCompleted && (goalsA.length > 0 || goalsB.length > 0) && (
-        <div className="flex items-start justify-between text-[11px] text-gray-400 pt-1 border-t border-gray-800/60 gap-4">
+        <div className="flex items-start justify-between text-[11px] text-amber-500/60 pt-1 border-t border-amber-900/30 border-dashed/60 gap-4">
           {/* Team A Goals */}
           <div className="flex-1 space-y-0.5">
             {goalsA.map((g, i) => {
               const p = state.players.find(x => x.id === g.scorerId);
               return (
-                <p key={i} className="truncate text-gray-300">
+                <p key={i} className="truncate text-amber-100">
                   ⚽ {p?.name || 'Goal'} {g.minute ? `${g.minute}'` : ''}
                 </p>
               );
@@ -1463,7 +1463,7 @@ function MatchRow({ match, editable, onOpenPerformance, onEditMatch, onOpenDetai
             {goalsB.map((g, i) => {
               const p = state.players.find(x => x.id === g.scorerId);
               return (
-                <p key={i} className="truncate text-gray-300">
+                <p key={i} className="truncate text-amber-100">
                   {p?.name || 'Goal'} {g.minute ? `${g.minute}'` : ''} ⚽
                 </p>
               );
@@ -1473,7 +1473,7 @@ function MatchRow({ match, editable, onOpenPerformance, onEditMatch, onOpenDetai
       )}
 
       {/* Bottom Actions Toolbar */}
-      <div className="flex items-center justify-between pt-1 border-t border-gray-800/40">
+      <div className="flex items-center justify-between pt-1 border-t border-amber-900/30 border-dashed/40">
         <button
           onClick={() => onOpenDetails(match)}
           className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 hover:underline"
@@ -1492,7 +1492,7 @@ function MatchRow({ match, editable, onOpenPerformance, onEditMatch, onOpenDetai
             </button>
             <button
               onClick={() => onEditMatch(match)}
-              className="p-1 text-gray-500 hover:text-amber-400 rounded hover:bg-gray-700/50 transition-colors"
+              className="p-1 text-amber-500/40 hover:text-amber-400 rounded hover:bg-[#0b132b]/50 transition-colors"
               title="Reschedule match date, time, venue"
             >
               <Settings2 className="w-4 h-4" />
@@ -1724,11 +1724,11 @@ export default function MatchEngine() {
       {/* Top Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-serif text-amber-200 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-purple-400" />
             League Fixtures & Schedule
           </h2>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-xs text-amber-500/60 mt-0.5">
             {leagueRounds.length > 0
               ? `${leagueRounds.length} rounds / matchdays scheduled • ${totalCompleted}/${totalMatches} matches completed`
               : 'Generate automated multi-week or daily schedules'}
@@ -1744,7 +1744,7 @@ export default function MatchEngine() {
                     setShowGenModal(true);
                   }
                 }}
-                className="flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-700 transition-colors"
+                className="flex items-center gap-1.5 bg-[#050814] hover:bg-[#0b132b] text-amber-100 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold border border-amber-900/40 transition-colors"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 Reschedule
@@ -1753,7 +1753,7 @@ export default function MatchEngine() {
             <button
               onClick={() => setShowGenModal(true)}
               disabled={state.teams.length < 2}
-              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-all shadow-lg shadow-purple-900/20"
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:bg-[#050814] disabled:text-gray-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-all shadow-lg shadow-purple-900/20"
             >
               <Shuffle className="w-4 h-4" />
               {leagueRounds.length === 0 ? 'Generate Fixtures' : 'Schedule Generator'}
@@ -1763,11 +1763,11 @@ export default function MatchEngine() {
       </div>
 
       {leagueRounds.length === 0 ? (
-        <div className="text-center py-14 border border-dashed border-gray-800 bg-gray-900/40 rounded-2xl text-gray-500 p-6 space-y-3">
+        <div className="text-center py-14 border border-dashed border-amber-900/30 border-dashed bg-gray-900/40 rounded-2xl text-amber-500/40 p-6 space-y-3">
           <Calendar className="w-12 h-12 mx-auto text-purple-500/40" />
           <div>
-            <p className="font-bold text-white text-base">No League Fixtures Scheduled</p>
-            <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+            <p className="font-serif text-xl text-amber-200">No League Fixtures Scheduled</p>
+            <p className="text-xs text-amber-500/60 mt-1 max-w-sm mx-auto">
               Configure weekly leagues (2 to 10 weeks), daily fixtures (each team plays everyday), or custom round-robin legs.
             </p>
           </div>
@@ -1775,7 +1775,7 @@ export default function MatchEngine() {
             <button
               onClick={() => setShowGenModal(true)}
               disabled={state.teams.length < 2}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:bg-[#050814] disabled:text-gray-600 text-white text-sm font-semibold transition-colors"
             >
               <Shuffle className="w-4 h-4" /> Open Fixture Generator
             </button>
@@ -1790,13 +1790,13 @@ export default function MatchEngine() {
         <>
           {/* Progress bar */}
           <div className="space-y-1.5">
-            <div className="flex justify-between text-xs text-gray-400">
+            <div className="flex justify-between text-xs text-amber-500/60">
               <span>{totalCompleted} of {totalMatches} matches completed</span>
               <span className="font-mono font-bold text-emerald-400">
                 {Math.round((totalCompleted / (totalMatches || 1)) * 100)}%
               </span>
             </div>
-            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-[#050814] rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-purple-500 to-emerald-500 rounded-full transition-all duration-500"
                 style={{ width: `${(totalCompleted / (totalMatches || 1)) * 100}%` }}
@@ -1815,14 +1815,14 @@ export default function MatchEngine() {
               const roundDate = firstMatch?.date;
 
               return (
-                <div key={round} className="bg-gray-900/60 border border-gray-800 rounded-2xl overflow-hidden">
+                <div key={round} className="sketch-border bg-[#0b132b]/60 rounded-2xl overflow-hidden shadow-lg">
                   {/* Round Header */}
-                  <div className="flex items-center justify-between px-4 py-3 bg-gray-800/50">
+                  <div className="flex items-center justify-between px-4 py-3 bg-[#050814]/60">
                     <button
                       onClick={() => setOpenRound(isOpen ? null : round)}
                       className="flex items-center gap-3 text-left flex-1 min-w-0"
                     >
-                      <span className="font-bold text-white text-sm truncate">
+                      <span className="font-serif text-amber-100 text-sm truncate">
                         {roundLabel}
                       </span>
                       {roundDate && (
@@ -1831,13 +1831,13 @@ export default function MatchEngine() {
                           {roundDate}
                         </span>
                       )}
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-amber-500/40">
                         ({matches.length} {matches.length === 1 ? 'match' : 'matches'})
                       </span>
                       {doneCount === matches.length && matches.length > 0 ? (
                         <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
                       ) : (
-                        <span className="text-[11px] text-gray-500 font-mono">
+                        <span className="text-[11px] text-amber-500/40 font-mono">
                           {doneCount}/{matches.length}
                         </span>
                       )}
@@ -1852,7 +1852,7 @@ export default function MatchEngine() {
                               setRoundLabelInput(roundLabel);
                               setRoundDateInput(roundDate || '');
                             }}
-                            className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-gray-700/60 transition-colors flex items-center gap-1"
+                            className="text-xs text-amber-500/60 hover:text-white px-2 py-1 rounded hover:bg-[#0b132b]/60 transition-colors flex items-center gap-1"
                             title="Edit date and title for this entire round"
                           >
                             <Edit3 className="w-3 h-3" />
@@ -1870,7 +1870,7 @@ export default function MatchEngine() {
                       )}
                       <button
                         onClick={() => setOpenRound(isOpen ? null : round)}
-                        className="p-1 text-gray-400 hover:text-white"
+                        className="p-1 text-amber-500/60 hover:text-white"
                       >
                         {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
@@ -1879,35 +1879,35 @@ export default function MatchEngine() {
 
                   {/* Inline Round Meta Editor */}
                   {editingRoundNum === round && (
-                    <div className="p-3.5 bg-gray-800/90 border-b border-gray-700 space-y-3">
-                      <p className="text-xs font-semibold text-gray-300">
+                    <div className="p-3.5 bg-[#050814]/90 border-b border-amber-900/40 space-y-3">
+                      <p className="text-xs font-semibold text-amber-100">
                         Update Round / Day Schedule Info
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <div>
-                          <label className="text-[11px] text-gray-400">Round Title</label>
+                          <label className="text-[11px] text-amber-500/60">Round Title</label>
                           <input
                             type="text"
                             value={roundLabelInput}
                             onChange={e => setRoundLabelInput(e.target.value)}
                             placeholder="e.g. Week 1 - Opening Matches"
-                            className="w-full mt-0.5 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1 text-white text-xs"
+                            className="w-full mt-0.5 bg-[#0b132b] border border-amber-900/50 rounded-lg px-2.5 py-1 text-white text-xs"
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] text-gray-400">Date (Applies to all matches in round)</label>
+                          <label className="text-[11px] text-amber-500/60">Date (Applies to all matches in round)</label>
                           <input
                             type="date"
                             value={roundDateInput}
                             onChange={e => setRoundDateInput(e.target.value)}
-                            className="w-full mt-0.5 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1 text-white text-xs"
+                            className="w-full mt-0.5 bg-[#0b132b] border border-amber-900/50 rounded-lg px-2.5 py-1 text-white text-xs"
                           />
                         </div>
                       </div>
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => setEditingRoundNum(null)}
-                          className="px-2.5 py-1 text-xs text-gray-400 hover:text-white"
+                          className="px-2.5 py-1 text-xs text-amber-500/60 hover:text-white"
                         >
                           Cancel
                         </button>

@@ -6,26 +6,26 @@ import {
 } from 'lucide-react';
 
 const POSITION_META = {
-  ALL: { label: 'All', color: 'bg-gray-700 text-gray-200 hover:bg-gray-600', activeColor: 'bg-gray-100 text-gray-900' },
-  GK: { label: 'GK', color: 'bg-yellow-500/15 text-yellow-300 hover:bg-yellow-500/30 border border-yellow-500/30', activeColor: 'bg-yellow-500 text-gray-900' },
-  DEF: { label: 'DEF', color: 'bg-blue-500/15 text-blue-300 hover:bg-blue-500/30 border border-blue-500/30', activeColor: 'bg-blue-500 text-white' },
-  MID: { label: 'MID', color: 'bg-green-500/15 text-green-300 hover:bg-green-500/30 border border-green-500/30', activeColor: 'bg-green-500 text-white' },
-  FWD: { label: 'FWD', color: 'bg-red-500/15 text-red-300 hover:bg-red-500/30 border border-red-500/30', activeColor: 'bg-red-500 text-white' },
-  FLEX: { label: 'FLEX', color: 'bg-purple-500/15 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30', activeColor: 'bg-purple-500 text-white' },
+  ALL:  { label: 'All',  color: 'bg-[#050814] text-amber-500/60 border border-amber-900/30 hover:text-amber-200', activeColor: 'bg-amber-900/40 text-amber-200 border border-amber-500/40 shadow-sm' },
+  GK:   { label: 'GK',   color: 'bg-[#050814] text-yellow-400/70 border border-yellow-500/30 hover:text-yellow-300', activeColor: 'bg-yellow-950/40 text-yellow-300 border border-yellow-500/60 shadow-sm' },
+  DEF:  { label: 'DEF',  color: 'bg-[#050814] text-blue-400/70 border border-blue-500/30 hover:text-blue-300', activeColor: 'bg-blue-950/40 text-blue-300 border border-blue-500/60 shadow-sm' },
+  MID:  { label: 'MID',  color: 'bg-[#050814] text-emerald-400/70 border border-emerald-500/30 hover:text-emerald-300', activeColor: 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/60 shadow-sm' },
+  FWD:  { label: 'FWD',  color: 'bg-[#050814] text-red-400/70 border border-red-500/30 hover:text-red-300', activeColor: 'bg-red-950/40 text-red-300 border border-red-500/60 shadow-sm' },
+  FLEX: { label: 'FLEX', color: 'bg-[#050814] text-purple-400/70 border border-purple-500/30 hover:text-purple-300', activeColor: 'bg-purple-950/40 text-purple-300 border border-purple-500/60 shadow-sm' },
 };
 
 const POS_BADGE = {
-  GK: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40',
-  DEF: 'bg-blue-500/20 text-blue-300 border border-blue-500/40',
-  MID: 'bg-green-500/20 text-green-300 border border-green-500/40',
-  FWD: 'bg-red-500/20 text-red-300 border border-red-500/40',
-  FLEX: 'bg-purple-500/20 text-purple-300 border border-purple-500/40',
+  GK:   'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30',
+  DEF:  'bg-blue-500/10   text-blue-400   border border-blue-500/30',
+  MID:  'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30',
+  FWD:  'bg-red-500/10    text-red-400    border border-red-500/30',
+  FLEX: 'bg-purple-500/10 text-purple-400 border border-purple-500/30',
 };
 
 const STATUS_FILTER_OPTIONS = [
-  { value: 'ALL', label: 'All Players' },
-  { value: 'UNDRAFTED', label: 'Undrafted' },
-  { value: 'DRAFTED', label: 'Drafted' },
+  { value: 'ALL',       label: 'All Warriors' },
+  { value: 'UNDRAFTED', label: 'Free Agents' },
+  { value: 'DRAFTED',   label: 'Enlisted' },
 ];
 
 export default function PlayerList() {
@@ -67,27 +67,29 @@ export default function PlayerList() {
   const selectedPlayer = players.find(p => p.id === selectedId);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <Users className="w-5 h-5 text-blue-400" />
-          Players
-          <span className="text-sm font-normal text-gray-500">({filtered.length}/{players.length})</span>
+      <div className="flex items-center justify-between border-b border-dashed border-amber-900/40 pb-4">
+        <h2 className="text-2xl font-serif text-amber-200 flex items-center gap-3">
+          <Users className="w-6 h-6 text-amber-500 stroke-[1.5]" />
+          Warriors of the Realm
         </h2>
+        <span className="text-xs font-mono tracking-widest text-amber-500/60 uppercase border border-amber-900/40 px-2 py-1 rounded bg-[#0b132b]/40">
+          Showing: {filtered.length} / {players.length}
+        </span>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500/50" />
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search name or position…"
-          className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Search warrior scroll by title or role…"
+          className="w-full bg-[#050814] border border-amber-900/50 rounded-xl pl-10 pr-10 py-3 text-sm text-amber-100 placeholder-amber-500/40 font-serif focus:outline-none focus:border-amber-500 shadow-inner"
         />
         {search && (
-          <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+          <button onClick={() => setSearch('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-amber-500/60 hover:text-amber-300">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -101,8 +103,9 @@ export default function PlayerList() {
             <button
               key={key}
               onClick={() => { setPosFilter(key); setSubTagFilter(null); }}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${isActive ? meta.activeColor : meta.color
-                }`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-serif transition-all ${
+                isActive ? meta.activeColor : meta.color
+              }`}
             >
               {meta.label}
             </button>
@@ -117,10 +120,11 @@ export default function PlayerList() {
             <button
               key={tag}
               onClick={() => setSubTagFilter(subTagFilter === tag ? null : tag)}
-              className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium border transition-all ${subTagFilter === tag
-                  ? 'bg-white text-gray-900 border-white'
-                  : 'bg-gray-800 text-gray-400 border-gray-600 hover:border-gray-400 hover:text-gray-200'
-                }`}
+              className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-wider border transition-all ${
+                subTagFilter === tag
+                  ? 'bg-amber-400 text-gray-950 font-bold border-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                  : 'bg-[#050814] text-amber-500/60 border-amber-900/30 hover:border-amber-700/50 hover:text-amber-300'
+              }`}
             >
               {tag}
             </button>
@@ -129,17 +133,18 @@ export default function PlayerList() {
       )}
 
       {/* Status filter */}
-      <div className="flex items-center gap-2">
-        <Filter className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+      <div className="flex items-center gap-2 pt-1 border-t border-dashed border-amber-900/30">
+        <Filter className="w-3.5 h-3.5 text-amber-500/50 shrink-0" />
         <div className="flex gap-1.5">
           {STATUS_FILTER_OPTIONS.map(opt => (
             <button
               key={opt.value}
               onClick={() => setStatusFilter(opt.value)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${statusFilter === opt.value
-                  ? 'bg-gray-200 text-gray-900'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200'
-                }`}
+              className={`px-2.5 py-1 rounded-lg text-xs font-serif transition-colors ${
+                statusFilter === opt.value
+                  ? 'bg-amber-900/40 text-amber-200 border border-amber-500/40 shadow-sm'
+                  : 'bg-[#050814]/60 text-amber-500/60 hover:text-amber-300 border border-amber-900/30'
+              }`}
             >
               {opt.label}
             </button>
@@ -149,12 +154,12 @@ export default function PlayerList() {
 
       {/* Player grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 border border-dashed border-gray-700 rounded-2xl">
-          <Users className="w-10 h-10 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">No players match this filter.</p>
+        <div className="text-center py-16 sketch-border rounded-2xl flex flex-col items-center">
+          <Users className="w-12 h-12 mb-3 text-amber-900/40" />
+          <p className="font-serif text-amber-500/60 text-lg">No warrior scrolls match this decree.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {filtered.map(player => {
             const team = teams.find(t => t.id === player.teamId);
             const isDrafted = player.status === 'DRAFTED';
@@ -162,7 +167,7 @@ export default function PlayerList() {
               <button
                 key={player.id}
                 onClick={() => setSelectedId(player.id)}
-                className="flex items-center gap-3 px-3 py-3 bg-gray-800/50 border border-gray-700/60 hover:border-gray-500 rounded-xl text-left transition-all group"
+                className="sketch-border w-full bg-[#0b132b]/60 p-3.5 rounded-xl flex items-center gap-3.5 hover:bg-[#0b132b]/90 transition-all text-left group"
               >
                 {/* Avatar */}
                 {player.avatar ? (
@@ -170,41 +175,39 @@ export default function PlayerList() {
                     <img
                       src={player.avatar}
                       alt={player.name}
-                      className="w-10 h-10 rounded-lg object-cover border border-gray-600 shrink-0"
+                      className="w-11 h-11 rounded-xl object-cover border border-amber-500/30 shrink-0 shadow-sm"
                     />
                   ) : (
                     <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0 border border-gray-600"
-                      style={{ backgroundColor: (team?.primaryColor || '#6B7280') + '30' }}
+                      className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 border border-amber-500/30 bg-[#050814] shadow-sm"
                     >
                       {player.avatar}
                     </div>
                   )
                 ) : (
                   <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-base font-bold text-white shrink-0 border border-gray-600"
-                    style={{ backgroundColor: (team?.primaryColor || '#6B7280') + '30' }}
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-mono font-bold text-amber-200 shrink-0 border border-amber-900/40 bg-[#050814]"
                   >
-                    {player.name.charAt(0).toUpperCase()}
+                    {player.name ? player.name.charAt(0).toUpperCase() : 'W'}
                   </div>
                 )}
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate group-hover:text-blue-300 transition-colors">
+                  <p className="font-serif font-bold text-amber-100 text-sm truncate group-hover:text-amber-300 transition-colors">
                     {player.name}
                     {player.jerseyNumber && (
-                      <span className="ml-1.5 text-xs text-gray-500 font-normal font-mono">#{player.jerseyNumber}</span>
+                      <span className="ml-1.5 text-xs text-amber-500/60 font-mono font-normal">#{player.jerseyNumber}</span>
                     )}
                   </p>
-                  <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
                     {/* Primary position */}
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-semibold ${POS_BADGE[player.position] || POS_BADGE.FLEX}`}>
+                    <span className={`text-[9px] font-mono tracking-wider uppercase px-1.5 py-0.5 rounded border ${POS_BADGE[player.position] || POS_BADGE.FLEX}`}>
                       {player.position}
                     </span>
                     {/* Sub-position tags */}
                     {player.rawPositions?.filter(r => r !== 'ANY').map((rp, i) => (
-                      <span key={i} className="text-[10px] px-1 py-0.5 rounded bg-gray-700 text-gray-400 font-mono">
+                      <span key={i} className="text-[9px] px-1 py-0.5 rounded bg-[#050814] text-amber-500/50 font-mono border border-amber-900/30">
                         {rp}
                       </span>
                     ))}
@@ -214,17 +217,19 @@ export default function PlayerList() {
                 {/* Right side */}
                 <div className="text-right shrink-0 space-y-1">
                   {isDrafted && team ? (
-                    <span className="text-xs text-gray-400 block">{team.logo}</span>
+                    <span className="text-xs text-amber-400 block font-mono">{team.logo}</span>
                   ) : null}
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium block ${isDrafted
-                      ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-gray-700 text-gray-400'
-                    }`}>
+                  <span className={`text-[9px] font-mono tracking-widest uppercase px-2 py-0.5 rounded border block ${
+                    isDrafted
+                      ? 'bg-emerald-950/30 text-emerald-300 border-emerald-500/30'
+                      : 'bg-[#050814] text-amber-500/50 border-amber-900/30'
+                  }`}>
                     {player.status}
                   </span>
-                  <span className={`text-[10px] block ${player.availability === 'AVAILABLE' ? 'text-emerald-500' :
-                      player.availability === 'INJURED' ? 'text-red-400' : 'text-yellow-400'
-                    }`}>
+                  <span className={`text-[9px] font-mono tracking-widest uppercase block ${
+                    player.availability === 'AVAILABLE' ? 'text-emerald-400' :
+                    player.availability === 'INJURED' ? 'text-red-400' : 'text-yellow-400'
+                  }`}>
                     {player.availability}
                   </span>
                 </div>
@@ -244,4 +249,3 @@ export default function PlayerList() {
     </div>
   );
 }
-

@@ -264,7 +264,7 @@ export default function SpinWheel() {
 
   const POS_PILLS = ['ALL', 'GK', 'DEF', 'MID', 'FWD', 'FLEX'];
   const POS_COLORS = {
-    ALL: { active: 'bg-white text-gray-900', inactive: 'bg-gray-700 text-gray-300 hover:bg-gray-600' },
+    ALL: { active: 'bg-white text-gray-900', inactive: 'bg-[#0b132b] text-amber-100 hover:bg-gray-600' },
     GK: { active: 'bg-yellow-400 text-gray-900', inactive: 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/30 hover:bg-yellow-500/30' },
     DEF: { active: 'bg-blue-500 text-white', inactive: 'bg-blue-500/15 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30' },
     MID: { active: 'bg-green-500 text-white', inactive: 'bg-green-500/15 text-green-300 border border-green-500/30 hover:bg-green-500/30' },
@@ -276,11 +276,11 @@ export default function SpinWheel() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+        <h2 className="text-2xl font-serif text-amber-200 flex items-center gap-2">
           <Dices className="w-5 h-5 text-amber-400" />
           Spin the Wheel
         </h2>
-        <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded-lg">
+        <span className="text-xs text-amber-500/40 bg-[#050814] px-2 py-1 rounded-lg">
           {pool.length} player{pool.length !== 1 ? 's' : ''} in pool
         </span>
       </div>
@@ -288,13 +288,13 @@ export default function SpinWheel() {
       {/* Captain selector (admin-only) */}
       {role === 'ADMIN' && (
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Captain (Picking Team)</label>
+          <label className="text-xs font-semibold text-amber-500/60 uppercase tracking-wider">Active Captain (Picking Team)</label>
           <div className="relative">
             <Crown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
             <select
               value={captainSel}
               onChange={e => setCaptainSel(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none cursor-pointer"
+              className="w-full bg-[#050814] border border-gray-700 rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none cursor-pointer"
             >
               <option value="">— Select a captain —</option>
               {state.captains.map(c => {
@@ -306,7 +306,7 @@ export default function SpinWheel() {
                 );
               })}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500/40 pointer-events-none" />
           </div>
         </div>
       )}
@@ -319,7 +319,7 @@ export default function SpinWheel() {
         >
           <span className="text-2xl">{activeTeam.logo}</span>
           <div>
-            <p className="text-sm font-bold text-white">{activeTeam.name}</p>
+            <p className="text-sm font-serif font-semibold text-amber-100">{activeTeam.name}</p>
             <p className="text-xs text-amber-400 flex items-center gap-1">
               <Crown className="w-3 h-3" /> {activeCaptain.name} — your spin
             </p>
@@ -329,7 +329,7 @@ export default function SpinWheel() {
 
       {/* Position pot filter */}
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Position Pot Filter</label>
+        <label className="text-xs font-semibold text-amber-500/60 uppercase tracking-wider">Position Pot Filter</label>
         <div className="flex flex-wrap gap-2">
           {POS_PILLS.map(p => (
             <button
@@ -350,7 +350,7 @@ export default function SpinWheel() {
       <div className="flex flex-col items-center gap-4">
         <div className="relative w-full max-w-[420px] mx-auto">
           {pool.length === 0 ? (
-            <div className="w-full aspect-square max-w-[420px] rounded-full border-2 border-dashed border-gray-700 flex flex-col items-center justify-center text-gray-600 gap-3">
+            <div className="w-full aspect-square max-w-[420px] rounded-full border-2 border-dashed border-gray-700 flex flex-col items-center justify-center text-amber-500/30 gap-3">
               <Users className="w-12 h-12 opacity-40" />
               <p className="text-sm text-center px-8">
                 No undrafted players match this filter.<br />
@@ -371,8 +371,8 @@ export default function SpinWheel() {
           onClick={spin}
           disabled={!canSpin}
           className={`relative flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-xl ${canSpin
-              ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-gray-900 shadow-amber-500/30 hover:shadow-amber-500/50 hover:scale-105 active:scale-95'
-              : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+              ? 'bg-[#050814] border border-amber-500/50 text-amber-300 hover:bg-amber-950/40 font-serif shadow-[0_0_15px_rgba(217,119,6,0.2)] hover:scale-105 active:scale-95'
+              : 'bg-[#050814] text-amber-500/30 cursor-not-allowed'
             }`}
         >
           <RefreshCw className={`w-5 h-5 ${spinning ? 'animate-spin' : ''}`} />
@@ -391,7 +391,7 @@ export default function SpinWheel() {
       {/* Pool list (scrollable) */}
       {pool.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Current Pool ({pool.length})</p>
+          <p className="text-xs font-semibold text-amber-500/40 uppercase tracking-wider">Current Pool ({pool.length})</p>
           <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
             {pool.map((p, i) => (
               <div
@@ -404,9 +404,9 @@ export default function SpinWheel() {
                   style={{ background: WHEEL_PALETTE[i % WHEEL_PALETTE.length] }}
                 />
                 <span className="text-sm text-white font-medium flex-1 truncate">{p.name}</span>
-                <span className="text-xs text-gray-400 font-mono">{p.position}</span>
+                <span className="text-xs text-amber-500/60 font-mono">{p.position}</span>
                 {p.rawPositions?.filter(r => r !== 'ANY').map((rp, j) => (
-                  <span key={j} className="text-[10px] px-1 py-0.5 rounded bg-gray-700 text-gray-400 font-mono">{rp}</span>
+                  <span key={j} className="text-[10px] px-1 py-0.5 rounded bg-[#0b132b] text-amber-500/60 font-mono">{rp}</span>
                 ))}
               </div>
             ))}
@@ -416,15 +416,15 @@ export default function SpinWheel() {
 
       {/* ── Winner Modal ── */}
       {showModal && winner && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[110] flex items-center justify-center p-4">
-          <div className="bg-gray-900 border border-amber-500/40 rounded-3xl w-full max-w-sm p-6 shadow-2xl shadow-amber-500/10 text-center space-y-4">
+        <div className="fixed inset-0 bg-[#050814]/85 backdrop-blur-md z-[110] flex items-center justify-center p-4">
+          <div className="sketch-border bg-[#0b132b] rounded-3xl w-full max-w-sm p-6 text-amber-50 shadow-2xl shadow-2xl shadow-amber-500/10 text-center space-y-4">
 
             {/* Confetti emoji animation */}
             <div className="text-5xl animate-bounce">🎉</div>
 
             <div>
-              <p className="text-gray-400 text-sm font-medium uppercase tracking-widest mb-1">Draft Pick</p>
-              <h2 className="text-3xl font-black text-white">{winner.name}</h2>
+              <p className="text-amber-500/60 text-sm font-medium uppercase tracking-widest mb-1">Draft Pick</p>
+              <h2 className="text-3xl font-serif font-bold text-amber-200">{winner.name}</h2>
 
               {/* Position badges */}
               <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
@@ -437,7 +437,7 @@ export default function SpinWheel() {
                   {winner.position}
                 </span>
                 {winner.rawPositions?.filter(r => r !== 'ANY').map((rp, i) => (
-                  <span key={i} className="text-xs px-1.5 py-0.5 rounded bg-gray-700 text-gray-400 font-mono">{rp}</span>
+                  <span key={i} className="text-xs px-1.5 py-0.5 rounded bg-[#0b132b] text-amber-500/60 font-mono">{rp}</span>
                 ))}
               </div>
             </div>
@@ -449,8 +449,8 @@ export default function SpinWheel() {
               >
                 <span className="text-2xl">{activeTeam.logo}</span>
                 <div className="text-left">
-                  <p className="text-xs text-gray-400">Drafted to</p>
-                  <p className="text-sm font-bold text-white">{activeTeam.name}</p>
+                  <p className="text-xs text-amber-500/60">Drafted to</p>
+                  <p className="text-sm font-serif font-semibold text-amber-100">{activeTeam.name}</p>
                 </div>
               </div>
             )}
@@ -480,14 +480,14 @@ export default function SpinWheel() {
               <div className="flex gap-2">
                 <button
                   onClick={() => { setShowModal(false); }}
-                  className="flex-1 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors"
+                  className="flex-1 py-2.5 rounded-xl bg-[#050814] hover:bg-[#0b132b] text-amber-100 font-medium text-sm transition-colors"
                 >
                   Re-spin
                 </button>
                 <button
                   onClick={confirmDraft}
                   disabled={!activeTeam}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-600/25"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 disabled:bg-[#0b132b] disabled:text-amber-500/40 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-600/25"
                 >
                   ✓ Confirm Draft
                 </button>

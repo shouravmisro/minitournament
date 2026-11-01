@@ -11,7 +11,6 @@ import {
    sorted by league standings. Supports 4 or 8 teams.
 ───────────────────────────────────────── */
 function seedKnockout(teams, matches) {
-  // Compute simple point totals for seeding
   const points = {};
   teams.forEach(t => { points[t.id] = 0; });
   matches.filter(m => m.stage === 'LEAGUE' && m.status === 'COMPLETED').forEach(m => {
@@ -36,11 +35,13 @@ function BracketMatch({ match, isAdmin, onScore }) {
   const teamA = match?.teamAId ? state.teams.find(t => t.id === match.teamAId) : null;
   const teamB = match?.teamBId ? state.teams.find(t => t.id === match.teamBId) : null;
 
-  if (!match) return (
-    <div className="w-36 rounded-xl border-2 border-dashed border-gray-700 p-3 text-center text-xs text-gray-600">
-      TBD
-    </div>
-  );
+  if (!match) {
+    return (
+      <div className="w-48 sketch-border rounded-xl p-4 text-center font-mono text-[10px] text-amber-500/30 uppercase tracking-widest bg-[#050814]/40">
+        Awaiting Destiny
+      </div>
+    );
+  }
 
   const done  = match.status === 'COMPLETED';
   const aWon  = done && match.scoreA > match.scoreB;
@@ -55,51 +56,83 @@ function BracketMatch({ match, isAdmin, onScore }) {
   }
 
   return (
-    <div className={`w-44 rounded-xl border overflow-hidden shadow-lg ${
-      done ? 'border-gray-700' : 'border-gray-600'
-    }`}>
-      {/* Team A row */}
-      {[{team: teamA, score: match.scoreA, won: aWon, key: 'a'},
-        {team: teamB, score: match.scoreB, won: bWon, key: 'b'}].map(row => (
-        <div key={row.key}
-          className={`flex items-center gap-2 px-2.5 py-2 ${
-            row.won
-              ? 'bg-emerald-500/15 border-l-2 border-emerald-500'
-              : 'bg-gray-800/80'
-          }`}>
-          <span className="text-sm">{row.team?.logo ?? '?'}</span>
-          <span className={`text-xs font-semibold flex-1 truncate ${row.won ? 'text-white' : done ? 'text-gray-500' : 'text-gray-300'}`}>
+    <div
+      className={`w-52 sketch-border rounded-xl overflow-hidden shadow-xl transition-all ${
+        done ? 'bg-[#050814]/90' : 'bg-[#0b132b]/80'
+      }`}
+    >
+      {/* Team A & B rows */}
+      {[{ team: teamA, score: match.scoreA, won: aWon, key: 'a' },
+        { team: teamB, score: match.scoreB, won: bWon, key: 'b' }].map(row => (
+        <div
+          key={row.key}
+          className={`flex items-center gap-2.5 px-3 py-2.5 border-b border-dashed border-amber-900/30 last:border-0 ${
+            row.won ? 'bg-amber-950/30' : ''
+          }`}
+        >
+          <span className="text-base shrink-0">{row.team?.logo ?? '🛡️'}</span>
+          <span
+            className={`font-serif text-sm flex-1 truncate ${
+              row.won
+                ? 'text-amber-200 font-bold'
+                : done
+                  ? 'text-amber-500/40'
+                  : 'text-amber-100'
+            }`}
+          >
             {row.team?.name ?? 'TBD'}
           </span>
           {done && (
-            <span className={`text-sm font-black ${row.won ? 'text-white' : 'text-gray-500'}`}>
+            <span
+              className={`font-mono text-sm ${
+                row.won ? 'text-amber-300 font-bold drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]' : 'text-amber-500/40'
+              }`}
+            >
               {row.score ?? '-'}
             </span>
           )}
         </div>
       ))}
 
-      {/* Score entry */}
+      {/* Score entry for Admin */}
       {isAdmin && !done && teamA && teamB && (
         editing ? (
-          <div className="bg-gray-900 p-2 flex items-center gap-1">
-            <input type="number" min="0" value={sA} onChange={e => setSA(e.target.value)}
-              className="w-10 bg-gray-700 border border-gray-600 rounded text-white text-center text-xs py-1 focus:outline-none focus:ring-1 focus:ring-amber-500"
-              autoFocus />
-            <span className="text-gray-600 text-xs">-</span>
-            <input type="number" min="0" value={sB} onChange={e => setSB(e.target.value)}
-              className="w-10 bg-gray-700 border border-gray-600 rounded text-white text-center text-xs py-1 focus:outline-none focus:ring-1 focus:ring-amber-500" />
-            <button onClick={save} className="ml-auto bg-emerald-600 text-white p-1 rounded">
-              <Save className="w-3 h-3" />
+          <div className="bg-[#050814] p-2 flex items-center gap-1.5 border-t border-dashed border-amber-900/40">
+            <input
+              type="number"
+              min="0"
+              value={sA}
+              onChange={e => setSA(e.target.value)}
+              className="w-10 bg-[#0b132b] border border-amber-600/50 rounded text-amber-100 text-center font-mono text-xs py-1 focus:outline-none focus:border-amber-400"
+              autoFocus
+            />
+            <span className="text-amber-600 text-xs font-mono">-</span>
+            <input
+              type="number"
+              min="0"
+              value={sB}
+              onChange={e => setSB(e.target.value)}
+              className="w-10 bg-[#0b132b] border border-amber-600/50 rounded text-amber-100 text-center font-mono text-xs py-1 focus:outline-none focus:border-amber-400"
+            />
+            <button
+              onClick={save}
+              className="ml-auto bg-emerald-900/40 hover:bg-emerald-900/60 border border-emerald-500/50 text-emerald-300 p-1.5 rounded transition-colors"
+            >
+              <Save className="w-3.5 h-3.5" />
             </button>
-            <button onClick={() => setEditing(false)} className="text-gray-500 p-1 rounded">
-              <X className="w-3 h-3" />
+            <button
+              onClick={() => setEditing(false)}
+              className="text-amber-500/50 hover:text-amber-300 p-1.5 rounded transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
-          <button onClick={() => { setSA(''); setSB(''); setEditing(true); }}
-            className="w-full text-center py-1.5 text-xs text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center gap-1 transition-colors">
-            <Play className="w-3 h-3" /> Enter Score
+          <button
+            onClick={() => { setSA(''); setSB(''); setEditing(true); }}
+            className="w-full text-center py-2 text-[10px] font-mono tracking-widest uppercase text-amber-400 bg-amber-950/20 hover:bg-amber-950/40 border-t border-dashed border-amber-900/40 flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <Play className="w-3 h-3 text-amber-500" /> Enter Score
           </button>
         )
       )}
@@ -108,12 +141,12 @@ function BracketMatch({ match, isAdmin, onScore }) {
 }
 
 /* ─────────────────────────────────────────
-   Connector line SVG between rounds
+   Connector line between rounds
 ───────────────────────────────────────── */
 function Connector() {
   return (
-    <div className="flex items-center self-stretch w-8 shrink-0">
-      <ChevronRight className="w-5 h-5 text-gray-600 mx-auto" />
+    <div className="flex items-center self-stretch w-10 shrink-0">
+      <ChevronRight className="w-6 h-6 text-amber-700/50 mx-auto" />
     </div>
   );
 }
@@ -144,9 +177,8 @@ export default function KnockoutBracket() {
     const seeded = seedKnockout(state.teams, state.matches);
 
     if (n >= 8) {
-      // QF (4 matches) → SF (2) → Final (1)
       const top8 = seeded.slice(0, 8);
-      const qfs  = [[0,7],[3,4],[1,6],[2,5]]; // seeding pairing
+      const qfs  = [[0,7],[3,4],[1,6],[2,5]];
       const qfIds = qfs.map(([i,j]) =>
         addMatchAndReturn({ koStage: 'QF', teamAId: top8[i]?.id ?? null, teamBId: top8[j]?.id ?? null })
       );
@@ -154,13 +186,11 @@ export default function KnockoutBracket() {
       addMatchAndReturn({ koStage: 'SF', teamAId: null, teamBId: null, feedFrom: [qfIds[2], qfIds[3]] });
       addMatchAndReturn({ koStage: 'FINAL', teamAId: null, teamBId: null });
     } else if (n >= 4) {
-      // SF (2) → Final
       const top4 = seeded.slice(0, 4);
       addMatchAndReturn({ koStage: 'SF', teamAId: top4[0]?.id ?? null, teamBId: top4[3]?.id ?? null });
       addMatchAndReturn({ koStage: 'SF', teamAId: top4[1]?.id ?? null, teamBId: top4[2]?.id ?? null });
       addMatchAndReturn({ koStage: 'FINAL', teamAId: null, teamBId: null });
     } else {
-      // Just a Final
       addMatchAndReturn({ koStage: 'FINAL', teamAId: seeded[0]?.id ?? null, teamBId: seeded[1]?.id ?? null });
     }
   }
@@ -178,9 +208,7 @@ export default function KnockoutBracket() {
     const winner = (updated.scoreA ?? 0) > (updated.scoreB ?? 0)
       ? updated.teamAId : updated.teamBId;
 
-    // Advance: QF winner → SF, SF winner → Final
     if (updated.koStage === 'QF') {
-      // Find which SF this feeds into based on index
       const qfIdx = qfMatches.findIndex(m => m.id === updated.id);
       const sfIdx = Math.floor(qfIdx / 2);
       const sf    = sfMatches[sfIdx];
@@ -206,53 +234,65 @@ export default function KnockoutBracket() {
     : null;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <GitBranch className="w-5 h-5 text-amber-400" />
-          Knockout Bracket
+    <div className="space-y-6 animate-in fade-in duration-700">
+      <div className="flex items-center justify-between border-b border-dashed border-amber-900/40 pb-4">
+        <h2 className="text-2xl font-serif text-amber-200 flex items-center gap-3">
+          <GitBranch className="w-6 h-6 text-amber-500 stroke-[1.5]" />
+          The Final Ascent (Knockout Bracket)
         </h2>
         {isAdmin && !hasKO && state.teams.length >= 2 && (
           <button
             onClick={handleGenerate}
-            className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-all"
+            className="flex items-center gap-2 bg-[#050814] border border-amber-500/40 text-amber-400 font-serif px-4 py-2 rounded-xl text-sm transition-all shadow-[0_0_10px_rgba(217,119,6,0.2)] hover:bg-amber-900/40 hover:text-amber-300"
           >
-            <Shuffle className="w-4 h-4" /> Generate Bracket
+            <Shuffle className="w-4 h-4" /> Forge Bracket
           </button>
         )}
       </div>
 
       {/* Champion banner */}
       {champion && (
-        <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-amber-500/40 rounded-2xl p-5 text-center space-y-2">
-          <div className="text-5xl">🏆</div>
-          <p className="text-amber-400 font-semibold text-sm uppercase tracking-widest">Champion</p>
-          <div className="flex items-center justify-center gap-3">
+        <div
+          className="sketch-border bg-[#0b132b]/80 p-6 text-center space-y-2 relative overflow-hidden shadow-2xl"
+          style={{ borderRadius: '1.5rem 0.5rem 1.5rem 0.5rem' }}
+        >
+          <div className="absolute inset-0 bg-amber-500/10 blur-[30px] rounded-full pointer-events-none" />
+          <div className="text-5xl drop-shadow-[0_0_15px_rgba(251,191,36,0.4)]">🏆</div>
+          <p className="text-amber-400 font-mono text-xs uppercase tracking-widest">Grand Champion of the Realm</p>
+          <div className="flex items-center justify-center gap-3 pt-1">
             <span className="text-4xl">{champion.logo}</span>
-            <p className="text-3xl font-black text-white">{champion.name}</p>
+            <p className="text-3xl font-serif font-bold text-amber-100 drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">
+              {champion.name}
+            </p>
           </div>
         </div>
       )}
 
       {!hasKO ? (
-        <div className="text-center py-12 border border-dashed border-gray-700 rounded-2xl text-gray-500">
-          <GitBranch className="w-10 h-10 mx-auto mb-2 opacity-30" />
-          <p className="text-sm font-medium text-gray-400">No knockout bracket yet.</p>
-          {isAdmin
-            ? <p className="text-sm mt-1">Click <span className="text-amber-400">Generate Bracket</span> to seed from league standings.</p>
-            : <p className="text-sm mt-1">The Admin will generate the bracket.</p>
-          }
+        <div className="text-center py-16 sketch-border rounded-2xl flex flex-col items-center">
+          <GitBranch className="w-12 h-12 mb-3 text-amber-900/40" />
+          <p className="font-serif text-amber-500/60 text-lg">The final ascent remains unwritten.</p>
+          {isAdmin ? (
+            <p className="text-xs font-mono tracking-widest uppercase text-amber-500/40 mt-1">
+              Select <span className="text-amber-400">Forge Bracket</span> to seed finalists from league standing points.
+            </p>
+          ) : (
+            <p className="text-xs font-mono tracking-widest uppercase text-amber-500/40 mt-1">
+              Knockout ties will appear here once seeded by the Tournament Herald.
+            </p>
+          )}
         </div>
       ) : (
         /* ── Bracket layout ── */
-        <div className="overflow-x-auto pb-4">
+        <div className="overflow-x-auto pb-6 pt-2">
           <div className="flex items-start gap-0 min-w-max">
-
             {/* Quarter Finals */}
             {qfMatches.length > 0 && (
               <>
                 <div className="flex flex-col gap-8 justify-around">
-                  <div className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">QF</div>
+                  <div className="text-center font-mono text-[10px] text-amber-600 uppercase tracking-widest mb-2">
+                    Quarter-Finals
+                  </div>
                   {qfMatches.map(m => (
                     <BracketMatch key={m.id} match={m} isAdmin={isAdmin} onScore={handleScore} />
                   ))}
@@ -265,7 +305,9 @@ export default function KnockoutBracket() {
             {sfMatches.length > 0 && (
               <>
                 <div className="flex flex-col gap-16 justify-around self-center">
-                  <div className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">SF</div>
+                  <div className="text-center font-mono text-[10px] text-amber-600 uppercase tracking-widest mb-2">
+                    Semi-Finals
+                  </div>
                   {sfMatches.map(m => (
                     <BracketMatch key={m.id} match={m} isAdmin={isAdmin} onScore={handleScore} />
                   ))}
@@ -277,7 +319,9 @@ export default function KnockoutBracket() {
             {/* Final */}
             {fMatch && (
               <div className="flex flex-col items-center self-center">
-                <div className="text-center text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2">FINAL</div>
+                <div className="text-center font-mono text-[10px] text-amber-400 uppercase tracking-widest mb-2 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]">
+                  The Grand Final
+                </div>
                 <BracketMatch match={fMatch} isAdmin={isAdmin} onScore={handleScore} />
               </div>
             )}
@@ -287,4 +331,3 @@ export default function KnockoutBracket() {
     </div>
   );
 }
-

@@ -27,14 +27,14 @@ function OrganizerProfileModal({ onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-6 space-y-5">
+    <div className="fixed inset-0 bg-[#050814]/85 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+      <div className="sketch-border bg-[#0b132b] rounded-2xl w-full max-w-md p-6 space-y-5 shadow-2xl text-amber-50">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-serif text-amber-200 flex items-center gap-2">
             <Settings className="w-5 h-5 text-amber-400" />
             Organizer Profile
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-amber-500/60 hover:text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -48,19 +48,19 @@ function OrganizerProfileModal({ onClose }) {
             { label: 'Email',      key: 'email',           placeholder: 'you@example.com' },
           ].map(({ label, key, placeholder }) => (
             <div key={key} className="space-y-1">
-              <label className="text-sm text-gray-400 font-medium">{label}</label>
+              <label className="text-sm text-amber-500/60 font-medium">{label}</label>
               <input
                 value={form[key] || ''}
                 onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                 placeholder={placeholder}
-                className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full bg-[#050814] border border-amber-900/50 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
           ))}
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-800 text-sm font-medium transition-colors">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-gray-600 text-amber-100 hover:bg-[#050814] text-sm font-medium transition-colors">
             Cancel
           </button>
           <button onClick={save} className="flex-1 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-1.5">
@@ -134,9 +134,9 @@ export default function TournamentManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="min-h-screen bg-[#050814] text-amber-50">
       {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
+      <header className="sketch-border bg-[#0b132b]/80 border-b border-dashed border-amber-900/40 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Trophy className="w-6 h-6 text-amber-400" />
@@ -144,7 +144,7 @@ export default function TournamentManager() {
           </div>
           <button
             onClick={() => setShowOrgProfile(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm text-gray-300 hover:text-white transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#050814] hover:bg-gray-700 text-sm text-amber-100 hover:text-white transition-colors"
           >
             {organizer.avatar ? (
               <img src={organizer.avatar} alt="" className="w-6 h-6 rounded-full object-cover" />
@@ -161,12 +161,12 @@ export default function TournamentManager() {
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Welcome banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-600/20 via-gray-900 to-gray-900 border border-amber-500/20 p-6">
+        <div className="sketch-border bg-[#0b132b]/70 rounded-2xl p-6 shadow-xl">
           <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <h1 className="text-2xl font-bold text-white mb-1">
+          <h1 className="text-3xl font-serif text-amber-200 mb-1">
             {organizer.name ? `Welcome back, ${organizer.name}!` : 'Welcome to Mini Tournament'}
           </h1>
-          <p className="text-gray-400 text-sm">
+          <p className="text-amber-500/60 text-sm">
             {global.tournaments.length === 0
               ? 'Create your first tournament to get started.'
               : `You have ${global.tournaments.length} tournament${global.tournaments.length !== 1 ? 's' : ''} running.`}
@@ -184,7 +184,7 @@ export default function TournamentManager() {
         {/* Create Tournament */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white">Tournaments</h2>
+            <h2 className="text-2xl font-serif text-amber-200">Tournaments</h2>
             <button
               onClick={() => setShowCreate(v => !v)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-colors"
@@ -195,23 +195,23 @@ export default function TournamentManager() {
           </div>
 
           {showCreate && (
-            <div className="bg-gray-900 border border-gray-700 rounded-xl p-5 space-y-4">
+            <div className="sketch-border bg-[#0b132b]/90 rounded-2xl p-6 space-y-4 shadow-xl">
               <h3 className="font-semibold text-white">Create Tournament</h3>
 
               <div className="space-y-1.5">
-                <label className="text-sm text-gray-400">Tournament Name</label>
+                <label className="text-sm text-amber-500/60">Tournament Name</label>
                 <input
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleCreate()}
                   placeholder="e.g. Summer Football Cup 2025"
                   autoFocus
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full bg-[#050814] border border-amber-900/50 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm text-gray-400">Format</label>
+                <label className="text-sm text-amber-500/60">Format</label>
                 <div className="grid grid-cols-3 gap-2">
                   {FORMAT_OPTIONS.map(opt => (
                     <button
@@ -220,7 +220,7 @@ export default function TournamentManager() {
                       className={`p-3 rounded-lg border text-left transition-all ${
                         newFormat === opt.value
                           ? 'border-amber-500 bg-amber-500/10 text-amber-300'
-                          : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-500'
+                          : 'border-gray-700 bg-[#050814] text-amber-500/60 hover:border-gray-500'
                       }`}
                     >
                       <div className="font-semibold text-sm">{opt.label}</div>
@@ -233,14 +233,14 @@ export default function TournamentManager() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowCreate(false)}
-                  className="flex-1 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-800 text-sm transition-colors"
+                  className="flex-1 py-2 rounded-lg border border-gray-600 text-amber-100 hover:bg-[#050814] text-sm transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreate}
                   disabled={!newName.trim()}
-                  className="flex-1 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 disabled:text-gray-500 text-white text-sm font-semibold transition-colors"
+                  className="flex-1 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 disabled:text-amber-500/40 text-white text-sm font-semibold transition-colors"
                 >
                   Create
                 </button>
@@ -250,7 +250,7 @@ export default function TournamentManager() {
 
           {/* Tournament List */}
           {global.tournaments.length === 0 && !showCreate && (
-            <div className="text-center py-16 text-gray-500">
+            <div className="text-center py-16 text-amber-500/40">
               <Globe className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>No tournaments yet.</p>
               <p className="text-sm mt-1">Click "New Tournament" to get started.</p>
@@ -264,17 +264,17 @@ export default function TournamentManager() {
               return (
                 <div
                   key={t.id}
-                  className="bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-600 transition-colors group"
+                  className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 hover:bg-[#0b132b]/90 transition-all group"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-bold text-white truncate">{t.name}</h3>
+                        <h3 className="font-serif text-amber-100 text-lg truncate group-hover:text-amber-300 transition-colors">{t.name}</h3>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${color}`}>
                           {t.format}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 text-xs text-amber-500/40">
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" /> {stats.players} players
                         </span>
@@ -293,7 +293,7 @@ export default function TournamentManager() {
                         <>
                           <button
                             onClick={() => setConfirmDelete(null)}
-                            className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600"
+                            className="text-xs px-2 py-1 rounded bg-gray-700 text-amber-100 hover:bg-gray-600"
                           >
                             Cancel
                           </button>
@@ -308,7 +308,7 @@ export default function TournamentManager() {
                         <>
                           <button
                             onClick={() => handleStartEditTournament(t)}
-                            className="p-1.5 rounded-lg text-gray-500 hover:text-amber-400 hover:bg-gray-850 transition-colors"
+                            className="p-1.5 rounded-lg text-amber-500/40 hover:text-amber-400 hover:bg-gray-850 transition-colors"
                             title="Edit tournament name & format"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -322,7 +322,7 @@ export default function TournamentManager() {
                           </button>
                           <button
                             onClick={() => selectTournament(t.id)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-800 hover:bg-amber-600 text-sm font-semibold text-gray-300 hover:text-white transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#050814] hover:bg-amber-600 text-sm font-semibold text-amber-100 hover:text-white transition-colors"
                           >
                             <Play className="w-3.5 h-3.5" />
                             Open
@@ -340,7 +340,7 @@ export default function TournamentManager() {
 
         {/* Tip box */}
         {global.tournaments.length > 0 && (
-          <div className="rounded-xl bg-gray-900/60 border border-gray-800 p-4 text-sm text-gray-500 flex items-start gap-3">
+          <div className="sketch-border bg-[#050814]/60 rounded-xl p-4 text-xs font-serif text-amber-500/50 flex items-start gap-3">
             <Dices className="w-4 h-4 mt-0.5 text-amber-500 shrink-0" />
             <p>Each tournament has its own players, teams, draft, matches, and awards — fully isolated.</p>
           </div>
@@ -351,32 +351,32 @@ export default function TournamentManager() {
 
       {/* Edit Tournament Modal */}
       {editingTournament && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-6 space-y-4">
+        <div className="fixed inset-0 bg-[#050814]/85 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div className="sketch-border bg-[#0b132b] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl text-amber-50">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <h2 className="text-2xl font-serif text-amber-200 flex items-center gap-2">
                 <Edit3 className="w-5 h-5 text-amber-400" />
                 Edit Tournament
               </h2>
-              <button onClick={() => setEditingTournament(null)} className="text-gray-400 hover:text-white">
+              <button onClick={() => setEditingTournament(null)} className="text-amber-500/60 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3.5">
               <div>
-                <label className="text-xs font-semibold text-gray-400">Tournament Name</label>
+                <label className="text-xs font-semibold text-amber-500/60">Tournament Name</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
-                  className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full mt-1 bg-[#050814] border border-amber-900/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-gray-400">Format</label>
+                <label className="text-xs font-semibold text-amber-500/60">Format</label>
                 <div className="grid grid-cols-3 gap-2 mt-1">
                   {FORMAT_OPTIONS.map(opt => (
                     <button
@@ -386,7 +386,7 @@ export default function TournamentManager() {
                       className={`p-2.5 rounded-lg border text-left transition-all ${
                         editFormat === opt.value
                           ? 'border-amber-500 bg-amber-500/10 text-amber-300'
-                          : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600'
+                          : 'border-gray-700 bg-[#050814] text-amber-500/60 hover:border-gray-600'
                       }`}
                     >
                       <div className="font-semibold text-xs">{opt.label}</div>
@@ -401,7 +401,7 @@ export default function TournamentManager() {
               <button
                 type="button"
                 onClick={() => setEditingTournament(null)}
-                className="flex-1 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-800 text-xs font-semibold"
+                className="flex-1 py-2 rounded-lg border border-gray-600 text-amber-100 hover:bg-[#050814] text-xs font-semibold"
               >
                 Cancel
               </button>

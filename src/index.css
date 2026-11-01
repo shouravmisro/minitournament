@@ -1,2 +1,74 @@
 @import "tailwindcss";
 
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* --- Van Gogh Canvas Texture --- */
+.canvas-noise {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.15;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* --- Starry Night Turbulent Animations --- */
+@keyframes swirl-1 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  33% { transform: translate(5%, -5%) rotate(120deg) scale(1.1); }
+  66% { transform: translate(-5%, 5%) rotate(240deg) scale(0.9); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+}
+@keyframes swirl-2 {
+  0% { transform: translate(0, 0) rotate(360deg) scale(1.2); }
+  50% { transform: translate(-10%, 10%) rotate(180deg) scale(0.8); }
+  100% { transform: translate(0, 0) rotate(0deg) scale(1.2); }
+}
+.bg-starry-1 { animation: swirl-1 25s infinite linear; }
+.bg-starry-2 { animation: swirl-2 30s infinite ease-in-out; }
+
+/* --- Da Vinci Sketch Elements --- */
+.sketch-border {
+  border: 1px solid rgba(217, 119, 6, 0.4); /* amber-600 */
+  position: relative;
+  background: rgba(10, 17, 40, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.sketch-border::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px dashed rgba(251, 191, 36, 0.25); /* amber-400 */
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* --- Navigation Button Underlines --- */
+.nav-button {
+  transition: all 0.3s ease;
+  position: relative;
+}
+.nav-button.active {
+  color: #fcd34d; /* amber-300 */
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+.nav-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 10%;
+  width: 80%;
+  height: 1px;
+  background: #fcd34d;
+  box-shadow: 0 0 8px #fcd34d;
+}

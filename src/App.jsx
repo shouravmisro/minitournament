@@ -21,7 +21,7 @@ import {
   Trophy, GitBranch, Calendar, TrendingUp,
 } from 'lucide-react';
 
-/* ── Combined Championship view ── */
+/* ── UI Upgraded Championship view ── */
 function ChampionshipView() {
   const [subTab, setSubTab] = useState('standings');
   const SUB = [
@@ -30,24 +30,29 @@ function ChampionshipView() {
     { id: 'bracket',   label: 'Knockout',  icon: GitBranch  },
   ];
   return (
-    <div className="space-y-4">
-      <div className="flex gap-1 p-1 bg-gray-800/60 rounded-xl w-fit">
+    <div className="space-y-6">
+      <div className="flex gap-2 p-1.5 sketch-border rounded-2xl w-fit mx-auto sm:mx-0 shadow-lg" style={{ borderRadius: '1rem' }}>
         {SUB.map(s => {
           const Icon = s.icon;
+          const isActive = subTab === s.id;
           return (
             <button key={s.id} onClick={() => setSubTab(s.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                subTab === s.id ? 'bg-gray-700 text-white shadow' : 'text-gray-500 hover:text-gray-300'
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-serif tracking-wide transition-all ${
+                isActive 
+                  ? 'bg-amber-900/40 text-amber-300 border border-amber-500/30 shadow-[0_0_10px_rgba(217,119,6,0.2)]' 
+                  : 'text-amber-100/50 hover:text-amber-200 hover:bg-[#0b132b]/50'
               }`}>
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-4 h-4" />
               <span className="hidden sm:inline">{s.label}</span>
             </button>
           );
         })}
       </div>
-      {subTab === 'standings' && <LeagueStandings />}
-      {subTab === 'fixtures'  && <MatchEngine />}
-      {subTab === 'bracket'   && <KnockoutBracket />}
+      <div className="animate-in fade-in duration-500">
+        {subTab === 'standings' && <LeagueStandings />}
+        {subTab === 'fixtures'  && <MatchEngine />}
+        {subTab === 'bracket'   && <KnockoutBracket />}
+      </div>
     </div>
   );
 }
@@ -82,22 +87,23 @@ const PLAYER_TABS = [
   { id: 'trophy',       label: 'Trophies',     icon: Trophy     },
 ];
 
+/* ── UI Upgraded TabBar ── */
 function TabBar({ tabs, active, onChange }) {
   return (
-    <div className="flex border-b border-gray-800 mb-6 overflow-x-auto scrollbar-none">
+    <div className="flex border-b border-amber-900/40 mb-8 pb-2 overflow-x-auto scrollbar-none gap-6 sm:gap-8 pt-2">
       {tabs.map(t => {
         const Icon     = t.icon;
         const isActive = active === t.id;
         return (
           <button key={t.id} onClick={() => onChange(t.id)}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all shrink-0 ${
+            className={`nav-button flex items-center gap-2 pb-2 text-sm sm:text-base font-serif tracking-widest uppercase whitespace-nowrap shrink-0 ${
               isActive
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-600'
+                ? 'active'
+                : 'text-amber-100/50 hover:text-amber-200'
             }`}
           >
-            <Icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{t.label}</span>
+            <Icon className="w-4 h-4 mb-0.5" />
+            <span>{t.label}</span>
           </button>
         );
       })}
@@ -137,26 +143,42 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <Navbar />
-      <main className="max-w-3xl mx-auto px-4 pt-5 pb-16">
-        <TabBar tabs={tabs} active={tab} onChange={setTab} />
-        {renderContent()}
-      </main>
-      <footer className="border-t border-gray-800/60 py-5 text-center">
-        <p className="text-xs text-gray-700">
-          Mini Tournament App • React + Tailwind CSS + Lucide Icons
-        </p>
-      </footer>
+    <div className="relative min-h-screen bg-[#050814] overflow-x-hidden text-amber-50 font-sans selection:bg-amber-700/50">
+      
+      {/* Background Layers */}
+      <div className="canvas-noise" />
+      <div className="fixed inset-0 bg-gradient-to-br from-[#050814] via-[#0b132b] to-[#171433] z-0 pointer-events-none" />
+      
+      {/* Turbulent Orbs */}
+      <div className="fixed top-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-amber-500/10 rounded-full blur-[100px] bg-starry-1 mix-blend-screen pointer-events-none z-0" />
+      <div className="fixed bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] bg-cyan-600/15 rounded-[40%_60%_70%_30%] blur-[120px] bg-starry-2 mix-blend-screen pointer-events-none z-0" />
+
+      {/* Main UI Wrapper */}
+      <div className="relative z-20 flex flex-col min-h-screen">
+        <Navbar />
+        
+        <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 pt-6 pb-20">
+          <TabBar tabs={tabs} active={tab} onChange={setTab} />
+          
+          <div className="animate-in fade-in duration-700">
+            {renderContent()}
+          </div>
+        </main>
+
+        <footer className="border-t border-amber-900/30 py-6 text-center bg-[#050814]/50 backdrop-blur-sm">
+          <p className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">
+            The Codex Arena • FC Chompa Premier League
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }
 
-/* ── Router: shows TournamentManager when no active tournament ── */
+/* ── Router ── */
 function AppRouter() {
   const { global } = useGlobal();
 
-  // If user explicitly clicked "Back to All Tournaments", show the manager
   if (global.showManager) {
     return (
       <ErrorBoundary>
@@ -165,15 +187,10 @@ function AppRouter() {
     );
   }
 
-  // Active tournament: always resolves to a valid tournament ID
   const activeId = global.activeTournamentId || (global.tournaments?.[0]?.id) || 't_mvwya9yi';
 
   return (
-    // key prop forces TournamentProvider to remount (fresh localStorage load) on tournament switch
-    <TournamentProvider
-      key={activeId}
-      storageKey={`mt_state_${activeId}`}
-    >
+    <TournamentProvider key={activeId} storageKey={`mt_state_${activeId}`}>
       <AuthProvider>
         <ErrorBoundary>
           <AppContent />
