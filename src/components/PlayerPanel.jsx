@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTournament } from '../context/TournamentContext';
 import { useAuth } from '../context/AuthContext';
 import {
-  User, Edit3, Save, X, Shield, Calendar,
+  User, Edit3, Save, X, Shield, Calendar, Crown,
   Heart, AlertTriangle, CircleDot, Trophy, Target, Zap, Award,
   Key, Eye, EyeOff, Check, Smile, Trash2, Link
 } from 'lucide-react';
