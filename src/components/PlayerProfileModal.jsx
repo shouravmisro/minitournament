@@ -59,15 +59,27 @@ export default function PlayerProfileModal({ player, onClose }) {
           <div className="flex items-start gap-4">
             {/* Avatar */}
             {player.avatar ? (
-              <img
-                src={player.avatar}
-                alt={player.name}
-                className="w-20 h-20 rounded-2xl object-cover border-2"
-                style={{ borderColor: (team?.primaryColor ?? '#3B82F6') + '60' }}
-              />
+              player.avatar.startsWith('http') || player.avatar.startsWith('data:image') ? (
+                <img
+                  src={player.avatar}
+                  alt={player.name}
+                  className="w-20 h-20 rounded-2xl object-cover border-2 shadow-md"
+                  style={{ borderColor: (team?.primaryColor ?? '#3B82F6') + '60' }}
+                />
+              ) : (
+                <div
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl border-2 shadow-md"
+                  style={{
+                    background: (team?.primaryColor ?? '#3B82F6') + '25',
+                    borderColor: (team?.primaryColor ?? '#3B82F6') + '50',
+                  }}
+                >
+                  {player.avatar}
+                </div>
+              )
             ) : (
               <div
-                className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black text-white border-2"
+                className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black text-white border-2 shadow-md"
                 style={{
                   background: (team?.primaryColor ?? '#3B82F6') + '25',
                   borderColor: (team?.primaryColor ?? '#3B82F6') + '50',

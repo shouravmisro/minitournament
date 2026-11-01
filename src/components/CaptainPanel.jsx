@@ -3,8 +3,63 @@ import { useTournament } from '../context/TournamentContext';
 import { useAuth } from '../context/AuthContext';
 import {
   Crown, Users, Edit3, Save, X, Palette, Shield, User,
-  Type, Smile, ChevronDown, ChevronUp, Dices, Key, Eye, EyeOff, Check
+  Type, Smile, ChevronDown, ChevronUp, Dices, Key, Eye, EyeOff, Check,
+  Camera, Upload, Trash2, Sparkles
 } from 'lucide-react';
+
+const POSITION_COLORS = {
+  GK: 'bg-yellow-500/20 text-yellow-300',
+  DEF: 'bg-blue-500/20 text-blue-300',
+  MID: 'bg-green-500/20 text-green-300',
+  FWD: 'bg-red-500/20 text-red-300',
+  FLEX: 'bg-purple-500/20 text-purple-300',
+};
+
+const CAPTAIN_AVATAR_PRESETS = [
+  '👑', '⚡', '🔥', '🦁', '🦅', '🎯', '🚀', '⚽', '🧤', '💎', '🐉', '🐺', '🛡️', '🥇'
+];
+
+const TEAM_LOGO_PRESETS = [
+  '⚡', '🔥', '🦁', '🦅', '🎯', '🚀', '💎', '🐉', '🐺', '🛡️', '⚔️', '🌟'
+];
+
+const COLOR_PRESETS = [
+  '#10B981', '#EF4444', '#3B82F6', '#F59E0B',
+  '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'
+];
+
+function compressImageFile(file, callback) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 220;
+      let width = img.width;
+      let height = img.height;
+      if (width > height) {
+        if (width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      callback(dataUrl);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
 export default function CaptainPanel() {
   const { state, updateTeam, updateCaptain } = useTournament();
@@ -16,7 +71,9 @@ export default function CaptainPanel() {
     ? state.players.filter(p => team.rosterIds.includes(p.id) || p.teamId === team.id)
     : [];
 
-  const [editingTeam, setEditingTeam] = useState(false);
+  const [editingModal, setEditingModal] = useState(false);
+  const [modalTab, setModalTab] = useState('CAPTAIN'); // 'CAPTAIN' | 'TEAM'
+  const [capForm, setCapForm] = useState({});
   const [teamForm, setTeamForm] = useState({});
   const [showRoster, setShowRoster] = useState(true);
 
@@ -37,14 +94,6 @@ export default function CaptainPanel() {
     );
   }
 
-  const POSITION_COLORS = {
-    GK: 'bg-yellow-500/20 text-yellow-300',
-    DEF: 'bg-blue-500/20 text-blue-300',
-    MID: 'bg-green-500/20 text-green-300',
-    FWD: 'bg-red-500/20 text-red-300',
-    FLEX: 'bg-purple-500/20 text-purple-300',
-  };
-
   function handleSavePin(e) {
     e.preventDefault();
     setPinErrorMsg('');
@@ -60,27 +109,70 @@ export default function CaptainPanel() {
     setTimeout(() => setPinSuccessMsg(''), 4000);
   }
 
+  function handleSaveAllEdits() {
+    updateCaptain({
+      ...captain,
+      ...capForm,
+    });
+    if (team) {
+      updateTeam({
+        ...team,
+        ...teamForm,
+      });
+    }
+    setEditingModal(false);
+  }
+
   return (
     <div className="space-y-4">
       {/* Captain Header */}
       <div className="bg-gradient-to-br from-amber-600/20 to-orange-600/10 border border-amber-500/20 rounded-2xl p-5">
-        <div className="flex items-center gap-4">
-          <div
-            className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl border-2 border-amber-500/40"
-            style={{ backgroundColor: (team?.primaryColor || '#F59E0B') + '20' }}
-          >
-            {team?.logo || '👑'}
-          </div>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <Crown className="w-5 h-5 text-amber-400" />
+        <div className="flex items-start gap-4">
+          {/* Captain Avatar or Team Logo */}
+          {captain.avatar ? (
+            captain.avatar.startsWith('http') || captain.avatar.startsWith('data:image') ? (
+              <img src={captain.avatar} alt={captain.name} className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-500/50 shadow-md shrink-0" />
+            ) : (
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-amber-500/40 shadow-md shrink-0"
+                style={{ backgroundColor: (team?.primaryColor || '#F59E0B') + '25' }}
+              >
+                {captain.avatar}
+              </div>
+            )
+          ) : (
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-amber-500/40 shadow-md shrink-0"
+              style={{ backgroundColor: (team?.primaryColor || '#F59E0B') + '25' }}
+            >
+              {team?.logo || '👑'}
+            </div>
+          )}
+
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold text-white flex items-center gap-2 truncate">
+              <Crown className="w-5 h-5 text-amber-400 shrink-0" />
               {captain.name}
             </h1>
-            <p className="text-amber-300/80 text-sm">{team?.name || 'No team assigned'}</p>
+            <p className="text-amber-300/80 text-sm font-semibold truncate">{team?.name || 'No team assigned'}</p>
             {team?.motto && (
-              <p className="text-gray-400 text-xs italic mt-1">"{team.motto}"</p>
+              <p className="text-gray-400 text-xs italic mt-0.5 line-clamp-2">"{team.motto}"</p>
             )}
           </div>
+
+          <button
+            onClick={() => {
+              setCapForm({ ...captain });
+              setTeamForm(team ? { ...team } : {});
+              setModalTab('CAPTAIN');
+              setEditingModal(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-amber-950 shrink-0"
+            title="Edit Captain Profile, Photo & Team"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Edit Profile & Team</span>
+          </button>
         </div>
 
         {/* Team stats */}
@@ -153,7 +245,7 @@ export default function CaptainPanel() {
         {editingPin && (
           <form onSubmit={handleSavePin} className="bg-gray-800/80 border border-amber-500/30 rounded-xl p-3 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-amber-400">Set New 4-Digit PIN</span>
+              <span className="text-xs font-semibold text-amber-400">Set New 4-Digit Captain PIN</span>
               <button
                 type="button"
                 onClick={() => setEditingPin(false)}
@@ -170,7 +262,7 @@ export default function CaptainPanel() {
                 maxLength={4}
                 value={newPin}
                 onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))}
-                placeholder="e.g. 5432"
+                placeholder="e.g. 1111"
                 className="w-32 bg-gray-900 border border-gray-600 rounded-lg px-3 py-1.5 text-white font-mono text-center tracking-widest text-base focus:outline-none focus:ring-2 focus:ring-amber-500"
                 autoFocus
               />
@@ -196,7 +288,7 @@ export default function CaptainPanel() {
         )}
       </div>
 
-      {/* Draft CTA */}
+      {/* Action banner */}
       <div className="bg-gradient-to-r from-amber-600/15 to-orange-600/10 border border-amber-500/20 rounded-2xl px-4 py-3 flex items-center gap-3">
         <Dices className="w-8 h-8 text-amber-400 shrink-0" />
         <div className="flex-1">
@@ -205,75 +297,7 @@ export default function CaptainPanel() {
         </div>
       </div>
 
-      {/* Edit Team Details */}
-      {editingTeam ? (
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-white text-sm">Edit Team Details</h3>
-            <button onClick={() => setEditingTeam(false)} className="text-gray-400 hover:text-white">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="grid gap-3">
-            <div>
-              <label className="text-xs text-gray-400 flex items-center gap-1"><Type className="w-3 h-3" /> Team Name</label>
-              <input
-                value={teamForm.name || ''}
-                onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
-                className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-gray-400 flex items-center gap-1"><Smile className="w-3 h-3" /> Badge/Emoji</label>
-                <input
-                  value={teamForm.logo || ''}
-                  onChange={(e) => setTeamForm({ ...teamForm, logo: e.target.value })}
-                  className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 flex items-center gap-1"><Palette className="w-3 h-3" /> Jersey Color</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <input
-                    type="color"
-                    value={teamForm.primaryColor || '#10B981'}
-                    onChange={(e) => setTeamForm({ ...teamForm, primaryColor: e.target.value })}
-                    className="w-10 h-9 rounded-lg border border-gray-600 cursor-pointer bg-transparent"
-                  />
-                  <span className="text-xs text-gray-400 font-mono">{teamForm.primaryColor}</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs text-gray-400">Motto</label>
-              <input
-                value={teamForm.motto || ''}
-                onChange={(e) => setTeamForm({ ...teamForm, motto: e.target.value })}
-                placeholder="Strike Fast, Win First"
-                className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-          </div>
-          <button
-            onClick={() => { updateTeam({ ...teamForm }); setEditingTeam(false); }}
-            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg"
-          >
-            <Save className="w-3.5 h-3.5" /> Save
-          </button>
-        </div>
-      ) : (
-        team && (
-          <button
-            onClick={() => { setTeamForm({ ...team }); setEditingTeam(true); }}
-            className="w-full flex items-center justify-center gap-2 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white text-sm py-2.5 rounded-xl transition-colors"
-          >
-            <Edit3 className="w-4 h-4" /> Edit Team Details
-          </button>
-        )
-      )}
-
-      {/* Roster */}
+      {/* Roster Section */}
       <div>
         <button
           onClick={() => setShowRoster(!showRoster)}
@@ -289,16 +313,27 @@ export default function CaptainPanel() {
         {showRoster && (
           <div className="space-y-1.5 mt-2">
             {roster.length === 0 ? (
-              <div className="text-center py-6 text-gray-500">
+              <div className="text-center py-6 text-gray-500 border border-dashed border-gray-800 rounded-xl">
                 <p className="text-sm">No players drafted yet.</p>
                 <p className="text-xs mt-1">Wait for the draft or ask your Admin.</p>
               </div>
             ) : (
               roster.map(player => (
                 <div key={player.id} className="flex items-center gap-3 px-3 py-2.5 bg-gray-800/50 border border-gray-700/50 rounded-xl">
-                  <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-300">
-                    {player.jerseyNumber || '#'}
-                  </div>
+                  {player.avatar ? (
+                    player.avatar.startsWith('http') || player.avatar.startsWith('data:image') ? (
+                      <img src={player.avatar} alt={player.name} className="w-8 h-8 rounded-lg object-cover border border-gray-600 shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-sm shrink-0">
+                        {player.avatar}
+                      </div>
+                    )
+                  ) : (
+                    <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-300 shrink-0">
+                      {player.jerseyNumber || '#'}
+                    </div>
+                  )}
+
                   <div className="flex-1 min-w-0">
                     <span className="font-medium text-white text-sm truncate block">{player.name}</span>
                     <div className="flex items-center gap-1 mt-0.5">
@@ -325,6 +360,263 @@ export default function CaptainPanel() {
           </div>
         )}
       </div>
+
+      {/* Unified Edit Modal: Captain Profile & Team Details */}
+      {editingModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Crown className="w-4 h-4 text-amber-400" />
+                Edit Profile & Team
+              </h3>
+              <button onClick={() => setEditingModal(false)} className="text-gray-400 hover:text-white p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Tabs */}
+            <div className="flex gap-1 p-1 bg-gray-950 rounded-xl border border-gray-800">
+              <button
+                type="button"
+                onClick={() => setModalTab('CAPTAIN')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  modalTab === 'CAPTAIN'
+                    ? 'bg-amber-600 text-white shadow'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" /> Captain Profile
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalTab('TEAM')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  modalTab === 'TEAM'
+                    ? 'bg-amber-600 text-white shadow'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5" /> Team Details
+              </button>
+            </div>
+
+            {modalTab === 'CAPTAIN' ? (
+              <div className="space-y-3">
+                {/* Captain Photo / Avatar Section */}
+                <div className="bg-gray-950/70 border border-gray-800 rounded-xl p-3.5 space-y-3">
+                  <label className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-amber-400" /> Captain Photo & Avatar
+                  </label>
+
+                  <div className="flex items-center gap-3">
+                    {/* Avatar Preview */}
+                    {capForm.avatar ? (
+                      capForm.avatar.startsWith('http') || capForm.avatar.startsWith('data:image') ? (
+                        <img src={capForm.avatar} alt="Captain" className="w-14 h-14 rounded-xl object-cover border-2 border-amber-500/50 shrink-0 shadow-md" />
+                      ) : (
+                        <div className="w-14 h-14 rounded-xl bg-gray-800 border-2 border-amber-500/50 flex items-center justify-center text-3xl shrink-0 shadow-md">
+                          {capForm.avatar}
+                        </div>
+                      )
+                    ) : (
+                      <div className="w-14 h-14 rounded-xl bg-gray-800 border-2 border-gray-700 flex items-center justify-center text-2xl font-bold text-white shrink-0 shadow-md">
+                        {(capForm.name || 'C').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold transition-colors">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Photo</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) compressImageFile(file, dataUrl => setCapForm(f => ({ ...f, avatar: dataUrl })));
+                            }}
+                          />
+                        </label>
+
+                        {capForm.avatar && (
+                          <button
+                            type="button"
+                            onClick={() => setCapForm(f => ({ ...f, avatar: '' }))}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-semibold transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" /> Clear
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-gray-500">Upload a selfie, picture, or select an emoji badge</p>
+                    </div>
+                  </div>
+
+                  {/* Emoji Presets */}
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 mb-1.5 flex items-center gap-1">
+                      <Smile className="w-3 h-3 text-amber-400" /> Captain Emoji Badges:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {CAPTAIN_AVATAR_PRESETS.map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => setCapForm(f => ({ ...f, avatar: emoji }))}
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all ${
+                            capForm.avatar === emoji
+                              ? 'bg-amber-500/30 border-2 border-amber-400 scale-110 shadow-lg'
+                              : 'bg-gray-800 border border-gray-700 hover:bg-gray-700'
+                          }`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* URL */}
+                  <div>
+                    <label className="text-[11px] text-gray-400 block mb-1">Or Paste Image URL</label>
+                    <input
+                      value={capForm.avatar?.startsWith('data:') ? '' : (capForm.avatar || '')}
+                      onChange={e => setCapForm(f => ({ ...f, avatar: e.target.value }))}
+                      placeholder="https://example.com/captain.jpg"
+                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Name & PIN */}
+                <div>
+                  <label className="text-xs text-gray-400 font-medium">Captain Name</label>
+                  <input
+                    value={capForm.name || ''}
+                    onChange={e => setCapForm({ ...capForm, name: e.target.value })}
+                    className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-400 font-medium">Captain 4-Digit Login PIN</label>
+                  <input
+                    maxLength={4}
+                    value={capForm.pin || ''}
+                    onChange={e => setCapForm({ ...capForm, pin: e.target.value.replace(/\D/g, '') })}
+                    placeholder="4 digits"
+                    className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-amber-400 font-mono text-sm tracking-wider focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Team Info */}
+                <div>
+                  <label className="text-xs text-gray-400 font-medium flex items-center gap-1">
+                    <Type className="w-3.5 h-3.5 text-amber-400" /> Team Name
+                  </label>
+                  <input
+                    value={teamForm.name || ''}
+                    onChange={e => setTeamForm({ ...teamForm, name: e.target.value })}
+                    className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                  />
+                </div>
+
+                {/* Team Logo / Badge */}
+                <div className="bg-gray-950/70 border border-gray-800 rounded-xl p-3 space-y-2">
+                  <label className="text-xs font-bold text-gray-300 flex items-center gap-1">
+                    <Smile className="w-3.5 h-3.5 text-amber-400" /> Team Badge / Emoji
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={teamForm.logo || ''}
+                      onChange={e => setTeamForm({ ...teamForm, logo: e.target.value })}
+                      placeholder="e.g. ⚡"
+                      className="w-14 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-center text-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                    <div className="flex flex-wrap gap-1 flex-1">
+                      {TEAM_LOGO_PRESETS.map(logo => (
+                        <button
+                          key={logo}
+                          type="button"
+                          onClick={() => setTeamForm({ ...teamForm, logo })}
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center text-base transition-all ${
+                            teamForm.logo === logo
+                              ? 'bg-amber-500/30 border border-amber-400 scale-110'
+                              : 'bg-gray-800 hover:bg-gray-700'
+                          }`}
+                        >
+                          {logo}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Team Color */}
+                <div className="bg-gray-950/70 border border-gray-800 rounded-xl p-3 space-y-2">
+                  <label className="text-xs font-bold text-gray-300 flex items-center gap-1">
+                    <Palette className="w-3.5 h-3.5 text-amber-400" /> Primary Team Color
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={teamForm.primaryColor || '#10B981'}
+                      onChange={e => setTeamForm({ ...teamForm, primaryColor: e.target.value })}
+                      className="w-10 h-8 rounded-lg border border-gray-700 cursor-pointer bg-transparent"
+                    />
+                    <span className="text-xs text-gray-400 font-mono">{teamForm.primaryColor}</span>
+                    <div className="flex gap-1 ml-auto">
+                      {COLOR_PRESETS.map(c => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setTeamForm({ ...teamForm, primaryColor: c })}
+                          className={`w-5 h-5 rounded-full border transition-all ${
+                            teamForm.primaryColor === c ? 'border-white scale-125 shadow-md' : 'border-transparent opacity-70 hover:opacity-100'
+                          }`}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Motto */}
+                <div>
+                  <label className="text-xs text-gray-400 font-medium">Team Motto / Slogan</label>
+                  <input
+                    value={teamForm.motto || ''}
+                    onChange={e => setTeamForm({ ...teamForm, motto: e.target.value })}
+                    placeholder="e.g. Strike Fast, Win First"
+                    className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-800">
+              <button
+                type="button"
+                onClick={() => setEditingModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-white rounded-xl hover:bg-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAllEdits}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md shadow-emerald-950"
+              >
+                <Save className="w-3.5 h-3.5" /> Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

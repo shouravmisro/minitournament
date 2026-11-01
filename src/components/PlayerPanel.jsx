@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   User, Edit3, Save, X, Shield, Calendar, MapPin, Phone,
   Heart, AlertTriangle, CircleDot, Trophy, Target, Zap, Award,
-  Key, Eye, EyeOff, Check
+  Key, Eye, EyeOff, Check, Camera, Upload, Smile, Sparkles, Trash2
 } from 'lucide-react';
 
 const POSITION_COLORS = {
@@ -20,6 +20,43 @@ const AVAILABILITY_OPTIONS = [
   { value: 'INJURED', label: 'Injured', icon: AlertTriangle, color: 'bg-red-600 hover:bg-red-500' },
   { value: 'DOUBTFUL', label: 'Doubtful', icon: CircleDot, color: 'bg-yellow-600 hover:bg-yellow-500' },
 ];
+
+const AVATAR_PRESETS = [
+  '⚽', '⚡', '🔥', '🧤', '🦁', '🦅', '🎯', '🚀', '👑', '💎', '🐉', '🐺', '🛡️', '🏃', '🥇', '👟'
+];
+
+function compressImageFile(file, callback) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 220;
+      let width = img.width;
+      let height = img.height;
+      if (width > height) {
+        if (width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      callback(dataUrl);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
 export default function PlayerPanel() {
   const { state, updatePlayer } = useTournament();
@@ -98,10 +135,19 @@ export default function PlayerPanel() {
           <div className="flex items-start gap-4">
             {/* Avatar */}
             {player.avatar ? (
-              <img src={player.avatar} alt={player.name} className="w-16 h-16 rounded-xl object-cover border-2 border-gray-600" />
+              player.avatar.startsWith('http') || player.avatar.startsWith('data:image') ? (
+                <img src={player.avatar} alt={player.name} className="w-16 h-16 rounded-2xl object-cover border-2 border-gray-600 shadow-md shrink-0" />
+              ) : (
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-2 border-gray-600 shadow-md shrink-0"
+                  style={{ backgroundColor: (team?.primaryColor || '#3B82F6') + '30' }}
+                >
+                  {player.avatar}
+                </div>
+              )
             ) : (
               <div
-                className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-bold text-white border-2 border-gray-600"
+                className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white border-2 border-gray-600 shadow-md shrink-0"
                 style={{ backgroundColor: (team?.primaryColor || '#3B82F6') + '30' }}
               >
                 {player.name.charAt(0).toUpperCase()}
@@ -109,8 +155,8 @@ export default function PlayerPanel() {
             )}
 
             {/* Info */}
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-white">{player.name}</h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-white truncate">{player.name}</h1>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${POSITION_COLORS[player.position]}`}>
                   {player.position}
@@ -121,19 +167,21 @@ export default function PlayerPanel() {
                   </span>
                 ))}
                 {player.jerseyNumber && (
-                  <span className="text-xs text-gray-400 font-mono">#{player.jerseyNumber}</span>
+                  <span className="text-xs text-amber-400 font-mono font-bold">#{player.jerseyNumber}</span>
                 )}
               </div>
               {player.bio && (
-                <p className="text-sm text-gray-400 mt-1 italic">"{player.bio}"</p>
+                <p className="text-xs text-gray-400 mt-1 italic line-clamp-2">"{player.bio}"</p>
               )}
             </div>
 
             <button
               onClick={() => { setForm({ ...player }); setEditing(true); }}
-              className="text-gray-400 hover:text-amber-400 p-2 rounded-lg hover:bg-gray-800/50"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-600/30 to-orange-600/30 hover:from-amber-600/50 hover:to-orange-600/50 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all shrink-0"
+              title="Edit Profile, Photo & Details"
             >
-              <Edit3 className="w-5 h-5" />
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit Profile</span>
             </button>
           </div>
 
@@ -346,92 +394,197 @@ export default function PlayerPanel() {
 
       {/* Edit Modal */}
       {editing && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-sm p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">Edit Profile</h3>
-              <button onClick={() => setEditing(false)} className="text-gray-400 hover:text-white">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-400" />
+                Edit Player Profile & Avatar
+              </h3>
+              <button onClick={() => setEditing(false)} className="text-gray-400 hover:text-white p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Avatar Photo & Emoji Selection Section */}
+            <div className="bg-gray-950/70 border border-gray-800 rounded-xl p-3.5 space-y-3">
+              <label className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                <Camera className="w-3.5 h-3.5 text-amber-400" /> Photo & Avatar
+              </label>
+
+              <div className="flex items-center gap-3">
+                {/* Current Avatar Preview */}
+                {form.avatar ? (
+                  form.avatar.startsWith('http') || form.avatar.startsWith('data:image') ? (
+                    <img src={form.avatar} alt="Avatar" className="w-14 h-14 rounded-xl object-cover border-2 border-amber-500/50 shrink-0 shadow-md" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-xl bg-gray-800 border-2 border-amber-500/50 flex items-center justify-center text-3xl shrink-0 shadow-md">
+                      {form.avatar}
+                    </div>
+                  )
+                ) : (
+                  <div className="w-14 h-14 rounded-xl bg-gray-800 border-2 border-gray-700 flex items-center justify-center text-2xl font-bold text-white shrink-0 shadow-md">
+                    {(form.name || 'P').charAt(0).toUpperCase()}
+                  </div>
+                )}
+
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Upload photo button */}
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-colors">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload Photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) compressImageFile(file, dataUrl => setForm(f => ({ ...f, avatar: dataUrl })));
+                        }}
+                      />
+                    </label>
+
+                    {form.avatar && (
+                      <button
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, avatar: '' }))}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-semibold transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" /> Clear
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-gray-500">Upload a selfie, photo from gallery, or choose an emoji below</p>
+                </div>
+              </div>
+
+              {/* Emoji avatar presets */}
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 mb-1.5 flex items-center gap-1">
+                  <Smile className="w-3 h-3 text-amber-400" /> Or Choose a Sports Emoji:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {AVATAR_PRESETS.map(emoji => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, avatar: emoji }))}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all ${
+                        form.avatar === emoji
+                          ? 'bg-amber-500/30 border-2 border-amber-400 scale-110 shadow-lg'
+                          : 'bg-gray-800 border border-gray-700 hover:bg-gray-700'
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Or paste Image URL */}
+              <div>
+                <label className="text-[11px] text-gray-400 block mb-1">Or Paste Image URL</label>
+                <input
+                  value={form.avatar?.startsWith('data:') ? '' : (form.avatar || '')}
+                  onChange={e => setForm(f => ({ ...f, avatar: e.target.value }))}
+                  placeholder="https://example.com/photo.jpg"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Profile fields */}
             <div className="grid gap-3">
               <div>
-                <label className="text-xs text-gray-400">Display Name</label>
+                <label className="text-xs text-gray-400 font-medium">Display Name</label>
                 <input
                   value={form.name || ''}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="Your full name"
+                  className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                 />
               </div>
-              <div>
-                <label className="text-xs text-gray-400">4-Digit PIN</label>
-                <input
-                  maxLength={4}
-                  value={form.pin || ''}
-                  onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })}
-                  className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-blue-400 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-400">Avatar URL</label>
-                <input
-                  value={form.avatar || ''}
-                  onChange={(e) => setForm({ ...form, avatar: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-gray-400">Preferred Position</label>
+                  <label className="text-xs text-gray-400 font-medium">Jersey Number</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={form.jerseyNumber ?? ''}
+                    onChange={(e) => setForm({ ...form, jerseyNumber: e.target.value ? Number(e.target.value) : null })}
+                    placeholder="e.g. 10"
+                    className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 font-medium">Primary Position</label>
                   <select
                     value={form.position || 'FLEX'}
                     onChange={(e) => setForm({ ...form, position: e.target.value })}
-                    className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {['GK', 'DEF', 'MID', 'FWD', 'FLEX'].map(p => (
                       <option key={p} value={p}>{p}</option>
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="text-xs text-gray-400">Jersey Number</label>
-                  <input
-                    type="number"
-                    value={form.jerseyNumber || ''}
-                    onChange={(e) => setForm({ ...form, jerseyNumber: e.target.value ? Number(e.target.value) : null })}
-                    className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
               </div>
+
               <div>
-                <label className="text-xs text-gray-400">Sub-positions (comma separated)</label>
+                <label className="text-xs text-gray-400 font-medium">Sub-positions / Roles (comma separated)</label>
                 <input
                   value={(form.rawPositions || []).join(', ')}
                   onChange={(e) => setForm({ ...form, rawPositions: e.target.value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) })}
-                  placeholder="CM, ATM"
-                  className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="e.g. CAM, CM, RW"
+                  className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                 />
               </div>
+
               <div>
-                <label className="text-xs text-gray-400">Short Bio</label>
+                <label className="text-xs text-gray-400 font-medium">Bio / Player Motto</label>
                 <input
                   value={form.bio || ''}
                   onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                  placeholder="Playmaker extraordinaire"
-                  className="w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="e.g. Speedster on the wings, set-piece specialist"
+                  className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-400 font-medium">4-Digit Login PIN</label>
+                <input
+                  maxLength={4}
+                  value={form.pin || ''}
+                  onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })}
+                  placeholder="4 digits"
+                  className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-amber-400 font-mono text-sm tracking-wider focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-gray-800">
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-800">
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-white rounded-xl hover:bg-gray-800 transition-colors"
+              >
                 Cancel
               </button>
               <button
-                onClick={() => { updatePlayer(form); setEditing(false); }}
-                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg"
+                type="button"
+                onClick={() => {
+                  updatePlayer({
+                    ...form,
+                    jerseyNumber: form.jerseyNumber ? Number(form.jerseyNumber) : null,
+                  });
+                  setEditing(false);
+                }}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md shadow-emerald-950"
               >
-                <Save className="w-3.5 h-3.5" /> Save
+                <Save className="w-3.5 h-3.5" /> Save Changes
               </button>
             </div>
           </div>

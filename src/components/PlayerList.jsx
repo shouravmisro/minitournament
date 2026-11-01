@@ -166,11 +166,20 @@ export default function PlayerList() {
               >
                 {/* Avatar */}
                 {player.avatar ? (
-                  <img
-                    src={player.avatar}
-                    alt={player.name}
-                    className="w-10 h-10 rounded-lg object-cover border border-gray-600 shrink-0"
-                  />
+                  player.avatar.startsWith('http') || player.avatar.startsWith('data:image') ? (
+                    <img
+                      src={player.avatar}
+                      alt={player.name}
+                      className="w-10 h-10 rounded-lg object-cover border border-gray-600 shrink-0"
+                    />
+                  ) : (
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0 border border-gray-600"
+                      style={{ backgroundColor: (team?.primaryColor || '#6B7280') + '30' }}
+                    >
+                      {player.avatar}
+                    </div>
+                  )
                 ) : (
                   <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center text-base font-bold text-white shrink-0 border border-gray-600"

@@ -547,10 +547,15 @@ function tournamentReducer(state, action) {
         });
       }
 
-      // If player changed name or PIN, and is also captain, keep captain in sync
+      // If player changed name, avatar, or PIN, and is also captain, keep captain in sync
       const syncedCaptains = state.captains.map(c => {
-        if (oldPlayer && c.name === oldPlayer.name) {
-          return { ...c, name: updatedPlayer.name, pin: updatedPlayer.pin || c.pin };
+        if (oldPlayer && (c.name === oldPlayer.name || c.id === oldPlayer.id)) {
+          return {
+            ...c,
+            name: updatedPlayer.name || c.name,
+            pin: updatedPlayer.pin || c.pin,
+            avatar: updatedPlayer.avatar !== undefined ? updatedPlayer.avatar : c.avatar,
+          };
         }
         return c;
       });
@@ -562,6 +567,7 @@ function tournamentReducer(state, action) {
         players: state.players.map(p =>
           p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
         ),
+        _updatedAt: Date.now(),
       };
     }
 
@@ -573,10 +579,11 @@ function tournamentReducer(state, action) {
           ...t,
           rosterIds: t.rosterIds.filter(id => id !== action.payload),
         })),
+        _updatedAt: Date.now(),
       };
 
     case 'ADD_CAPTAIN':
-      return { ...state, captains: [...state.captains, action.payload] };
+      return { ...state, captains: [...state.captains, action.payload], _updatedAt: Date.now() };
 
     case 'UPDATE_CAPTAIN': {
       const updatedCap = action.payload;
@@ -587,10 +594,16 @@ function tournamentReducer(state, action) {
           c.id === updatedCap.id ? { ...c, ...updatedCap } : c
         ),
         players: state.players.map(p =>
-          oldCap && p.name === oldCap.name
-            ? { ...p, name: updatedCap.name || p.name, pin: updatedCap.pin || p.pin }
+          oldCap && (p.name === oldCap.name || p.id === updatedCap.id)
+            ? {
+                ...p,
+                name: updatedCap.name || p.name,
+                pin: updatedCap.pin || p.pin,
+                avatar: updatedCap.avatar !== undefined ? updatedCap.avatar : p.avatar,
+              }
             : p
         ),
+        _updatedAt: Date.now(),
       };
     }
 
