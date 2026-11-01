@@ -3,7 +3,7 @@ import { useTournament, generateId } from '../context/TournamentContext';
 import { useAuth } from '../context/AuthContext';
 import {
   GitBranch, Trophy, ChevronRight, Play, Save, X,
-  Shuffle, AlertCircle, Crown
+  Shuffle, AlertCircle, Crown, ShieldCheck
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────
@@ -152,9 +152,18 @@ function Connector() {
 }
 
 export default function KnockoutBracket() {
-  const { state, addMatch, updateMatch } = useTournament();
-  const { role } = useAuth();
+  const { state, addMatch, updateMatch, addAuditLog } = useTournament();
+  const { role, authenticatedId } = useAuth();
   const isAdmin = role === 'ADMIN';
+  const currentPlayer = state.players.find(p => p.id === authenticatedId);
+  const isOfficial = role === 'PLAYER' && Boolean(currentPlayer?.isOfficial);
+  const canScore = isAdmin || isOfficial;
+
+  const updaterInfo = isAdmin
+    ? { id: 'admin', name: state.organizer?.hostName || 'Magistrate (Admin)', role: 'ADMIN' }
+    : isOfficial
+    ? { id: currentPlayer?.id || 'official', name: `${currentPlayer?.name || 'Player'} (Official Scribe)`, role: 'OFFICIAL' }
+    : { id: 'unknown', name: 'Unknown', role: 'PUBLIC' };
 
   const koMatches = useMemo(
     () => state.matches.filter(m => m.stage === 'KNOCKOUT'),
@@ -205,6 +214,23 @@ export default function KnockoutBracket() {
   function handleScore(updated) {
     updateMatch(updated);
 
+    if (addAuditLog) {
+      const teamA = state.teams.find(t => t.id === updated.teamAId);
+      const teamB = state.teams.find(t => t.id === updated.teamBId);
+      const stageName = updated.koStage === 'FINAL' ? 'Championship Final' : updated.koStage === 'SF' ? 'Semi-Final' : 'Quarter-Final';
+      addAuditLog({
+        id: generateId('audit'),
+        timestamp: Date.now(),
+        userId: updaterInfo.id,
+        userName: updaterInfo.name,
+        userRole: updaterInfo.role,
+        matchId: updated.id,
+        action: 'KNOCKOUT_SCORED',
+        summary: `[${stageName}] ${teamA?.name || 'Team A'} ${updated.scoreA ?? '-'} - ${updated.scoreB ?? '-'} ${teamB?.name || 'Team B'}`,
+        details: `Recorded knockout stage match conclusion for ${stageName}`,
+      });
+    }
+
     const winner = (updated.scoreA ?? 0) > (updated.scoreB ?? 0)
       ? updated.teamAId : updated.teamBId;
 
@@ -235,6 +261,17 @@ export default function KnockoutBracket() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
+      {/* Official Scribe Privilege Banner */}
+      {isOfficial && !isAdmin && (
+        <div className="sketch-border bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-3 flex items-center gap-3 text-emerald-200 text-xs shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+          <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+          <div>
+            <span className="font-serif font-bold text-emerald-100">Ordained Match Scribe Access Active: </span>
+            <span className="text-emerald-200/80">You can enter scores for tournament knockout bracket matches. All results will be recorded in the audit logbook.</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between border-b border-dashed border-amber-900/40 pb-4">
         <h2 className="text-2xl font-serif text-amber-200 flex items-center gap-3">
           <GitBranch className="w-6 h-6 text-amber-500 stroke-[1.5]" />
@@ -294,7 +331,7 @@ export default function KnockoutBracket() {
                     Quarter-Finals
                   </div>
                   {qfMatches.map(m => (
-                    <BracketMatch key={m.id} match={m} isAdmin={isAdmin} onScore={handleScore} />
+                    <BracketMatch key={m.id} match={m} isAdmin={canScore} onScore={handleScore} />
                   ))}
                 </div>
                 <Connector />
@@ -309,7 +346,7 @@ export default function KnockoutBracket() {
                     Semi-Finals
                   </div>
                   {sfMatches.map(m => (
-                    <BracketMatch key={m.id} match={m} isAdmin={isAdmin} onScore={handleScore} />
+                    <BracketMatch key={m.id} match={m} isAdmin={canScore} onScore={handleScore} />
                   ))}
                 </div>
                 <Connector />
@@ -322,7 +359,7 @@ export default function KnockoutBracket() {
                 <div className="text-center font-mono text-[10px] text-amber-400 uppercase tracking-widest mb-2 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]">
                   The Grand Final
                 </div>
-                <BracketMatch match={fMatch} isAdmin={isAdmin} onScore={handleScore} />
+                <BracketMatch match={fMatch} isAdmin={canScore} onScore={handleScore} />
               </div>
             )}
           </div>

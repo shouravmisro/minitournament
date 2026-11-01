@@ -9,7 +9,7 @@ import {
   Shield, Users, UserPlus, Crown, Trash2, Sparkles, Download, Upload,
   Key, Eye, EyeOff, Edit3, Save, X, AlertCircle, ChevronDown, ChevronUp,
   Settings, Dices, Trophy, Calendar, Copy, Check, Palette, Coins, UserCheck, Cloud,
-  RefreshCw
+  RefreshCw, BookOpen, ShieldCheck, History
 } from 'lucide-react';
 
 const POSITION_COLORS = {
@@ -29,11 +29,11 @@ const COLOR_PRESETS = [
 export default function AdminPanel() {
   const {
     state, dispatch,
-    addPlayer, updatePlayer, deletePlayer, toggleCaptain,
+    addPlayer, updatePlayer, deletePlayer, toggleCaptain, toggleOfficial,
     addCaptain, updateCaptain, deleteCaptain,
     addTeam, updateTeam, deleteTeam,
     exportState, importState, setAdminPin, resetState,
-    setDraftMode, setDefaultBudget, recomputeStats,
+    setDraftMode, setDefaultBudget, recomputeStats, clearAuditLog,
   } = useTournament();
 
   const [showWizard, setShowWizard] = useState(false);
@@ -537,6 +537,11 @@ export default function AdminPanel() {
                           {player.jerseyNumber && (
                             <span className="text-[10px] text-amber-500/40 font-mono">#{player.jerseyNumber}</span>
                           )}
+                          {player.isOfficial && (
+                            <span className="text-[9px] font-mono tracking-widest uppercase px-1.5 py-0.5 rounded border bg-emerald-950/40 text-emerald-300 border-emerald-500/40 shadow-[0_0_6px_rgba(16,185,129,0.2)]">
+                              Scribe
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 text-xs text-amber-500/60">
                           {showPins && (
@@ -556,6 +561,17 @@ export default function AdminPanel() {
                         title="Edit Player Profile"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => toggleOfficial(player.id)}
+                        className={`p-1.5 rounded-lg transition-colors border ${
+                          player.isOfficial
+                            ? 'text-emerald-400 bg-emerald-950/40 border-emerald-500/40 shadow-[0_0_8px_rgba(16,185,129,0.2)]'
+                            : 'text-amber-500/30 border-transparent hover:text-emerald-400 hover:bg-[#0b132b]'
+                        }`}
+                        title={player.isOfficial ? 'Ordained Match Scribe (Click to Revoke)' : 'Appoint as Official Match Scribe (Can enter scores & ratings)'}
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => toggleCaptain(player.id)}
@@ -821,7 +837,161 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* ── 4. Draft Engine Section ── */}
+      {/* ── 4. Official Scribes & Match Update Logbook ── */}
+      <SectionToggle id="logbook" label="Official Scribes & Match Update Logbook" icon={BookOpen} count={state.auditLog?.length || 0} />
+      {expandedSection === 'logbook' && (
+        <div className="sketch-border bg-[#0b132b]/80 rounded-2xl p-5 space-y-6">
+          {/* Subheader / Info */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-dashed border-amber-900/30 pb-4">
+            <div>
+              <h3 className="font-serif text-xl text-amber-200 flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-amber-500" />
+                Tournament Scribes & Audit Ledger
+              </h3>
+              <p className="text-xs font-serif text-amber-500/60 mt-0.5">
+                Delegate score & rating authority to specific players. Every match update is chronicled below in real-time.
+              </p>
+            </div>
+            {state.auditLog && state.auditLog.length > 0 && (
+              <button
+                onClick={() => {
+                  if (window.confirm('Clear all entries from the match update logbook?')) {
+                    clearAuditLog();
+                  }
+                }}
+                className="text-xs font-serif text-red-400 hover:text-red-300 bg-red-950/30 border border-red-900/40 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Clear Logbook
+              </button>
+            )}
+          </div>
+
+          {/* Scribe Delegation Bento */}
+          <div className="sketch-border bg-[#050814]/70 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-serif text-sm font-semibold text-amber-100 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                Appointed Match Scribes ({state.players.filter(p => p.isOfficial).length})
+              </span>
+              <span className="text-[10px] font-mono tracking-widest uppercase text-emerald-400 bg-emerald-950/40 border border-emerald-500/40 px-2 py-0.5 rounded-full">
+                {state.players.filter(p => p.isOfficial).length} Appointed
+              </span>
+            </div>
+            <p className="text-xs font-serif text-amber-500/50">
+              Appointed players can sign in with their individual Player PIN and log match scores, goals, assists, saves, and ratings from the Fixtures tab.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+              {state.players.map(p => {
+                const team = state.teams.find(t => t.id === p.teamId);
+                const isOff = Boolean(p.isOfficial);
+                return (
+                  <div
+                    key={p.id}
+                    className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                      isOff
+                        ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-200'
+                        : 'bg-[#0b132b]/50 border-amber-900/20 text-amber-100/70 hover:border-amber-700/40'
+                    }`}
+                  >
+                    <div className="min-w-0 pr-2">
+                      <p className="font-serif text-sm font-semibold truncate text-amber-100">{p.name}</p>
+                      <p className="text-[10px] font-mono text-amber-500/50 truncate">
+                        {team ? `${team.logo} ${team.name}` : 'Free Agent'} • {p.position}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleOfficial(p.id)}
+                      className={`text-xs font-serif px-2.5 py-1 rounded-lg transition-all shrink-0 border ${
+                        isOff
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                          : 'bg-[#050814] text-amber-500/60 border-amber-900/40 hover:text-amber-200 hover:border-amber-600'
+                      }`}
+                    >
+                      {isOff ? 'Scribe ✓' : '+ Appoint'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Historical Logbook */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-serif text-sm font-semibold text-amber-100 flex items-center gap-2">
+                <History className="w-4 h-4 text-cyan-400" />
+                Chronicled Match Updates Log
+              </span>
+              <span className="text-[10px] font-mono text-amber-500/50 uppercase tracking-widest">
+                {state.auditLog?.length || 0} Chronicles
+              </span>
+            </div>
+
+            {(!state.auditLog || state.auditLog.length === 0) ? (
+              <div className="text-center py-10 sketch-border rounded-xl bg-[#050814]/40 flex flex-col items-center justify-center p-4">
+                <BookOpen className="w-8 h-8 text-amber-900/40 mb-2" />
+                <p className="font-serif text-amber-500/50 text-sm">No match updates logged yet.</p>
+                <p className="text-[10px] font-mono text-amber-500/30 uppercase tracking-widest mt-0.5">
+                  Any score or performance updated by Admin or an appointed Scribe will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="max-h-[420px] overflow-y-auto space-y-2 pr-1">
+                {state.auditLog.map(log => {
+                  const dateStr = log.timestamp
+                    ? new Date(log.timestamp).toLocaleString(undefined, {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                      })
+                    : 'Just now';
+                  const isAdm = log.userRole === 'ADMIN';
+
+                  return (
+                    <div
+                      key={log.id}
+                      className="sketch-border bg-[#050814]/70 p-3.5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs hover:bg-[#050814]/90 transition-colors"
+                    >
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-widest uppercase border ${
+                            log.action === 'SCORED_MATCH'
+                              ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40'
+                              : log.action === 'KNOCKOUT_SCORED'
+                              ? 'bg-amber-950/40 text-amber-300 border-amber-500/40'
+                              : 'bg-purple-950/40 text-purple-300 border-purple-500/40'
+                          }`}>
+                            {log.action === 'SCORED_MATCH' ? 'Match Scored' : log.action === 'KNOCKOUT_SCORED' ? 'Knockout Scored' : 'Fixture Edited'}
+                          </span>
+                          <span className="font-serif font-bold text-amber-100 text-sm">
+                            {log.summary}
+                          </span>
+                        </div>
+                        <p className="text-amber-500/60 font-serif text-[11px]">
+                          {log.details}
+                        </p>
+                      </div>
+
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto shrink-0 gap-1 pt-1 sm:pt-0 border-t sm:border-0 border-dashed border-amber-900/30">
+                        <span className={`inline-flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 rounded-full border ${
+                          isAdm
+                            ? 'bg-amber-950/40 text-amber-300 border-amber-500/40'
+                            : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40'
+                        }`}>
+                          <UserCheck className="w-3 h-3" /> {log.userName || (isAdm ? 'Admin' : 'Official Scribe')}
+                        </span>
+                        <span className="font-mono text-[10px] text-amber-500/40">{dateStr}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. Draft Engine Section ── */}
       <SectionToggle id="draft" label="Draft Engine & Auction Rules" icon={Dices} />
       {expandedSection === 'draft' && (
         <div className="sketch-border bg-[#0b132b]/70 rounded-2xl p-6 border-dashed border-amber-900/30 space-y-4">

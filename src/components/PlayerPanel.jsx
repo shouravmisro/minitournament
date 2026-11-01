@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   User, Edit3, Save, X, Shield, Calendar, Crown,
   Heart, AlertTriangle, CircleDot, Trophy, Target, Zap, Award,
-  Key, Eye, EyeOff, Check, Smile, Trash2, Link
+  Key, Eye, EyeOff, Check, Smile, Trash2, Link, ShieldCheck
 } from 'lucide-react';
 
 const POSITION_COLORS = {
@@ -167,6 +167,19 @@ export default function PlayerPanel() {
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
 
+      {/* ── Official Scribe Status Banner ── */}
+      {player.isOfficial && (
+        <div className="sketch-border bg-emerald-950/30 border border-emerald-500/40 rounded-xl p-3.5 flex items-center justify-between gap-3 text-emerald-200 text-xs shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+          <div className="flex items-center gap-2.5">
+            <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div>
+              <p className="font-serif font-bold text-emerald-100">Tournament Scribe Authority Active</p>
+              <p className="text-emerald-200/70 text-[11px] font-serif">You have been appointed to record match scores, player stats, and ratings in the Championship tab.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Player Card ── */}
       <div className="sketch-border bg-[#0b132b]/80 rounded-2xl overflow-hidden shadow-xl" style={{ borderRadius: '1.5rem 0.5rem 1.5rem 0.5rem' }}>
         <div className="h-1.5" style={{ backgroundColor: team?.primaryColor || '#d97706' }} />
@@ -186,6 +199,11 @@ export default function PlayerPanel() {
                 ))}
                 {player.jerseyNumber && (
                   <span className="text-xs text-amber-400 font-mono font-bold">#{player.jerseyNumber}</span>
+                )}
+                {player.isOfficial && (
+                  <span className="text-[9px] font-mono tracking-widest uppercase px-2 py-0.5 rounded border bg-emerald-950/50 text-emerald-300 border-emerald-500/40 shadow-[0_0_8px_rgba(16,185,129,0.25)] flex items-center gap-1 font-semibold">
+                    <ShieldCheck className="w-3 h-3" /> Ordained Scribe
+                  </span>
                 )}
               </div>
               {player.bio && (

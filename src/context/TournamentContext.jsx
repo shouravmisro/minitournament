@@ -25,6 +25,7 @@ const DEFAULT_STATE = {
   adminPin: '0000',
   draftMode: 'AUCTION', // 'AUCTION' | 'FREE'
   defaultBudget: 1000,
+  auditLog: [],
   _updatedAt: 0,
 };
 
@@ -52,6 +53,7 @@ export function sanitizeTournamentState(rawState) {
       status: p.status || 'UNDRAFTED',
       teamId: p.teamId || null,
       availability: p.availability || 'AVAILABLE',
+      isOfficial: Boolean(p.isOfficial),
       stats: {
         matches: Number(stats.matches) || 0,
         goals: Number(stats.goals) || 0,
@@ -104,6 +106,7 @@ export function sanitizeTournamentState(rawState) {
   }).filter(Boolean);
 
   const rawAwards = Array.isArray(rawState.awards) ? rawState.awards : [];
+  const rawAuditLog = Array.isArray(rawState.auditLog) ? rawState.auditLog : [];
 
   return {
     ...DEFAULT_STATE,
@@ -117,6 +120,7 @@ export function sanitizeTournamentState(rawState) {
     players,
     matches,
     awards: rawAwards,
+    auditLog: rawAuditLog,
     adminPin: rawState.adminPin ? String(rawState.adminPin) : '0000',
     draftMode: rawState.draftMode || 'AUCTION',
     defaultBudget: Number(rawState.defaultBudget) || 1000,
@@ -778,6 +782,34 @@ function tournamentReducer(state, action) {
     case 'DELETE_AWARD':
       return { ...state, awards: state.awards.filter(a => a.id !== action.payload) };
 
+    case 'TOGGLE_OFFICIAL': {
+      const playerId = action.payload;
+      return {
+        ...state,
+        players: state.players.map(p =>
+          p.id === playerId ? { ...p, isOfficial: !p.isOfficial } : p
+        ),
+        _updatedAt: Date.now(),
+      };
+    }
+
+    case 'ADD_AUDIT_LOG': {
+      const newLog = action.payload;
+      const existingLogs = Array.isArray(state.auditLog) ? state.auditLog : [];
+      return {
+        ...state,
+        auditLog: [newLog, ...existingLogs].slice(0, 150),
+        _updatedAt: Date.now(),
+      };
+    }
+
+    case 'CLEAR_AUDIT_LOG':
+      return {
+        ...state,
+        auditLog: [],
+        _updatedAt: Date.now(),
+      };
+
     case 'RESET_STATE':
       return { ...DEFAULT_STATE };
 
@@ -864,6 +896,9 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
     addAward:         useCallback((a)    => dispatchLocal({ type: 'ADD_AWARD',          payload: a }),                        [dispatchLocal]),
     updateAward:      useCallback((a)    => dispatchLocal({ type: 'UPDATE_AWARD',       payload: a }),                        [dispatchLocal]),
     deleteAward:      useCallback((id)   => dispatchLocal({ type: 'DELETE_AWARD',       payload: id }),                       [dispatchLocal]),
+    toggleOfficial:   useCallback((id)   => dispatchLocal({ type: 'TOGGLE_OFFICIAL',    payload: id }),                       [dispatchLocal]),
+    addAuditLog:      useCallback((log)  => dispatchLocal({ type: 'ADD_AUDIT_LOG',     payload: log }),                      [dispatchLocal]),
+    clearAuditLog:    useCallback(()     => dispatchLocal({ type: 'CLEAR_AUDIT_LOG' }),                                       [dispatchLocal]),
     setAdminPin:      useCallback((pin)  => dispatchLocal({ type: 'SET_ADMIN_PIN',      payload: pin }),                      [dispatchLocal]),
     setDraftMode:     useCallback((mode) => dispatchLocal({ type: 'SET_DRAFT_MODE',     payload: mode }),                     [dispatchLocal]),
     setDefaultBudget: useCallback((n)    => dispatchLocal({ type: 'SET_DEFAULT_BUDGET', payload: n }),                        [dispatchLocal]),

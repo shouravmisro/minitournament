@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useTournament, generateId } from '../context/TournamentContext';
 import { useAuth } from '../context/AuthContext';
 import {
-  Calendar, Play, CheckCircle, Edit3, Save, X, Shuffle,
+  Calendar, Play, CheckCircle, Edit3, Save, X, Shuffle, ShieldCheck,
   AlertCircle, RefreshCw, ChevronDown, ChevronUp, Clock, Plus,
   Trash2, MapPin, Settings2, Target, Zap, Shield, Trophy, Star,
   Award, Activity, Users, ChevronRight, Eye
@@ -1513,9 +1513,61 @@ export default function MatchEngine() {
     deleteMatch,
     setMatches,
     updateRoundMatches,
+    addAuditLog,
   } = useTournament();
-  const { role } = useAuth();
+  const { role, authenticatedId } = useAuth();
   const isAdmin = role === 'ADMIN';
+  const currentPlayer = state.players.find(p => p.id === authenticatedId);
+  const isOfficial = role === 'PLAYER' && Boolean(currentPlayer?.isOfficial);
+  const canManageScores = isAdmin || isOfficial;
+
+  const updaterInfo = isAdmin
+    ? { id: 'admin', name: state.organizer?.hostName || 'Magistrate (Admin)', role: 'ADMIN' }
+    : isOfficial
+    ? { id: currentPlayer?.id || 'official', name: `${currentPlayer?.name || 'Player'} (Official Scribe)`, role: 'OFFICIAL' }
+    : { id: 'unknown', name: 'Unknown', role: 'PUBLIC' };
+
+  function handleSavePerformance(updatedMatch) {
+    updateMatch(updatedMatch);
+    const teamA = state.teams.find(t => t.id === updatedMatch.teamAId);
+    const teamB = state.teams.find(t => t.id === updatedMatch.teamBId);
+    const scoreStr = `${updatedMatch.scoreA ?? '-'} - ${updatedMatch.scoreB ?? '-'}`;
+    const goalsCount = (updatedMatch.events || []).length;
+    if (addAuditLog) {
+      addAuditLog({
+        id: generateId('audit'),
+        timestamp: Date.now(),
+        userId: updaterInfo.id,
+        userName: updaterInfo.name,
+        userRole: updaterInfo.role,
+        matchId: updatedMatch.id,
+        action: 'SCORED_MATCH',
+        summary: `${teamA?.name || 'Team A'} ${scoreStr} ${teamB?.name || 'Team B'}`,
+        details: `Updated match score to ${scoreStr} (${goalsCount} goal records, status: ${updatedMatch.status || 'COMPLETED'})`,
+      });
+    }
+    setPerformanceMatch(null);
+  }
+
+  function handleSaveEditMatch(updatedMatch) {
+    updateMatch(updatedMatch);
+    const teamA = state.teams.find(t => t.id === updatedMatch.teamAId);
+    const teamB = state.teams.find(t => t.id === updatedMatch.teamBId);
+    if (addAuditLog) {
+      addAuditLog({
+        id: generateId('audit'),
+        timestamp: Date.now(),
+        userId: updaterInfo.id,
+        userName: updaterInfo.name,
+        userRole: updaterInfo.role,
+        matchId: updatedMatch.id,
+        action: 'EDITED_FIXTURE',
+        summary: `${teamA?.name || 'Team A'} vs ${teamB?.name || 'Team B'}`,
+        details: `Rescheduled fixture: ${updatedMatch.date || 'TBD'} at ${updatedMatch.time || 'TBD'} (${updatedMatch.venue || 'No venue'})`,
+      });
+    }
+    setEditingMatch(null);
+  }
 
   const [showGenModal, setShowGenModal] = useState(false);
   const [editingMatch, setEditingMatch] = useState(null);
@@ -1928,7 +1980,7 @@ export default function MatchEngine() {
                         <MatchRow
                           key={m.id}
                           match={m}
-                          editable={isAdmin}
+                          editable={canManageScores}
                           onOpenPerformance={setPerformanceMatch}
                           onEditMatch={setEditingMatch}
                           onOpenDetails={setViewDetailsMatch}
@@ -1957,17 +2009,17 @@ export default function MatchEngine() {
         <EditMatchModal
           match={editingMatch}
           onClose={() => setEditingMatch(null)}
-          onSave={updateMatch}
+          onSave={handleSaveEditMatch}
           onDelete={deleteMatch}
         />
       )}
 
-      {/* Score & Performance Sheet Modal (Admin) */}
+      {/* Score & Performance Sheet Modal (Admin / Official Scribe) */}
       {performanceMatch && (
         <MatchPerformanceModal
           match={performanceMatch}
           onClose={() => setPerformanceMatch(null)}
-          onSave={updateMatch}
+          onSave={handleSavePerformance}
         />
       )}
 
