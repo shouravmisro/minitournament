@@ -91,12 +91,16 @@ export default function AdminPanel() {
   }
 
   function handleStartEditPlayer(player) {
+    const rawPos = Array.isArray(player.rawPositions)
+      ? player.rawPositions.filter(r => r !== 'ANY').join(', ')
+      : '';
     setEditingPlayer(player.id);
     setPlayerForm({
       ...player,
       pin: player.pin || generatePin(),
       jerseyNumber: player.jerseyNumber ?? '',
       rawPositions: player.rawPositions || [],
+      rawPositionsInput: rawPos,
       status: player.status || 'UNDRAFTED',
       teamId: player.teamId || '',
       availability: player.availability || 'AVAILABLE',
@@ -118,12 +122,21 @@ export default function AdminPanel() {
     const assignedTeamId = playerForm.teamId || null;
     const assignedStatus = assignedTeamId ? 'DRAFTED' : playerForm.status;
 
-    updatePlayer({
+    const parsedRaw = (playerForm.rawPositionsInput ?? '')
+      .split(',')
+      .map(s => s.trim().toUpperCase())
+      .filter(Boolean);
+
+    const toSave = {
       ...playerForm,
+      rawPositions: parsedRaw.length > 0 ? parsedRaw : ['ANY'],
       jerseyNumber: playerForm.jerseyNumber ? Number(playerForm.jerseyNumber) : null,
       teamId: assignedTeamId,
       status: assignedStatus,
-    });
+    };
+    delete toSave.rawPositionsInput;
+
+    updatePlayer(toSave);
     setEditingPlayer(null);
   }
 
@@ -167,6 +180,7 @@ export default function AdminPanel() {
       teamLogo: team.logo || '⚡',
       teamColor: team.primaryColor || '#10B981',
       teamMotto: team.motto || '',
+      teamPhoto: team.photo || '',
       teamBudget: team.budget ?? state.defaultBudget ?? 1000,
       teamSpent: team.spent ?? 0,
     });
@@ -187,6 +201,7 @@ export default function AdminPanel() {
         logo: captainForm.teamLogo,
         primaryColor: captainForm.teamColor,
         motto: captainForm.teamMotto,
+        photo: (captainForm.teamPhoto || '').trim(),
         budget: Number(captainForm.teamBudget),
         spent: Number(captainForm.teamSpent),
       });
@@ -432,8 +447,8 @@ export default function AdminPanel() {
                           <label className="text-[11px] font-semibold text-gray-400">Sub-positions (comma separated)</label>
                           <input
                             type="text"
-                            value={(playerForm.rawPositions || []).join(', ')}
-                            onChange={(e) => setPlayerForm({ ...playerForm, rawPositions: e.target.value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) })}
+                            value={playerForm.rawPositionsInput ?? ''}
+                            onChange={(e) => setPlayerForm({ ...playerForm, rawPositionsInput: e.target.value })}
                             placeholder="e.g. CM, ATM, CDM"
                             className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           />
@@ -662,6 +677,18 @@ export default function AdminPanel() {
                             className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm"
                           />
                         </div>
+                      </div>
+
+                      {/* Team Photo URL */}
+                      <div>
+                        <label className="text-xs font-semibold text-gray-300">Team Photo / Squad Picture (Image URL)</label>
+                        <input
+                          type="text"
+                          value={captainForm.teamPhoto || ''}
+                          onChange={e => setCaptainForm({ ...captainForm, teamPhoto: e.target.value })}
+                          placeholder="https://example.com/team-squad.jpg"
+                          className="w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white text-sm font-mono"
+                        />
                       </div>
 
                       {/* Color Picker & Presets */}

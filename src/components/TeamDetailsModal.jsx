@@ -40,23 +40,32 @@ export default function TeamDetailsModal({ team, onClose }) {
 
           {/* Color banner */}
           <div
-            className="h-24 relative"
-            style={{ background: `linear-gradient(135deg, ${team.primaryColor}40 0%, ${team.primaryColor}15 100%)` }}
+            className="h-28 relative overflow-hidden"
+            style={{ background: `linear-gradient(135deg, ${team.primaryColor}50 0%, ${team.primaryColor}15 100%)` }}
           >
+            {team.photo && (
+              <img
+                src={team.photo}
+                alt={team.name}
+                className="w-full h-full object-cover absolute inset-0 opacity-40"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+
             {/* Close */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 text-gray-400 hover:text-white bg-gray-900/60 p-1.5 rounded-lg"
+              className="absolute top-3 right-3 text-gray-400 hover:text-white bg-gray-900/70 backdrop-blur-sm p-1.5 rounded-lg z-10"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Team badge overlapping */}
             <div
-              className="absolute -bottom-7 left-5 w-16 h-16 rounded-2xl border-4 flex items-center justify-center text-3xl"
+              className="absolute -bottom-7 left-5 w-16 h-16 rounded-2xl border-4 flex items-center justify-center text-3xl z-10 shadow-lg"
               style={{
-                background: team.primaryColor + '30',
-                borderColor: team.primaryColor + '60',
+                background: team.primaryColor + '40',
+                borderColor: team.primaryColor + '80',
               }}
             >
               {team.logo}
@@ -92,6 +101,23 @@ export default function TeamDetailsModal({ team, onClose }) {
               </div>
             ))}
           </div>
+
+          {/* Squad Photo if provided */}
+          {team.photo && (
+            <div className="mx-5 mb-4 rounded-xl overflow-hidden border border-gray-700/60 shadow-lg relative h-44 bg-gray-950">
+              <img
+                src={team.photo}
+                alt={`${team.name} Squad`}
+                className="w-full h-full object-cover"
+                onError={e => { e.currentTarget.style.display = 'none'; }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2.5">
+                <span className="text-xs font-bold text-white drop-shadow">
+                  📸 Official Squad Photo
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Roster */}
           <div className="px-5 pb-5 space-y-2">

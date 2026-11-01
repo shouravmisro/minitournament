@@ -48,16 +48,26 @@ export default function CaptainList() {
                 className="w-full bg-gray-800/50 border border-gray-700 hover:border-gray-500 rounded-2xl p-4 text-left transition-all group"
               >
                 <div className="flex items-center gap-4">
-                  {/* Team badge */}
-                  <div
-                    className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl border-2 shrink-0"
-                    style={{
-                      background: (team?.primaryColor ?? '#F59E0B') + '20',
-                      borderColor: (team?.primaryColor ?? '#F59E0B') + '40',
-                    }}
-                  >
-                    {team?.logo ?? '👤'}
-                  </div>
+                  {/* Team badge / photo */}
+                  {team?.photo ? (
+                    <img
+                      src={team.photo}
+                      alt={team.name}
+                      className="w-14 h-14 rounded-xl object-cover border-2 shrink-0 shadow-md"
+                      style={{ borderColor: (team?.primaryColor ?? '#F59E0B') + '60' }}
+                      onError={e => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div
+                      className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl border-2 shrink-0"
+                      style={{
+                        background: (team?.primaryColor ?? '#F59E0B') + '20',
+                        borderColor: (team?.primaryColor ?? '#F59E0B') + '40',
+                      }}
+                    >
+                      {team?.logo ?? '👤'}
+                    </div>
+                  )}
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">

@@ -82,11 +82,16 @@ export default function CaptainPanel() {
     updateCaptain({
       ...captain,
       ...capForm,
+      name: capForm.name ? capForm.name.trim() : captain.name,
+      avatar: capForm.avatar || '',
+      pin: capForm.pin ? capForm.pin.replace(/\D/g, '') : captain.pin,
     });
     if (team) {
       updateTeam({
         ...team,
         ...teamForm,
+        name: teamForm.name ? teamForm.name.trim() : team.name,
+        photo: (teamForm.photo || '').trim(),
       });
     }
     setEditingModal(false);
@@ -132,7 +137,7 @@ export default function CaptainPanel() {
           <button
             onClick={() => {
               setCapForm({ ...captain });
-              setTeamForm(team ? { ...team } : {});
+              setTeamForm(team ? { ...team, photo: team.photo || '' } : {});
               setModalTab('CAPTAIN');
               setEditingModal(true);
             }}
@@ -143,6 +148,23 @@ export default function CaptainPanel() {
             <span>Edit Profile & Team</span>
           </button>
         </div>
+
+        {/* Team Squad Photo Banner */}
+        {team?.photo && (
+          <div className="mt-4 rounded-xl overflow-hidden border border-amber-500/30 shadow-md relative h-36 bg-gray-900 group">
+            <img
+              src={team.photo}
+              alt={team.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={e => { e.currentTarget.style.display = 'none'; }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-transparent to-transparent flex items-end p-3">
+              <span className="text-xs font-bold text-white drop-shadow flex items-center gap-1.5">
+                📸 {team.name} Official Squad Photo
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Team stats */}
         <div className="grid grid-cols-3 gap-3 mt-4">
@@ -547,6 +569,50 @@ export default function CaptainPanel() {
                     placeholder="e.g. Strike Fast, Win First"
                     className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
+                </div>
+
+                {/* Team Photo (via Link) */}
+                <div className="bg-gray-950/70 border border-gray-800 rounded-xl p-3.5 space-y-3">
+                  <label className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                    <Link className="w-3.5 h-3.5 text-amber-400" /> Team Photo / Squad Picture (via Link)
+                  </label>
+
+                  {/* Team Photo Preview */}
+                  {teamForm.photo ? (
+                    <div className="relative rounded-xl overflow-hidden border border-amber-500/40 bg-gray-900">
+                      <img
+                        src={teamForm.photo}
+                        alt="Team Photo Preview"
+                        className="w-full h-32 object-cover rounded-lg"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setTeamForm(f => ({ ...f, photo: '' }))}
+                        className="absolute top-2 right-2 bg-black/75 hover:bg-red-600/90 text-white px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors backdrop-blur-sm"
+                        title="Remove Team Photo"
+                      >
+                        <Trash2 className="w-3 h-3" /> Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="border border-dashed border-gray-700 rounded-xl p-3 text-center text-gray-500 text-xs">
+                      No team photo added yet. Paste a photo link below.
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-[11px] text-gray-400 block mb-1">Paste Direct Image URL</label>
+                    <input
+                      value={teamForm.photo || ''}
+                      onChange={e => setTeamForm({ ...teamForm, photo: e.target.value.trim() })}
+                      placeholder="https://example.com/squad-photo.jpg"
+                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">Direct link (JPG, PNG, WebP) to your team or squad photo.</p>
+                  </div>
                 </div>
               </div>
             )}

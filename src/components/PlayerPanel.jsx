@@ -81,15 +81,18 @@ export default function PlayerPanel() {
 
   // ── Helpers ──
   function openEdit() {
+    const rawPos = Array.isArray(player.rawPositions)
+      ? player.rawPositions.filter(r => r !== 'ANY').join(', ')
+      : '';
     setForm({
-      id:           player.id,
-      name:         player.name         || '',
-      bio:          player.bio          || '',
-      jerseyNumber: player.jerseyNumber ?? '',
-      position:     player.position     || 'FLEX',
-      rawPositions: Array.isArray(player.rawPositions) ? player.rawPositions : [],
-      avatar:       player.avatar       || '',
-      pin:          player.pin          || '',
+      id:                player.id,
+      name:              player.name         || '',
+      bio:               player.bio          || '',
+      jerseyNumber:      player.jerseyNumber ?? '',
+      position:          player.position     || 'FLEX',
+      rawPositionsInput: rawPos,
+      avatar:            player.avatar       || '',
+      pin:               player.pin          || '',
     });
     setSaveMsg('');
     setAvatarUrlError(false);
@@ -100,15 +103,25 @@ export default function PlayerPanel() {
     if (!form.name?.trim()) return;
     if (form.pin && form.pin.replace(/\D/g, '').length !== 4) return;
 
+    // Parse comma-separated roles cleanly
+    const parsedRoles = (form.rawPositionsInput || '')
+      .split(',')
+      .map(s => s.trim().toUpperCase())
+      .filter(Boolean);
+
     const cleaned = {
+      ...player,
       ...form,
       name:         form.name.trim(),
-      jerseyNumber: form.jerseyNumber !== '' && form.jerseyNumber !== null
+      bio:          form.bio ? form.bio.trim() : '',
+      jerseyNumber: (form.jerseyNumber !== '' && form.jerseyNumber !== null && form.jerseyNumber !== undefined)
                       ? Number(form.jerseyNumber) : null,
       pin:          form.pin ? form.pin.replace(/\D/g, '') : player.pin,
-      rawPositions: Array.isArray(form.rawPositions) && form.rawPositions.length > 0
-                      ? form.rawPositions : ['ANY'],
+      position:     form.position || 'FLEX',
+      rawPositions: parsedRoles.length > 0 ? parsedRoles : ['ANY'],
+      avatar:       form.avatar || '',
     };
+    delete cleaned.rawPositionsInput;
 
     updatePlayer(cleaned);
     setEditing(false);
@@ -479,7 +492,7 @@ export default function PlayerPanel() {
                 <div>
                   <label className="text-xs text-gray-400 font-medium">Display Name</label>
                   <input
-                    value={form.name}
+                    value={form.name || ''}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="Your full name"
                     className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -513,25 +526,23 @@ export default function PlayerPanel() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-400 font-medium">Sub-positions / Roles <span className="text-gray-600">(comma separated)</span></label>
+                  <label className="text-xs text-gray-400 font-medium flex items-center justify-between">
+                    <span>Sub-positions / Roles <span className="text-gray-500 font-normal">(comma separated)</span></span>
+                    <span className="text-[10px] text-gray-500 font-mono">e.g. CAM, RW, ST</span>
+                  </label>
                   <input
-                    value={(form.rawPositions || []).filter(r => r !== 'ANY').join(', ')}
-                    onChange={e => {
-                      const vals = e.target.value
-                        .split(',')
-                        .map(s => s.trim().toUpperCase())
-                        .filter(Boolean);
-                      setForm(f => ({ ...f, rawPositions: vals.length > 0 ? vals : ['ANY'] }));
-                    }}
+                    value={form.rawPositionsInput ?? ''}
+                    onChange={e => setForm(f => ({ ...f, rawPositionsInput: e.target.value }))}
                     placeholder="e.g. CAM, CM, RW"
                     className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   />
+                  <p className="text-[11px] text-gray-500 mt-1">Separate multiple preferred positions with commas.</p>
                 </div>
 
                 <div>
                   <label className="text-xs text-gray-400 font-medium">Bio / Player Motto</label>
                   <input
-                    value={form.bio}
+                    value={form.bio ?? ''}
                     onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
                     placeholder="e.g. Speedster on the wings, set-piece specialist"
                     className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -544,7 +555,7 @@ export default function PlayerPanel() {
                     type="text"
                     inputMode="numeric"
                     maxLength={4}
-                    value={form.pin}
+                    value={form.pin ?? ''}
                     onChange={e => setForm(f => ({ ...f, pin: e.target.value.replace(/\D/g, '') }))}
                     placeholder="4 digits"
                     className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-amber-400 font-mono text-sm tracking-wider focus:outline-none focus:ring-2 focus:ring-amber-500"

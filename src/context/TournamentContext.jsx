@@ -74,6 +74,7 @@ export function sanitizeTournamentState(rawState) {
       logo: t.logo || '⚡',
       primaryColor: t.primaryColor || '#3B82F6',
       motto: t.motto || '',
+      photo: t.photo || '',
       rosterIds: Array.isArray(t.rosterIds) ? t.rosterIds : [],
       budget: (t.budget !== undefined && t.budget !== null) ? Number(t.budget) : 1000,
       spent: Number(t.spent) || 0,
