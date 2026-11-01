@@ -8,7 +8,8 @@ import { isFirebaseConfigured } from '../services/firebase';
 import {
   Shield, Users, UserPlus, Crown, Trash2, Sparkles, Download, Upload,
   Key, Eye, EyeOff, Edit3, Save, X, AlertCircle, ChevronDown, ChevronUp,
-  Settings, Dices, Trophy, Calendar, Copy, Check, Palette, Coins, UserCheck, Cloud
+  Settings, Dices, Trophy, Calendar, Copy, Check, Palette, Coins, UserCheck, Cloud,
+  RefreshCw
 } from 'lucide-react';
 
 const POSITION_COLORS = {
