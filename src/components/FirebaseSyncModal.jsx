@@ -102,16 +102,6 @@ export default function FirebaseSyncModal({ onClose }) {
     }
   }
 
-  function handleDisconnect() {
-    if (window.confirm('Disconnect Firebase cloud sync? The app will return to offline/local storage mode.')) {
-      saveFirebaseConfig(null);
-      setCurrentConfig(null);
-      setConfigInput('');
-      setStatusMessage('Cloud sync disconnected. App is now in standalone offline mode.');
-      window.location.reload();
-    }
-  }
-
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-3 sm:p-4">
       <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
@@ -152,15 +142,6 @@ export default function FirebaseSyncModal({ onClose }) {
                 </p>
               </div>
             </div>
-
-            {isConnected && (
-              <button
-                onClick={handleDisconnect}
-                className="text-xs text-red-400 hover:text-red-300 font-semibold px-2.5 py-1 rounded border border-red-500/20 hover:bg-red-500/10 transition-colors"
-              >
-                Disconnect
-              </button>
-            )}
           </div>
 
           {statusMessage && (

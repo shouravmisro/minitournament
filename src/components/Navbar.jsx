@@ -4,10 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { useGlobal, useOrganizer } from '../context/GlobalContext';
 import {
   Trophy, Shield, Users, User, Menu, X, LogOut, Lock,
-  Crown, Home, ChevronLeft, Settings, Cloud, Share2, Check
+  Crown, Home, ChevronLeft, Settings, Share2, Check
 } from 'lucide-react';
 import { isFirebaseConfigured } from '../services/firebase';
-import FirebaseSyncModal from './FirebaseSyncModal';
 
 export default function Navbar() {
   const { state }                      = useTournament();
@@ -21,7 +20,6 @@ export default function Navbar() {
   const [pinError,        setPinError]        = useState('');
   const [selectList,      setSelectList]      = useState(null);
   const [selectedEntityId, setSelectedEntityId] = useState(null);
-  const [showCloudModal,  setShowCloudModal]  = useState(false);
   const [copiedShare,     setCopiedShare]     = useState(false);
 
   async function handleShare() {
@@ -156,21 +154,16 @@ export default function Navbar() {
               </span>
             </button>
 
-            {/* Cloud Sync Status Indicator */}
-            <button
-              onClick={() => setShowCloudModal(true)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
-                hasCloud
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
-                  : 'bg-gray-800 text-gray-400 border-gray-700 hover:text-white hover:bg-gray-700'
-              }`}
-              title={hasCloud ? 'Firebase Live Sync Active' : 'Configure Cloud Sync'}
-            >
-              <Cloud className={`w-3.5 h-3.5 ${hasCloud ? 'text-emerald-400 animate-pulse' : 'text-gray-400'}`} />
-              <span className="hidden sm:inline text-[11px]">
-                {hasCloud ? 'Live Sync' : 'Cloud Sync'}
-              </span>
-            </button>
+            {/* Live Cloud Status Indicator (read-only) */}
+            {hasCloud && (
+              <div
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 select-none cursor-default"
+                title="Live Cloud Sync Active"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[11px] font-semibold">Live</span>
+              </div>
+            )}
 
             {role !== 'PUBLIC' && (
               <button
@@ -191,19 +184,18 @@ export default function Navbar() {
         </div>
 
         {/* Mobile role badge */}
-        <div className={`sm:hidden px-4 pb-2 flex items-center justify-between`}>
+        <div className="sm:hidden px-4 pb-2 flex items-center justify-between">
           <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-xs font-medium ${current.color}`}>
             <RoleIcon className="w-3 h-3" />
             <span>{current.label}</span>
           </div>
 
-          <button
-            onClick={() => setShowCloudModal(true)}
-            className="text-[11px] text-gray-400 hover:text-white flex items-center gap-1"
-          >
-            <Cloud className="w-3 h-3 text-emerald-400" />
-            <span>{hasCloud ? 'Cloud Live' : 'Setup Cloud'}</span>
-          </button>
+          {hasCloud && (
+            <div className="flex items-center gap-1 text-[11px] text-emerald-400 select-none cursor-default font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Live</span>
+            </div>
+          )}
         </div>
 
         {/* Dropdown Menu */}
@@ -229,13 +221,6 @@ export default function Navbar() {
               );
             })}
             <div className="border-t border-gray-800 my-1" />
-            <button
-              onClick={() => { setMenuOpen(false); setShowCloudModal(true); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-400 hover:bg-gray-800 transition-colors"
-            >
-              <Cloud className="w-4 h-4" />
-              Firebase Cloud Live Sync
-            </button>
             <button
               onClick={handleBack}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
@@ -325,11 +310,6 @@ export default function Navbar() {
             </form>
           </div>
         </div>
-      )}
-
-      {/* Cloud Sync Modal */}
-      {showCloudModal && (
-        <FirebaseSyncModal onClose={() => setShowCloudModal(false)} />
       )}
     </>
   );
