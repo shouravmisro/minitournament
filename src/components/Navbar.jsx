@@ -44,11 +44,13 @@ export default function Navbar() {
       if (pinInput === state.adminPin) { login('ADMIN'); closePinModal(); }
       else setPinError('Invalid Admin PIN');
     } else if (targetRole === 'CAPTAIN') {
-      const cap = state.captains.find(c => c.id === entityId);
+      const caps = Array.isArray(state?.captains) ? state.captains : [];
+      const cap = caps.find(c => c.id === entityId);
       if (cap && pinInput === cap.pin) { login('CAPTAIN', cap.id); closePinModal(); }
       else setPinError('Invalid Captain PIN');
     } else if (targetRole === 'PLAYER') {
-      const plr = state.players.find(p => p.id === entityId);
+      const plrs = Array.isArray(state?.players) ? state.players : [];
+      const plr = plrs.find(p => p.id === entityId);
       if (plr && pinInput === plr.pin) { login('PLAYER', plr.id); closePinModal(); }
       else setPinError('Invalid Player PIN');
     }
@@ -67,12 +69,12 @@ export default function Navbar() {
     if (targetRole === 'PUBLIC') { login('PUBLIC'); return; }
     if (targetRole === 'ADMIN')  { setPinModal('ADMIN'); return; }
     if (targetRole === 'CAPTAIN') {
-      setSelectList({ role: 'CAPTAIN', items: state.captains });
+      setSelectList({ role: 'CAPTAIN', items: Array.isArray(state?.captains) ? state.captains : [] });
       setPinModal('CAPTAIN');
       return;
     }
     if (targetRole === 'PLAYER') {
-      setSelectList({ role: 'PLAYER', items: state.players });
+      setSelectList({ role: 'PLAYER', items: Array.isArray(state?.players) ? state.players : [] });
       setPinModal('PLAYER');
       return;
     }
@@ -231,18 +233,24 @@ export default function Navbar() {
             {selectList && (
               <div className="space-y-2">
                 <label className="text-sm text-gray-400 font-medium">Select your name:</label>
-                <select
-                  value={selectedEntityId || ''}
-                  onChange={e => setSelectedEntityId(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm"
-                >
-                  <option value="">-- Choose from roster --</option>
-                  {selectList.items.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} {item.position ? `(${item.position})` : ''}
-                    </option>
-                  ))}
-                </select>
+                {(!selectList.items || selectList.items.length === 0) ? (
+                  <p className="text-xs text-amber-400/90 bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
+                    No {selectList.role === 'CAPTAIN' ? 'captains' : 'players'} registered in this tournament yet.
+                  </p>
+                ) : (
+                  <select
+                    value={selectedEntityId || ''}
+                    onChange={e => setSelectedEntityId(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white text-sm"
+                  >
+                    <option value="">-- Choose from roster ({selectList.items.length}) --</option>
+                    {selectList.items.map(item => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} {item.position ? `(${item.position})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             )}
 

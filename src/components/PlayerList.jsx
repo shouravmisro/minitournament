@@ -31,6 +31,9 @@ const STATUS_FILTER_OPTIONS = [
 export default function PlayerList() {
   const { state } = useTournament();
 
+  const players = Array.isArray(state?.players) ? state.players : [];
+  const teams = Array.isArray(state?.teams) ? state.teams : [];
+
   const [posFilter, setPosFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
@@ -39,27 +42,29 @@ export default function PlayerList() {
   // Build set of all unique raw sub-tags across every player
   const allSubTags = useMemo(() => {
     const tags = new Set();
-    state.players.forEach(p => p.rawPositions?.forEach(t => { if (t !== 'ANY') tags.add(t); }));
+    players.forEach(p => p.rawPositions?.forEach(t => { if (t !== 'ANY') tags.add(t); }));
     return [...tags].sort();
-  }, [state.players]);
+  }, [players]);
 
   const [subTagFilter, setSubTagFilter] = useState(null);
 
   const filtered = useMemo(() => {
-    return state.players.filter(p => {
+    return players.filter(p => {
+      if (!p) return false;
       if (posFilter !== 'ALL' && p.position !== posFilter) return false;
       if (statusFilter !== 'ALL' && p.status !== statusFilter) return false;
       if (subTagFilter && !p.rawPositions?.includes(subTagFilter)) return false;
       if (search) {
         const q = search.toLowerCase();
-        if (!p.name.toLowerCase().includes(q) &&
-          !p.rawPositions?.some(t => t.toLowerCase().includes(q))) return false;
+        const nameMatch = (p.name || '').toLowerCase().includes(q);
+        const tagMatch = p.rawPositions?.some(t => t.toLowerCase().includes(q));
+        if (!nameMatch && !tagMatch) return false;
       }
       return true;
     });
-  }, [state.players, posFilter, statusFilter, subTagFilter, search]);
+  }, [players, posFilter, statusFilter, subTagFilter, search]);
 
-  const selectedPlayer = state.players.find(p => p.id === selectedId);
+  const selectedPlayer = players.find(p => p.id === selectedId);
 
   return (
     <div className="space-y-4">
@@ -68,7 +73,7 @@ export default function PlayerList() {
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
           <Users className="w-5 h-5 text-blue-400" />
           Players
-          <span className="text-sm font-normal text-gray-500">({filtered.length}/{state.players.length})</span>
+          <span className="text-sm font-normal text-gray-500">({filtered.length}/{players.length})</span>
         </h2>
       </div>
 
@@ -151,7 +156,7 @@ export default function PlayerList() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {filtered.map(player => {
-            const team = state.teams.find(t => t.id === player.teamId);
+            const team = teams.find(t => t.id === player.teamId);
             const isDrafted = player.status === 'DRAFTED';
             return (
               <button

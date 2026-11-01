@@ -25,7 +25,103 @@ const DEFAULT_STATE = {
   adminPin: '0000',
   draftMode: 'AUCTION', // 'AUCTION' | 'FREE'
   defaultBudget: 1000,
+  _updatedAt: 0,
 };
+
+// ── Sanitize tournament state to prevent any undefined crashes ──
+export function sanitizeTournamentState(rawState) {
+  if (!rawState || typeof rawState !== 'object') {
+    return { ...DEFAULT_STATE, _updatedAt: Date.now() };
+  }
+
+  const rawPlayers = Array.isArray(rawState.players) ? rawState.players : [];
+  const players = rawPlayers.map(p => {
+    if (!p || typeof p !== 'object') return null;
+    const stats = p.stats || {};
+    return {
+      id: p.id || generateId('plr'),
+      name: p.name || 'Unknown Player',
+      pin: p.pin ? String(p.pin) : generatePin(),
+      position: p.position || 'FLEX',
+      rawPositions: Array.isArray(p.rawPositions)
+        ? p.rawPositions
+        : (p.position ? [p.position] : ['ANY']),
+      jerseyNumber: (p.jerseyNumber !== undefined && p.jerseyNumber !== null && p.jerseyNumber !== '') ? Number(p.jerseyNumber) : null,
+      avatar: p.avatar || '',
+      bio: p.bio || '',
+      status: p.status || 'UNDRAFTED',
+      teamId: p.teamId || null,
+      availability: p.availability || 'AVAILABLE',
+      stats: {
+        matches: Number(stats.matches) || 0,
+        goals: Number(stats.goals) || 0,
+        assists: Number(stats.assists) || 0,
+        cleanSheets: Number(stats.cleanSheets) || 0,
+        saves: Number(stats.saves) || 0,
+        avgRating: Number(stats.avgRating) || 0,
+        mvpCount: Number(stats.mvpCount) || 0,
+      },
+    };
+  }).filter(Boolean);
+
+  const rawTeams = Array.isArray(rawState.teams) ? rawState.teams : [];
+  const teams = rawTeams.map(t => {
+    if (!t || typeof t !== 'object') return null;
+    return {
+      id: t.id || generateId('team'),
+      name: t.name || 'Team',
+      captainId: t.captainId || null,
+      logo: t.logo || '⚡',
+      primaryColor: t.primaryColor || '#3B82F6',
+      motto: t.motto || '',
+      rosterIds: Array.isArray(t.rosterIds) ? t.rosterIds : [],
+      budget: (t.budget !== undefined && t.budget !== null) ? Number(t.budget) : 1000,
+      spent: Number(t.spent) || 0,
+    };
+  }).filter(Boolean);
+
+  const rawCaptains = Array.isArray(rawState.captains) ? rawState.captains : [];
+  const captains = rawCaptains.map(c => {
+    if (!c || typeof c !== 'object') return null;
+    return {
+      id: c.id || generateId('cap'),
+      name: c.name || 'Captain',
+      pin: c.pin ? String(c.pin) : generatePin(),
+      teamId: c.teamId || null,
+      avatar: c.avatar || '',
+    };
+  }).filter(Boolean);
+
+  const rawMatches = Array.isArray(rawState.matches) ? rawState.matches : [];
+  const matches = rawMatches.map(m => {
+    if (!m || typeof m !== 'object') return null;
+    return {
+      ...m,
+      events: Array.isArray(m.events) ? m.events : [],
+      playerPerformance: Array.isArray(m.playerPerformance) ? m.playerPerformance : [],
+    };
+  }).filter(Boolean);
+
+  const rawAwards = Array.isArray(rawState.awards) ? rawState.awards : [];
+
+  return {
+    ...DEFAULT_STATE,
+    ...rawState,
+    organizer: {
+      ...DEFAULT_STATE.organizer,
+      ...(rawState.organizer || {}),
+    },
+    captains,
+    teams,
+    players,
+    matches,
+    awards: rawAwards,
+    adminPin: rawState.adminPin ? String(rawState.adminPin) : '0000',
+    draftMode: rawState.draftMode || 'AUCTION',
+    defaultBudget: Number(rawState.defaultBudget) || 1000,
+    _updatedAt: rawState._updatedAt || 0,
+  };
+}
 
 // ── Storage helpers (dynamic key for multi-tournament) ──
 function loadState(storageKey) {
@@ -33,25 +129,12 @@ function loadState(storageKey) {
     const raw = localStorage.getItem(storageKey);
     if (raw) {
       const parsed = JSON.parse(raw);
-      const players = (parsed.players || []).map(p => ({
-        ...p,
-        stats: {
-          matches: 0,
-          goals: 0,
-          assists: 0,
-          cleanSheets: 0,
-          saves: 0,
-          avgRating: 0,
-          mvpCount: 0,
-          ...(p.stats || {}),
-        },
-      }));
-      return { ...DEFAULT_STATE, ...parsed, players };
+      return sanitizeTournamentState(parsed);
     }
   } catch (e) {
     console.warn('Failed to load state', e);
   }
-  return { ...DEFAULT_STATE };
+  return { ...DEFAULT_STATE, _updatedAt: Date.now() };
 }
 
 function saveState(storageKey, state) {
@@ -396,7 +479,31 @@ export function recomputePlayerStats(players, matches) {
 function tournamentReducer(state, action) {
   switch (action.type) {
     case 'SET_STATE':
-      return { ...action.payload };
+      return sanitizeTournamentState({ ...action.payload, _updatedAt: Date.now() });
+
+    case 'SYNC_REMOTE_STATE': {
+      const incoming = action.payload;
+      if (!incoming || typeof incoming !== 'object') return state;
+
+      const remotePlayers = Array.isArray(incoming.players) ? incoming.players : [];
+      const localPlayers = Array.isArray(state.players) ? state.players : [];
+
+      // Critical protection: If local state has players and cloud document has 0 players,
+      // DO NOT wipe local state!
+      if (localPlayers.length > 0 && remotePlayers.length === 0) {
+        console.warn('Preserving local tournament data because remote has 0 players');
+        return state;
+      }
+
+      // Check timestamps: if local state is newer, keep local state
+      const remoteTime = incoming._updatedAt || 0;
+      const localTime = state._updatedAt || 0;
+      if (localTime > remoteTime && localPlayers.length >= remotePlayers.length && remoteTime > 0) {
+        return state;
+      }
+
+      return sanitizeTournamentState({ ...incoming, _updatedAt: remoteTime || Date.now() });
+    }
 
     case 'UPDATE_ORGANIZER':
       return { ...state, organizer: { ...state.organizer, ...action.payload } };
@@ -686,9 +793,9 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
     if (!isFirebaseConfigured() || !tournamentId) return;
 
     const unsubscribe = subscribeTournament(tournamentId, (cloudData) => {
-      if (cloudData && cloudData.organizer) {
+      if (cloudData && typeof cloudData === 'object' && cloudData.organizer) {
         isRemoteUpdate.current = true;
-        dispatch({ type: 'SET_STATE', payload: cloudData });
+        dispatch({ type: 'SYNC_REMOTE_STATE', payload: cloudData });
       }
     });
 

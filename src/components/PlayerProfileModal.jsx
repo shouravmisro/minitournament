@@ -16,13 +16,20 @@ const POS_BADGE = {
 export default function PlayerProfileModal({ player, onClose }) {
   const { state } = useTournament();
 
-  const team = state.teams.find(t => t.id === player.teamId);
-  const captain = team ? state.captains.find(c => c.id === team.captainId) : null;
-  const awards = state.awards.filter(a => a.winnerPlayerId === player.id);
-  const isCap = state.captains.some(c => c.name === player.name);
+  if (!player) return null;
+
+  const teams = state?.teams || [];
+  const captains = state?.captains || [];
+  const awardsList = state?.awards || [];
+  const matchesList = state?.matches || [];
+
+  const team = teams.find(t => t.id === player.teamId);
+  const captain = team ? captains.find(c => c.id === team.captainId) : null;
+  const awards = awardsList.filter(a => a.winnerPlayerId === player.id);
+  const isCap = captains.some(c => c.name === player.name);
 
   // Recent match performances
-  const playerMatches = state.matches
+  const playerMatches = matchesList
     .filter(m => m.status === 'COMPLETED' && Array.isArray(m.playerPerformance) && m.playerPerformance.some(p => p.playerId === player.id))
     .slice(-4)
     .reverse();
@@ -150,7 +157,7 @@ export default function PlayerProfileModal({ player, onClose }) {
               {playerMatches.map(m => {
                 const perf = m.playerPerformance.find(p => p.playerId === player.id);
                 const oppTeamId = m.teamAId === player.teamId ? m.teamBId : m.teamAId;
-                const oppTeam = state.teams.find(t => t.id === oppTeamId);
+                const oppTeam = teams.find(t => t.id === oppTeamId);
                 return (
                   <div key={m.id} className="flex items-center justify-between text-xs bg-gray-800/60 px-2.5 py-1.5 rounded-lg">
                     <span className="text-gray-300 truncate">

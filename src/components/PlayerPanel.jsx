@@ -23,12 +23,18 @@ const AVAILABILITY_OPTIONS = [
 
 export default function PlayerPanel() {
   const { state, updatePlayer } = useTournament();
-  const { authenticatedId } = useAuth();
+  const { authenticatedId, logout } = useAuth();
 
-  const player = state.players.find(p => p.id === authenticatedId);
-  const team = player?.teamId ? state.teams.find(t => t.id === player.teamId) : null;
-  const captain = team ? state.captains.find(c => c.id === team.captainId) : null;
-  const awards = state.awards.filter(a => a.winnerPlayerId === player?.id);
+  const players = state?.players || [];
+  const teams = state?.teams || [];
+  const captains = state?.captains || [];
+  const matches = state?.matches || [];
+  const awardsList = state?.awards || [];
+
+  const player = players.find(p => p.id === authenticatedId);
+  const team = player?.teamId ? teams.find(t => t.id === player.teamId) : null;
+  const captain = team ? captains.find(c => c.id === team.captainId) : null;
+  const awards = awardsList.filter(a => player && a.winnerPlayerId === player.id);
 
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
@@ -42,16 +48,24 @@ export default function PlayerPanel() {
 
   if (!player) {
     return (
-      <div className="text-center py-12 text-gray-500">
-        <User className="w-12 h-12 mx-auto mb-3 opacity-50" />
-        <p className="text-lg font-medium">Player not found</p>
-        <p className="text-sm">Please login again from the navigation menu.</p>
+      <div className="text-center py-14 bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-500 max-w-md mx-auto space-y-3">
+        <User className="w-12 h-12 mx-auto mb-2 text-blue-400/50" />
+        <h3 className="text-lg font-bold text-white">Player Session Expired or Not Selected</h3>
+        <p className="text-xs text-gray-400">
+          Please select your player profile from the top-right menu and enter your 4-digit PIN.
+        </p>
+        <button
+          onClick={logout}
+          className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold"
+        >
+          Return to Public Hub
+        </button>
       </div>
     );
   }
 
-  const upcomingMatches = state.matches.filter(m =>
-    (m.teamAId === player.teamId || m.teamBId === player.teamId) &&
+  const upcomingMatches = matches.filter(m =>
+    player?.teamId && (m.teamAId === player.teamId || m.teamBId === player.teamId) &&
     m.status !== 'COMPLETED'
   );
 
@@ -124,14 +138,14 @@ export default function PlayerPanel() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-6 gap-2 mt-4">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-4">
             {[
-              { label: 'Matches', value: player.stats.matches, icon: Calendar },
-              { label: 'Goals', value: player.stats.goals, icon: Target },
-              { label: 'Assists', value: player.stats.assists, icon: Zap },
-              { label: 'Clean S.', value: player.stats.cleanSheets, icon: Shield },
-              { label: 'Saves', value: player.stats.saves || 0, icon: Shield },
-              { label: 'Rating', value: player.stats.avgRating ? `${player.stats.avgRating}★` : '–', icon: Trophy },
+              { label: 'Matches', value: player.stats?.matches ?? 0, icon: Calendar },
+              { label: 'Goals', value: player.stats?.goals ?? 0, icon: Target },
+              { label: 'Assists', value: player.stats?.assists ?? 0, icon: Zap },
+              { label: 'Clean S.', value: player.stats?.cleanSheets ?? 0, icon: Shield },
+              { label: 'Saves', value: player.stats?.saves ?? 0, icon: Shield },
+              { label: 'Rating', value: player.stats?.avgRating ? `${player.stats.avgRating}★` : '–', icon: Trophy },
             ].map(s => (
               <div key={s.label} className="bg-gray-800/60 rounded-lg p-2 text-center">
                 <s.icon className="w-3.5 h-3.5 text-gray-500 mx-auto mb-0.5" />

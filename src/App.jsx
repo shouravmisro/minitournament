@@ -4,6 +4,7 @@ import { TournamentProvider } from './context/TournamentContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar            from './components/Navbar';
 import TournamentManager from './components/TournamentManager';
+import ErrorBoundary     from './components/ErrorBoundary';
 import PublicHub         from './components/PublicHub';
 import AdminPanel        from './components/AdminPanel';
 import CaptainPanel      from './components/CaptainPanel';
@@ -156,7 +157,11 @@ function AppRouter() {
   const { global } = useGlobal();
 
   if (!global.activeTournamentId) {
-    return <TournamentManager />;
+    return (
+      <ErrorBoundary>
+        <TournamentManager />
+      </ErrorBoundary>
+    );
   }
 
   return (
@@ -166,7 +171,9 @@ function AppRouter() {
       storageKey={`mt_state_${global.activeTournamentId}`}
     >
       <AuthProvider>
-        <AppContent />
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
       </AuthProvider>
     </TournamentProvider>
   );
@@ -174,8 +181,10 @@ function AppRouter() {
 
 export default function App() {
   return (
-    <GlobalProvider>
-      <AppRouter />
-    </GlobalProvider>
+    <ErrorBoundary>
+      <GlobalProvider>
+        <AppRouter />
+      </GlobalProvider>
+    </ErrorBoundary>
   );
 }
