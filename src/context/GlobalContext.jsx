@@ -28,6 +28,9 @@ export function getUrlTournamentId() {
   return null;
 }
 
+// Stored once at module load to distinguish an explicitly provided URL link from runtime state
+const INITIAL_EXPLICIT_URL_TOURNAMENT_ID = typeof window !== 'undefined' ? getUrlTournamentId() : null;
+
 const DEFAULT_ORGANIZER = {
   name: '',
   avatar: '',
@@ -39,26 +42,25 @@ const DEFAULT_ORGANIZER = {
 const DEFAULT_GLOBAL = {
   tournaments: [
     {
-      id: 'default',
-      name: 'Local Champions League',
+      id: 't_mvwya9yi',
+      name: 'FC CHOMPA PREMIER LEAGUE ',
       format: 'HYBRID',
-      createdAt: '2026-11-01T00:00:00.000Z',
+      createdAt: '2026-10-31T22:06:06.570Z',
     }
   ],
-  activeTournamentId: 'default',
+  activeTournamentId: 't_mvwya9yi',
   showManager: false,
 };
 
 function loadGlobal() {
   try {
-    const urlId = getUrlTournamentId();
     const raw = localStorage.getItem(GM_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       const tournaments = Array.isArray(parsed.tournaments) && parsed.tournaments.length > 0
         ? parsed.tournaments
         : DEFAULT_GLOBAL.tournaments;
-      const activeTournamentId = urlId || parsed.activeTournamentId || tournaments[0]?.id || 'default';
+      const activeTournamentId = INITIAL_EXPLICIT_URL_TOURNAMENT_ID || parsed.activeTournamentId || tournaments[0]?.id || 't_mvwya9yi';
       return {
         ...DEFAULT_GLOBAL,
         ...parsed,
@@ -67,11 +69,11 @@ function loadGlobal() {
         showManager: parsed.showManager || false,
       };
     }
-    if (urlId) {
+    if (INITIAL_EXPLICIT_URL_TOURNAMENT_ID) {
       return {
         ...DEFAULT_GLOBAL,
-        activeTournamentId: urlId,
-        tournaments: [{ id: urlId, name: 'Local Champions League', format: 'HYBRID', createdAt: new Date().toISOString() }],
+        activeTournamentId: INITIAL_EXPLICIT_URL_TOURNAMENT_ID,
+        tournaments: [{ id: INITIAL_EXPLICIT_URL_TOURNAMENT_ID, name: 'FC CHOMPA PREMIER LEAGUE ', format: 'HYBRID', createdAt: new Date().toISOString() }],
       };
     }
   } catch {
@@ -98,17 +100,16 @@ function globalReducer(state, action) {
       const currentTournaments = state.tournaments || [];
       const tournaments = incomingTournaments.length > 0 ? incomingTournaments : currentTournaments;
 
-      // URL tournament ID has highest priority, then cloud active, then current, then first
-      const urlId = getUrlTournamentId();
-      let activeId = urlId || action.payload.activeTournamentId || state.activeTournamentId;
-      if (!activeId && tournaments.length > 0) {
-        activeId = tournaments[0].id;
+      // Honor initial deep-link if present, otherwise follow cloud's active tournament
+      let activeId = INITIAL_EXPLICIT_URL_TOURNAMENT_ID || action.payload.activeTournamentId || state.activeTournamentId;
+      if (tournaments.length > 0 && !tournaments.some(t => t.id === activeId)) {
+        activeId = action.payload.activeTournamentId || tournaments[0].id;
       }
 
       return {
         ...state,
         tournaments,
-        activeTournamentId: activeId || 'default',
+        activeTournamentId: activeId || 't_mvwya9yi',
         _updatedAt: action.payload._updatedAt || Date.now(),
       };
     }

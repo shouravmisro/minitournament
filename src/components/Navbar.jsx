@@ -25,7 +25,7 @@ export default function Navbar() {
   const [copiedShare,     setCopiedShare]     = useState(false);
 
   async function handleShare() {
-    const tournamentId = global.activeTournamentId || 'default';
+    const tournamentId = global.activeTournamentId || 't_mvwya9yi';
     const base = window.location.origin + window.location.pathname;
     const url = `${base}?t=${tournamentId}`;
     if (navigator.share) {

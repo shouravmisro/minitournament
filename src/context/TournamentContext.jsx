@@ -8,7 +8,7 @@ import {
 // ── Default tournament state (Section 3 schema) ──
 const DEFAULT_STATE = {
   organizer: {
-    name: 'Local Champions League',
+    name: 'FC CHOMPA PREMIER LEAGUE ',
     hostName: 'City Sports Club',
     logoUrl: '',
     venue: 'Central Turf Arena',

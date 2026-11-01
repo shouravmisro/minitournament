@@ -166,7 +166,7 @@ function AppRouter() {
   }
 
   // Active tournament: always resolves to a valid tournament ID
-  const activeId = global.activeTournamentId || (global.tournaments?.[0]?.id) || 'default';
+  const activeId = global.activeTournamentId || (global.tournaments?.[0]?.id) || 't_mvwya9yi';
 
   return (
     // key prop forces TournamentProvider to remount (fresh localStorage load) on tournament switch
