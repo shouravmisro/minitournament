@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Crown, Users, Edit3, Save, X, Palette, Shield, User,
   Type, Smile, ChevronDown, ChevronUp, Dices, Key, Eye, EyeOff, Check,
-  Camera, Upload, Trash2, Sparkles
+  Trash2, Link
 } from 'lucide-react';
 
 const POSITION_COLORS = {
@@ -28,38 +28,7 @@ const COLOR_PRESETS = [
   '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'
 ];
 
-function compressImageFile(file, callback) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const maxDim = 220;
-      let width = img.width;
-      let height = img.height;
-      if (width > height) {
-        if (width > maxDim) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        }
-      } else {
-        if (height > maxDim) {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
-        }
-      }
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      callback(dataUrl);
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
+
 
 export default function CaptainPanel() {
   const { state, updateTeam, updateCaptain } = useTournament();
@@ -406,7 +375,7 @@ export default function CaptainPanel() {
                 {/* Captain Photo / Avatar Section */}
                 <div className="bg-gray-950/70 border border-gray-800 rounded-xl p-3.5 space-y-3">
                   <label className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
-                    <Camera className="w-3.5 h-3.5 text-amber-400" /> Captain Photo & Avatar
+                    <Smile className="w-3.5 h-3.5 text-amber-400" /> Captain Photo & Avatar
                   </label>
 
                   <div className="flex items-center gap-3">
@@ -426,32 +395,27 @@ export default function CaptainPanel() {
                     )}
 
                     <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold transition-colors">
-                          <Upload className="w-3.5 h-3.5" />
-                          <span>Upload Photo</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={e => {
-                              const file = e.target.files?.[0];
-                              if (file) compressImageFile(file, dataUrl => setCapForm(f => ({ ...f, avatar: dataUrl })));
-                            }}
-                          />
+                      {/* URL Input */}
+                      <div>
+                        <label className="text-[11px] text-gray-400 block mb-1 flex items-center gap-1">
+                          <Link className="w-3 h-3" /> Paste Photo URL
                         </label>
-
-                        {capForm.avatar && (
-                          <button
-                            type="button"
-                            onClick={() => setCapForm(f => ({ ...f, avatar: '' }))}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-semibold transition-colors"
-                          >
-                            <Trash2 className="w-3 h-3" /> Clear
-                          </button>
-                        )}
+                        <input
+                          value={capForm.avatar?.startsWith('data:') ? '' : (capForm.avatar?.startsWith('http') ? capForm.avatar : '')}
+                          onChange={e => setCapForm(f => ({ ...f, avatar: e.target.value.trim() }))}
+                          placeholder="https://example.com/photo.jpg"
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono"
+                        />
                       </div>
-                      <p className="text-[11px] text-gray-500">Upload a selfie, picture, or select an emoji badge</p>
+                      {capForm.avatar && (
+                        <button
+                          type="button"
+                          onClick={() => setCapForm(f => ({ ...f, avatar: '' }))}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" /> Clear
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -476,17 +440,6 @@ export default function CaptainPanel() {
                         </button>
                       ))}
                     </div>
-                  </div>
-
-                  {/* URL */}
-                  <div>
-                    <label className="text-[11px] text-gray-400 block mb-1">Or Paste Image URL</label>
-                    <input
-                      value={capForm.avatar?.startsWith('data:') ? '' : (capForm.avatar || '')}
-                      onChange={e => setCapForm(f => ({ ...f, avatar: e.target.value }))}
-                      placeholder="https://example.com/captain.jpg"
-                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono"
-                    />
                   </div>
                 </div>
 
