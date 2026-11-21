@@ -55,12 +55,12 @@ export default function LeagueStandings() {
   const hasLeague = state.matches.some(m => m.stage === 'LEAGUE');
   const colBase = 'text-right text-xs sm:text-sm font-mono';
 
-  // Leaders calculations
+  // Leaders calculations (Top 10 in each category)
   const topScorers = useMemo(() =>
     [...state.players]
       .filter(p => (p.stats?.goals || 0) > 0)
       .sort((a, b) => (b.stats?.goals || 0) - (a.stats?.goals || 0))
-      .slice(0, 5),
+      .slice(0, 10),
     [state.players]
   );
 
@@ -68,7 +68,7 @@ export default function LeagueStandings() {
     [...state.players]
       .filter(p => (p.stats?.assists || 0) > 0)
       .sort((a, b) => (b.stats?.assists || 0) - (a.stats?.assists || 0))
-      .slice(0, 5),
+      .slice(0, 10),
     [state.players]
   );
 
@@ -79,7 +79,7 @@ export default function LeagueStandings() {
         (b.stats?.cleanSheets || 0) - (a.stats?.cleanSheets || 0) ||
         (b.stats?.saves || 0) - (a.stats?.saves || 0)
       )
-      .slice(0, 5),
+      .slice(0, 10),
     [state.players]
   );
 
@@ -87,7 +87,7 @@ export default function LeagueStandings() {
     [...state.players]
       .filter(p => Number(p.stats?.avgRating || 0) > 0)
       .sort((a, b) => Number(b.stats?.avgRating || 0) - Number(a.stats?.avgRating || 0))
-      .slice(0, 5),
+      .slice(0, 10),
     [state.players]
   );
 
@@ -220,7 +220,7 @@ export default function LeagueStandings() {
           {/* 1. Golden Boot (Top Goals) */}
           <div className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 space-y-4 shadow-xl">
             <h3 className="font-serif text-base text-amber-200 flex items-center gap-2.5 border-b border-dashed border-amber-900/40 pb-3">
-              <Target className="w-4 h-4 text-emerald-400" /> Golden Boot (Top Scorers)
+              <Target className="w-4 h-4 text-emerald-400" /> Golden Boot (Top 10 Scorers)
             </h3>
             {topScorers.length === 0 ? (
               <p className="text-xs font-serif text-amber-500/40 py-6 text-center italic">No goals chronicled yet.</p>
@@ -248,7 +248,7 @@ export default function LeagueStandings() {
           {/* 2. Playmaker Kings (Top Assists) */}
           <div className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 space-y-4 shadow-xl">
             <h3 className="font-serif text-base text-amber-200 flex items-center gap-2.5 border-b border-dashed border-amber-900/40 pb-3">
-              <Zap className="w-4 h-4 text-amber-400" /> Crown Architects (Top Assists)
+              <Zap className="w-4 h-4 text-amber-400" /> Crown Architects (Top 10 Assists)
             </h3>
             {topAssisters.length === 0 ? (
               <p className="text-xs font-serif text-amber-500/40 py-6 text-center italic">No assists chronicled yet.</p>
@@ -276,7 +276,7 @@ export default function LeagueStandings() {
           {/* 3. Golden Glove (Clean Sheets & Saves) */}
           <div className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 space-y-4 shadow-xl">
             <h3 className="font-serif text-base text-amber-200 flex items-center gap-2.5 border-b border-dashed border-amber-900/40 pb-3">
-              <Shield className="w-4 h-4 text-cyan-400" /> Golden Glove (Defenders & Goalkeepers)
+              <Shield className="w-4 h-4 text-cyan-400" /> Golden Glove (Top 10 Keepers & Defenders)
             </h3>
             {topGKs.length === 0 ? (
               <p className="text-xs font-serif text-amber-500/40 py-6 text-center italic">No sentinel stats recorded yet.</p>
@@ -306,7 +306,7 @@ export default function LeagueStandings() {
           {/* 4. Top Rated Players */}
           <div className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 space-y-4 shadow-xl">
             <h3 className="font-serif text-base text-amber-200 flex items-center gap-2.5 border-b border-dashed border-amber-900/40 pb-3">
-              <Star className="w-4 h-4 text-purple-400" /> Grand Valuations (Highest Ratings)
+              <Star className="w-4 h-4 text-purple-400" /> Grand Valuations (Top 10 Match Ratings)
             </h3>
             {topRated.length === 0 ? (
               <p className="text-xs font-serif text-amber-500/40 py-6 text-center italic">No match valuations recorded yet.</p>
