@@ -132,40 +132,51 @@ function WheelCanvas({ players, spinning, onSpinEnd, targetIndex }) {
   );
 }
 
-/* ── Main AuctionDraft component ── */
+/* ── Main AuctionDraft component (Live Cloud-Synced + Bid Guardrails) ── */
 export default function AuctionDraft() {
-  const { state, draftPlayer, updateTeam } = useTournament();
-  const { role, entityId }                  = useAuth();
+  const {
+    state,
+    draftPlayer,
+    updateTeam,
+    setActiveDraft,
+    placeDraftBid,
+    autoFillUndrafted,
+  } = useTournament();
+  const { role, authenticatedId, user } = useAuth();
 
   const { players, teams, captains, draftMode, defaultBudget } = state;
+  const activeDraft = state.activeDraft || {};
+  const phase = activeDraft.phase || 'IDLE';
+  const currentPlayer = activeDraft.playerId
+    ? players.find(p => p.id === activeDraft.playerId) || null
+    : null;
+  const syncedBids = activeDraft.bids || {};
 
-  // Local auction state
+  // Local wheel animation & bid draft inputs
   const [posFilter,     setPosFilter]     = useState('ALL');
-  const [phase,         setPhase]         = useState('IDLE'); // IDLE | SPINNING | BIDDING | ASSIGNED
   const [spinning,      setSpinning]      = useState(false);
   const [targetIndex,   setTargetIndex]   = useState(null);
-  const [currentPlayer, setCurrentPlayer] = useState(null);
-  const [bids,          setBids]          = useState({});     // teamId -> amount
-  const [winner,        setWinner]        = useState(null);   // { teamId, amount }
+  const [localBids,     setLocalBids]     = useState({});     // teamId -> amount
   const [celebration,   setCelebration]   = useState(false);
 
   const isAdmin   = role === 'ADMIN';
   const isCaptain = role === 'CAPTAIN';
 
-  // Pool of undrafted players (non-captain-only)
+  const minSquadSize = Number(activeDraft.minSquadSize) || 5;
+  const minBasePrice = Number(activeDraft.minBasePrice) || 50;
+
+  // Pool of undrafted players
   const undrafted = players.filter(p => p.status === 'UNDRAFTED');
 
-  // Filtered pool
   const pool = posFilter === 'ALL'
     ? undrafted
     : undrafted.filter(p => p.position === posFilter || p.rawPositions?.includes(posFilter));
 
   const positions = ['ALL', 'GK', 'DEF', 'MID', 'FWD', 'FLEX'];
 
-  // My team (for captain view)
   const myTeam = isCaptain
     ? teams.find(t => {
-        const cap = captains.find(c => c.id === entityId);
+        const cap = captains.find(c => c.id === authenticatedId);
         return cap && t.id === cap.teamId;
       })
     : null;
@@ -174,56 +185,113 @@ export default function AuctionDraft() {
     return (team.budget ?? defaultBudget ?? 1000) - (team.spent ?? 0);
   }
 
+  function getTeamRosterCount(team) {
+    return players.filter(p => p.teamId === team.id || team.rosterIds?.includes(p.id)).length;
+  }
+
+  // Max safe bid ensures team always keeps enough budget for remaining required squad slots
+  function getMaxSafeBid(team) {
+    const rem = getRemainingBudget(team);
+    const currentSize = getTeamRosterCount(team);
+    const slotsLeftAfterThis = Math.max(0, minSquadSize - currentSize - 1);
+    const reserved = slotsLeftAfterThis * minBasePrice;
+    return Math.max(0, rem - reserved);
+  }
+
+  function getEffectiveBid(teamId) {
+    const syncedEntry = syncedBids[teamId];
+    const syncedVal = typeof syncedEntry === 'number' ? syncedEntry : (syncedEntry?.amount ?? 0);
+    return localBids[teamId] !== undefined ? localBids[teamId] : syncedVal;
+  }
+
   function handleSpin() {
-    if (pool.length === 0 || spinning) return;
+    if (pool.length === 0 || spinning || !isAdmin) return;
     const idx = Math.floor(Math.random() * pool.length);
     setTargetIndex(idx);
     setSpinning(true);
-    setPhase('SPINNING');
-    setBids({});
-    setWinner(null);
+    setLocalBids({});
+    setActiveDraft({
+      phase: 'SPINNING',
+      playerId: null,
+      bids: {},
+      highestTeamId: null,
+      highestBid: 0,
+    });
   }
 
   const handleSpinEnd = useCallback(() => {
     setSpinning(false);
-    if (!pool[targetIndex]) return;
-    setCurrentPlayer(pool[targetIndex]);
-    // Pre-fill bid inputs at 0
-    const initBids = {};
-    teams.forEach(t => { initBids[t.id] = 0; });
-    setBids(initBids);
-    setPhase('BIDDING');
-  }, [pool, targetIndex, teams]);
+    const landed = pool[targetIndex];
+    if (!landed) return;
+    setLocalBids({});
+    setActiveDraft({
+      phase: 'BIDDING',
+      playerId: landed.id,
+      bids: {},
+      highestTeamId: null,
+      highestBid: 0,
+    });
+  }, [pool, targetIndex, setActiveDraft]);
 
   function handleBidChange(teamId, val) {
     const n = parseInt(val, 10);
-    setBids(prev => ({ ...prev, [teamId]: isNaN(n) ? 0 : n }));
+    setLocalBids(prev => ({ ...prev, [teamId]: isNaN(n) ? 0 : Math.max(0, n) }));
+  }
+
+  function handleCaptainSubmitBid(team) {
+    if (!team || phase !== 'BIDDING') return;
+    const amount = getEffectiveBid(team.id);
+    const maxSafe = getMaxSafeBid(team);
+    if (amount > maxSafe) return;
+    placeDraftBid({ teamId: team.id, amount, byUid: user?.uid || authenticatedId || null });
   }
 
   function handleAssign(teamId) {
     if (!currentPlayer || !isAdmin) return;
-    const team   = teams.find(t => t.id === teamId);
-    const amount = bids[teamId] || 0;
+    const team    = teams.find(t => t.id === teamId);
+    const amount  = getEffectiveBid(teamId);
+    const maxSafe = getMaxSafeBid(team);
+    if (amount > maxSafe) return;
 
     draftPlayer(currentPlayer.id, teamId);
     updateTeam({ id: teamId, spent: (team.spent ?? 0) + amount });
 
-    setWinner({ teamId, amount, teamName: team.name, playerName: currentPlayer.name });
-    setPhase('ASSIGNED');
+    setActiveDraft({
+      phase: 'ASSIGNED',
+      playerId: null,
+      bids: {},
+      highestTeamId: null,
+      highestBid: 0,
+      lastWinner: {
+        teamId,
+        amount,
+        teamName: team.name,
+        playerName: currentPlayer.name,
+      },
+    });
+    setLocalBids({});
     setCelebration(true);
     setTimeout(() => setCelebration(false), 3000);
   }
 
   function handleReset() {
-    setPhase('IDLE');
-    setCurrentPlayer(null);
-    setBids({});
-    setWinner(null);
+    setLocalBids({});
     setTargetIndex(null);
     setSpinning(false);
+    setActiveDraft({
+      phase: 'IDLE',
+      playerId: null,
+      bids: {},
+      highestTeamId: null,
+      highestBid: 0,
+    });
   }
 
   const canSpin = isAdmin && pool.length > 0 && (phase === 'IDLE' || phase === 'ASSIGNED');
+  const winner = activeDraft.lastWinner;
+  const highestTeam = activeDraft.highestTeamId
+    ? teams.find(t => t.id === activeDraft.highestTeamId)
+    : null;
 
   // ── FREE DRAFT mode ──
   if (draftMode === 'FREE') {
@@ -235,7 +303,6 @@ export default function AuctionDraft() {
           <p className="text-amber-500/60 text-sm">Spin the wheel and assign players directly.</p>
         </div>
 
-        {/* Pos filter */}
         <div className="flex gap-1.5 flex-wrap">
           {positions.map(pos => (
             <button key={pos} onClick={() => setPosFilter(pos)}
@@ -255,11 +322,7 @@ export default function AuctionDraft() {
             players={pool}
             spinning={spinning}
             targetIndex={targetIndex}
-            onSpinEnd={() => {
-              setSpinning(false);
-              setCurrentPlayer(pool[targetIndex]);
-              setPhase('BIDDING');
-            }}
+            onSpinEnd={handleSpinEnd}
           />
         ) : (
           <div className="text-center py-12 text-amber-500/40">
@@ -268,8 +331,7 @@ export default function AuctionDraft() {
           </div>
         )}
 
-        {/* Free draft assign panel */}
-        {phase === 'BIDDING' && currentPlayer && (
+        {phase === 'BIDDING' && currentPlayer && isAdmin && (
           <div className="sketch-border bg-[#0b132b]/90 rounded-2xl p-6 shadow-2xl space-y-4">
             <h3 className="font-bold text-white flex items-center gap-2">
               <Dices className="w-4 h-4 text-amber-400" />
@@ -301,39 +363,83 @@ export default function AuctionDraft() {
     );
   }
 
-  // ── AUCTION mode (default) ──
+  // ── AUCTION mode (Synced Real-Time Room) ──
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="sketch-border bg-[#0b132b]/80 rounded-2xl p-6 shadow-xl">
+      <div className="sketch-border bg-[#0b132b]/80 rounded-2xl p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h2 className="text-2xl font-serif text-amber-200 flex items-center gap-2">
-              <Dices className="w-5 h-5 text-amber-400" /> Auction Draft
+              <Dices className="w-5 h-5 text-amber-400" /> Live Auction Room
             </h2>
             <p className="text-sm text-amber-500/60 mt-0.5">
-              Spin → Player lands → Captains bid → Admin assigns
+              Synced across devices • Spin → Captains bid live → Admin assigns
             </p>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Coins className="w-4 h-4 text-amber-400" />
-            <span className="text-amber-500/60">Default budget:</span>
-            <span className="text-amber-400 font-bold">{defaultBudget ?? 1000}</span>
+          <div className="flex items-center gap-3 flex-wrap text-xs font-mono">
+            <span className="flex items-center gap-1.5 text-amber-300 bg-[#050814] border border-amber-900/40 px-3 py-1.5 rounded-lg">
+              <Coins className="w-3.5 h-3.5 text-amber-400" />
+              Default: {defaultBudget ?? 1000}
+            </span>
+            {isAdmin && undrafted.length > 0 && teams.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Auto-assign all ${undrafted.length} remaining undrafted players evenly across ${teams.length} teams?`)) {
+                    autoFillUndrafted();
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/35 border border-cyan-500/40 text-cyan-200 font-semibold transition-colors"
+              >
+                Auto-Fill Remaining ({undrafted.length})
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Squad Guardrails Controls (Admin) */}
+        {isAdmin && (
+          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-dashed border-amber-900/30">
+            <div>
+              <label className="text-[10px] font-mono uppercase text-amber-500/60">Min Squad Size (Guardrail)</label>
+              <input
+                type="number"
+                min="1"
+                max="25"
+                value={minSquadSize}
+                onChange={e => setActiveDraft({ minSquadSize: Math.max(1, Number(e.target.value) || 1) })}
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-xs font-mono text-amber-100"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-mono uppercase text-amber-500/60">Min Reserve / Slot</label>
+              <input
+                type="number"
+                min="0"
+                step="10"
+                value={minBasePrice}
+                onChange={e => setActiveDraft({ minBasePrice: Math.max(0, Number(e.target.value) || 0) })}
+                className="w-full mt-1 bg-[#050814] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-xs font-mono text-amber-100"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Team budgets strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
         {teams.map(t => {
           const rem     = getRemainingBudget(t);
           const total   = t.budget ?? defaultBudget ?? 1000;
           const pct     = Math.max(0, (rem / total) * 100);
+          const maxSafe = getMaxSafeBid(t);
+          const rosterCount = getTeamRosterCount(t);
           return (
             <div key={t.id} className="sketch-border bg-[#050814]/70 rounded-xl p-3 border border-amber-900/30 space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-amber-100 truncate">{t.logo} {t.name}</span>
-                <span className={`text-xs font-bold ${rem < total * 0.2 ? 'text-red-400' : 'text-emerald-400'}`}>
+                <span className={`text-xs font-bold font-mono ${rem < total * 0.2 ? 'text-red-400' : 'text-emerald-400'}`}>
                   {rem}
                 </span>
               </div>
@@ -342,6 +448,10 @@ export default function AuctionDraft() {
                   className={`h-full rounded-full transition-all ${rem < total * 0.2 ? 'bg-red-500' : 'bg-emerald-500'}`}
                   style={{ width: `${pct}%` }}
                 />
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-mono text-amber-500/60">
+                <span>Squad: {rosterCount}/{minSquadSize}</span>
+                <span className="text-cyan-300/80">Max bid: {maxSafe}</span>
               </div>
             </div>
           );
@@ -359,7 +469,7 @@ export default function AuctionDraft() {
             }`}
           >{pos}</button>
         ))}
-        <span className="ml-auto text-xs text-gray-600 self-center">
+        <span className="ml-auto text-xs text-gray-500 self-center font-mono">
           {pool.length} left
         </span>
       </div>
@@ -391,7 +501,7 @@ export default function AuctionDraft() {
         </div>
       )}
 
-      {/* Spin button (IDLE / ASSIGNED phase) */}
+      {/* Spin button */}
       {(phase === 'IDLE' || phase === 'ASSIGNED') && pool.length > 0 && isAdmin && (
         <button
           onClick={handleSpin}
@@ -403,61 +513,85 @@ export default function AuctionDraft() {
       )}
 
       {phase === 'SPINNING' && (
-        <div className="w-full py-4 rounded-xl bg-[#050814] text-amber-500/40 text-lg font-bold text-center">
-          🌀 Spinning…
+        <div className="w-full py-4 rounded-xl bg-[#050814] text-amber-400 text-lg font-bold text-center border border-amber-500/30">
+          🌀 Spinning live on the Auction Floor…
         </div>
       )}
 
-      {/* Bidding Panel */}
+      {/* Synced Live Bidding Panel */}
       {phase === 'BIDDING' && currentPlayer && (
         <div className="sketch-border bg-[#0b132b]/90 rounded-2xl p-6 shadow-2xl space-y-5">
-          {/* Player card */}
-          <div className="flex items-center gap-4 p-4 bg-[#050814]/80 rounded-xl border border-amber-900/30">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-2xl font-black text-white shrink-0">
-              {currentPlayer.name[0].toUpperCase()}
-            </div>
-            <div>
-              <h3 className="text-xl font-serif text-amber-100">{currentPlayer.name}</h3>
-              <div className="flex gap-1 mt-1 flex-wrap">
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  currentPlayer.position === 'GK'  ? 'bg-yellow-600/20 text-yellow-400' :
-                  currentPlayer.position === 'DEF' ? 'bg-blue-600/20 text-blue-400'    :
-                  currentPlayer.position === 'MID' ? 'bg-emerald-600/20 text-emerald-400' :
-                  currentPlayer.position === 'FWD' ? 'bg-red-600/20 text-red-400'      :
-                  'bg-gray-600/20 text-amber-500/60'
-                }`}>{currentPlayer.position}</span>
-                {currentPlayer.rawPositions?.filter(r => r !== 'ANY').map(r => (
-                  <span key={r} className="text-xs px-1.5 py-0.5 rounded bg-[#0b132b] text-amber-500/60">{r}</span>
-                ))}
+          {/* Player card + Highest Bid */}
+          <div className="flex items-center justify-between gap-4 flex-wrap p-4 bg-[#050814]/80 rounded-xl border border-amber-900/30">
+            <div className="flex items-center gap-4">
+              {currentPlayer.avatar && (currentPlayer.avatar.startsWith('http') || currentPlayer.avatar.startsWith('data:image')) ? (
+                <img src={currentPlayer.avatar} alt={currentPlayer.name} className="w-14 h-14 rounded-full object-cover border border-amber-500/40 shrink-0" />
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-2xl font-black text-white shrink-0">
+                  {currentPlayer.name[0].toUpperCase()}
+                </div>
+              )}
+              <div>
+                <h3 className="text-xl font-serif text-amber-100">{currentPlayer.name}</h3>
+                <div className="flex gap-1 mt-1 flex-wrap">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    currentPlayer.position === 'GK'  ? 'bg-yellow-600/20 text-yellow-400' :
+                    currentPlayer.position === 'DEF' ? 'bg-blue-600/20 text-blue-400'    :
+                    currentPlayer.position === 'MID' ? 'bg-emerald-600/20 text-emerald-400' :
+                    currentPlayer.position === 'FWD' ? 'bg-red-600/20 text-red-400'      :
+                    'bg-gray-600/20 text-amber-500/60'
+                  }`}>{currentPlayer.position}</span>
+                  {currentPlayer.rawPositions?.filter(r => r !== 'ANY').map(r => (
+                    <span key={r} className="text-xs px-1.5 py-0.5 rounded bg-[#0b132b] text-amber-500/60">{r}</span>
+                  ))}
+                </div>
               </div>
             </div>
+
+            {highestTeam && (
+              <div className="px-3.5 py-2 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-right">
+                <p className="text-[10px] font-mono uppercase text-emerald-400">Highest Live Bid</p>
+                <p className="text-sm font-serif font-bold text-emerald-200">
+                  {highestTeam.logo} {highestTeam.name} • <span className="font-mono">{activeDraft.highestBid}</span>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Bid inputs per team (admin view) */}
           {isAdmin && (
             <div className="space-y-3">
               <h4 className="text-sm font-serif text-amber-200 flex items-center gap-2">
-                <Coins className="w-4 h-4 text-amber-400" /> Team Bids
+                <Coins className="w-4 h-4 text-amber-400" /> Live Team Bids
               </h4>
               {teams.map(t => {
                 const rem     = getRemainingBudget(t);
-                const bidVal  = bids[t.id] ?? 0;
-                const overBid = bidVal > rem;
+                const maxSafe = getMaxSafeBid(t);
+                const bidVal  = getEffectiveBid(t.id);
+                const overBid = bidVal > maxSafe;
+                const syncedEntry = syncedBids[t.id];
+                const liveSyncedVal = typeof syncedEntry === 'number' ? syncedEntry : (syncedEntry?.amount || 0);
+
                 return (
-                  <div key={t.id} className="flex items-center gap-3 p-3 bg-[#050814]/60 rounded-xl border border-amber-900/30">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-serif font-semibold text-amber-100">{t.logo} {t.name}</span>
-                        <span className={`text-xs ${rem < 100 ? 'text-red-400' : 'text-amber-500/60'}`}>
-                          Budget: {rem}
+                  <div key={t.id} className="flex items-center gap-3 p-3 bg-[#050814]/60 rounded-xl border border-amber-900/30 flex-wrap sm:flex-nowrap">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-serif font-semibold text-amber-100 truncate">{t.logo} {t.name}</span>
+                        <span className="text-xs font-mono text-amber-500/70">
+                          Rem: {rem} • Max safe: <strong className="text-cyan-300">{maxSafe}</strong>
                         </span>
                       </div>
+                      {liveSyncedVal > 0 && (
+                        <p className="text-[10px] font-mono text-emerald-400 mt-0.5">
+                          Captain live bid: {liveSyncedVal}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <input
                         type="number"
                         min={0}
-                        max={rem}
+                        max={maxSafe}
                         value={bidVal}
                         onChange={e => handleBidChange(t.id, e.target.value)}
                         className={`w-20 bg-[#0b132b] border rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:ring-2 ${
@@ -466,7 +600,7 @@ export default function AuctionDraft() {
                       />
                       <button
                         onClick={() => handleAssign(t.id)}
-                        disabled={overBid || rem === 0}
+                        disabled={overBid}
                         className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 disabled:bg-[#0b132b] disabled:text-gray-600 text-white text-xs font-semibold transition-colors whitespace-nowrap"
                       >
                         Assign
@@ -478,25 +612,60 @@ export default function AuctionDraft() {
             </div>
           )}
 
-          {/* Captain view: show own bid input */}
+          {/* Captain live remote bidding view */}
           {isCaptain && myTeam && (
-            <div className="space-y-3">
-              <h4 className="text-sm font-serif text-amber-200">Your Bid (Budget: {getRemainingBudget(myTeam)})</h4>
-              <div className="flex items-center gap-3 p-3 bg-[#050814]/60 rounded-xl border border-amber-900/30">
-                <Crown className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="text-sm text-white flex-1">{myTeam.logo} {myTeam.name}</span>
+            <div className="space-y-3 bg-[#050814]/70 border border-amber-500/30 rounded-xl p-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h4 className="text-sm font-serif text-amber-200 flex items-center gap-1.5">
+                  <Crown className="w-4 h-4 text-amber-400" />
+                  Your Live Bid ({myTeam.logo} {myTeam.name})
+                </h4>
+                <span className="text-xs font-mono text-cyan-300">
+                  Budget: {getRemainingBudget(myTeam)} • Max Safe Bid: {getMaxSafeBid(myTeam)}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   type="number"
                   min={0}
-                  max={getRemainingBudget(myTeam)}
-                  value={bids[myTeam.id] ?? 0}
+                  max={getMaxSafeBid(myTeam)}
+                  value={getEffectiveBid(myTeam.id)}
                   onChange={e => handleBidChange(myTeam.id, e.target.value)}
-                  className="w-24 bg-[#0b132b] border border-amber-900/40 rounded-lg px-2 py-2 text-white text-sm text-center focus:outline-none focus:ring-2 focus:border-amber-400 font-mono"
+                  className="w-28 bg-[#0b132b] border border-amber-900/50 rounded-lg px-3 py-2 text-white text-sm text-center font-mono focus:outline-none focus:border-amber-400"
                 />
+                {[50, 100].map(inc => (
+                  <button
+                    key={inc}
+                    type="button"
+                    onClick={() => {
+                      const base = Math.max(activeDraft.highestBid || 0, getEffectiveBid(myTeam.id));
+                      const next = Math.min(getMaxSafeBid(myTeam), base + inc);
+                      handleBidChange(myTeam.id, next);
+                    }}
+                    className="px-2.5 py-2 rounded-lg bg-[#0b132b] border border-amber-900/40 text-amber-300 text-xs font-mono hover:border-amber-500"
+                  >
+                    +{inc}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={getEffectiveBid(myTeam.id) > getMaxSafeBid(myTeam)}
+                  onClick={() => handleCaptainSubmitBid(myTeam)}
+                  className="ml-auto px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-xs font-semibold transition-colors"
+                >
+                  Submit Live Bid
+                </button>
               </div>
-              <p className="text-xs text-amber-500/40 flex items-center gap-1">
+
+              {getEffectiveBid(myTeam.id) > getMaxSafeBid(myTeam) && (
+                <p className="text-xs text-red-400 font-mono">
+                  Exceeds max safe bid ({getMaxSafeBid(myTeam)}) — reserve kept for remaining squad slots.
+                </p>
+              )}
+              <p className="text-xs text-amber-500/60 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" />
-                Admin will assign the player based on bids received.
+                Live bids sync to the Admin&apos;s screen immediately.
               </p>
             </div>
           )}
@@ -515,9 +684,9 @@ export default function AuctionDraft() {
 
       {/* Non-admin, non-bidding view */}
       {!isAdmin && !isCaptain && (
-        <div className="rounded-xl bg-gray-900 border border-gray-800 p-4 text-center text-sm text-amber-500/40">
+        <div className="rounded-xl bg-[#0b132b]/60 border border-amber-900/40 p-4 text-center text-sm text-amber-500/60">
           <AlertCircle className="w-5 h-5 mx-auto mb-1 text-amber-500" />
-          Admin controls the wheel. Captains can submit bids.
+          Admin controls the wheel. Captains can submit live bids from their panel.
         </div>
       )}
     </div>

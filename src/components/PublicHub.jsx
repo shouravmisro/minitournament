@@ -1,16 +1,167 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTournament } from '../context/TournamentContext';
+import { useAuth } from '../context/AuthContext';
 import OrganizerProfile from './OrganizerProfile';
-import { Trophy, Calendar, Shield, Users } from 'lucide-react';
+import PlayerRegistrationModal from './PlayerRegistrationModal';
+import {
+  subscribeMyRegistration,
+  subscribeMyClaimRequest,
+  generateJoinCode,
+  isFirebaseConfigured,
+} from '../services/firebase';
+import { Trophy, Calendar, Shield, Users, UserPlus, CheckCircle, Clock, Copy, Check, Link2 } from 'lucide-react';
 
 export default function PublicHub() {
-  const { state } = useTournament();
+  const { state, tournamentId } = useTournament();
+  const { user, login } = useAuth();
   const isEmpty = state.teams.length === 0 && state.players.length === 0;
+
+  const [regModalMode, setRegModalMode] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('join') === '1' ? 'REGISTER' : null;
+    } catch {
+      return null;
+    }
+  });
+  const [myRegistration, setMyRegistration] = useState(null);
+  const [myClaimRequest, setMyClaimRequest] = useState(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const regSettings = state.registrationSettings || {};
+  const regEnabled = regSettings.enabled !== false;
+  const joinCode = regSettings.joinCode || generateJoinCode(tournamentId);
+  const maxPlayers = Number(regSettings.maxPlayers) || 0;
+  const linkedPlayer = user?.uid ? state.players.find(p => p.uid === user.uid) : null;
+  const linkedCaptain = user?.uid ? state.captains.find(c => c.uid === user.uid) : null;
+  const hasUnlinkedRoster = state.players.some(p => !p.uid) || state.captains.some(c => !c.uid);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured() || !tournamentId || !user?.uid) {
+      setMyRegistration(null);
+      setMyClaimRequest(null);
+      return;
+    }
+    const unsubReg = subscribeMyRegistration(tournamentId, user.uid, setMyRegistration);
+    const unsubClaim = subscribeMyClaimRequest(tournamentId, user.uid, setMyClaimRequest);
+    return () => {
+      unsubReg();
+      unsubClaim();
+    };
+  }, [tournamentId, user?.uid]);
+
+  function copyInviteLink() {
+    const base = window.location.origin + window.location.pathname;
+    navigator.clipboard.writeText(`${base}?t=${tournamentId}&join=1`);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
       {/* Organizer Profile banner */}
       <OrganizerProfile editable={false} />
+
+      {/* Player Self-Registration & Existing Profile Link Callout */}
+      {(regEnabled || myRegistration || myClaimRequest || linkedPlayer || linkedCaptain || hasUnlinkedRoster) && (
+        <div className="sketch-border bg-gradient-to-r from-cyan-950/40 via-[#0b132b]/90 to-amber-950/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                Join Code: {joinCode}
+              </span>
+              {maxPlayers > 0 && (
+                <span className="text-xs font-mono text-amber-300/80">
+                  {state.players.length} / {maxPlayers} Spots Filled
+                </span>
+              )}
+              {regSettings.entryFee && (
+                <span className="text-xs font-mono text-emerald-300">
+                  Fee: {regSettings.entryFee}
+                </span>
+              )}
+            </div>
+
+            <h3 className="font-serif text-lg sm:text-xl text-amber-100 font-bold">
+              {linkedPlayer || linkedCaptain
+                ? `Welcome, ${(linkedCaptain || linkedPlayer).name}! Your Google account is connected.`
+                : myClaimRequest?.status === 'PENDING'
+                  ? `Google Link Pending: ${myClaimRequest.targetName}`
+                  : myRegistration
+                    ? `Registration Status: ${myRegistration.status}`
+                    : regEnabled
+                      ? 'Join This Tournament or Connect Existing Profile'
+                      : 'Connect Your Existing Roster Profile'}
+            </h3>
+            <p className="text-xs font-serif text-amber-200/70">
+              {linkedPlayer || linkedCaptain
+                ? 'Your stats, matches, and profile data are synced to your Google login.'
+                : myClaimRequest?.status === 'PENDING'
+                  ? 'Waiting for organizer confirmation to finalize linking your existing profile.'
+                  : hasUnlinkedRoster
+                    ? 'Already listed on the roster? Connect your Google account to keep all your existing stats & profile data.'
+                    : 'Sign in with Google and submit your player profile to enter the draft pool.'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 flex-wrap w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={copyInviteLink}
+              className="px-3 py-2.5 rounded-xl bg-[#050814] border border-amber-900/40 text-amber-200 hover:text-white text-xs font-mono flex items-center gap-1.5"
+              title="Copy registration invite link"
+            >
+              {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
+              <span>{copiedCode ? 'Copied' : 'Invite'}</span>
+            </button>
+
+            {linkedPlayer || linkedCaptain ? (
+              <div className="flex gap-2">
+                {linkedPlayer && (
+                  <button
+                    type="button"
+                    onClick={() => login('PLAYER', linkedPlayer.id)}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-serif font-bold transition-colors shadow-lg"
+                  >
+                    <CheckCircle className="w-4 h-4" /> My Warrior Scroll
+                  </button>
+                )}
+                {linkedCaptain && (
+                  <button
+                    type="button"
+                    onClick={() => login('CAPTAIN', linkedCaptain.id)}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-serif font-bold transition-colors shadow-lg"
+                  >
+                    <CheckCircle className="w-4 h-4" /> My Faction
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                {hasUnlinkedRoster && (
+                  <button
+                    type="button"
+                    onClick={() => setRegModalMode('CONNECT')}
+                    className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-serif font-bold transition-colors shadow-lg"
+                  >
+                    <Link2 className="w-4 h-4" />
+                    {myClaimRequest ? 'View Link Status' : 'Connect Google'}
+                  </button>
+                )}
+                {regEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => setRegModalMode('REGISTER')}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-serif font-bold transition-colors shadow-lg"
+                  >
+                    {myRegistration ? <Clock className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                    {myRegistration ? 'View Application' : 'Register as Player'}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Empty state */}
       {isEmpty && (
@@ -33,7 +184,7 @@ export default function PublicHub() {
             </h3>
             <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500/50">Historic Records</span>
           </div>
-          
+
           <div className="space-y-2.5">
             {state.matches
               .filter(m => m.status === 'COMPLETED')
@@ -47,7 +198,6 @@ export default function PublicHub() {
                 return (
                   <div key={match.id}
                     className="sketch-border bg-[#0b132b]/60 rounded-xl px-4 py-3 flex items-center gap-4 hover:bg-[#0b132b]/90 transition-all">
-                    {/* Team A */}
                     <div className={`flex items-center gap-2.5 flex-1 min-w-0 ${aWon ? '' : 'opacity-60'}`}>
                       <span className="text-xl shrink-0 drop-shadow-[0_0_8px_rgba(217,119,6,0.2)]">{teamA?.logo ?? '🛡️'}</span>
                       <span className={`font-serif text-sm truncate ${aWon ? 'text-amber-100 font-bold' : 'text-amber-200/60'}`}>
@@ -55,7 +205,6 @@ export default function PublicHub() {
                       </span>
                     </div>
 
-                    {/* Score */}
                     <div className="flex items-center gap-2.5 px-3 py-1 bg-[#050814]/70 border border-amber-900/40 rounded-lg shrink-0">
                       <span className={`font-mono text-lg font-bold ${aWon ? 'text-amber-300 drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]' : 'text-amber-500/50'}`}>
                         {match.scoreA ?? 0}
@@ -66,7 +215,6 @@ export default function PublicHub() {
                       </span>
                     </div>
 
-                    {/* Team B */}
                     <div className={`flex items-center gap-2.5 flex-1 min-w-0 justify-end ${bWon ? '' : 'opacity-60'}`}>
                       <span className={`font-serif text-sm truncate text-right ${bWon ? 'text-amber-100 font-bold' : 'text-amber-200/60'}`}>
                         {teamB?.name ?? 'TBD'}
@@ -101,7 +249,7 @@ export default function PublicHub() {
                   {winner ? (
                     <div className="mt-2 pt-2 border-t border-dashed border-amber-900/30">
                       <p className="font-serif text-xs text-amber-100 font-semibold">{winner.name}</p>
-                      {award.statNote && <p className="text-[10px] font-serif text-amber-500/50 italic mt-0.5">"{award.statNote}"</p>}
+                      {award.statNote && <p className="text-[10px] font-serif text-amber-500/50 italic mt-0.5">&quot;{award.statNote}&quot;</p>}
                     </div>
                   ) : (
                     <p className="text-[10px] font-mono tracking-widest uppercase text-amber-500/30 mt-2 pt-2 border-t border-dashed border-amber-900/30">Unclaimed</p>
@@ -113,7 +261,7 @@ export default function PublicHub() {
         </div>
       )}
 
-      {/* Quick stats row (only if data exists) */}
+      {/* Quick stats row */}
       {!isEmpty && (
         <div className="grid grid-cols-3 gap-3 pt-2">
           {[
@@ -131,6 +279,15 @@ export default function PublicHub() {
             );
           })}
         </div>
+      )}
+
+      {regModalMode && (
+        <PlayerRegistrationModal
+          initialMode={regModalMode}
+          onClose={() => setRegModalMode(null)}
+          myRegistration={myRegistration}
+          myClaimRequest={myClaimRequest}
+        />
       )}
     </div>
   );

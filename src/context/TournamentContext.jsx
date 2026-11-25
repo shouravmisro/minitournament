@@ -1,11 +1,36 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import {
   subscribeTournament,
+  subscribeTournamentSecrets,
   saveTournamentCloud,
-  isFirebaseConfigured
+  isFirebaseConfigured,
+  generateJoinCode,
 } from '../services/firebase';
+import { useAuth } from './AuthContext';
 
 // ── Default tournament state (Section 3 schema) ──
+const DEFAULT_REGISTRATION_SETTINGS = {
+  enabled: true,
+  joinCode: '',
+  maxPlayers: 0, // 0 = unlimited
+  deadline: '',
+  entryFee: '',
+  paymentInstructions: '',
+  allowSelfWithdraw: true,
+};
+
+const DEFAULT_ACTIVE_DRAFT = {
+  phase: 'IDLE', // 'IDLE' | 'SPINNING' | 'BIDDING' | 'ASSIGNED'
+  playerId: null,
+  bids: {},
+  highestTeamId: null,
+  highestBid: 0,
+  lastWinner: null,
+  minSquadSize: 5,
+  minBasePrice: 50,
+  updatedAt: 0,
+};
+
 const DEFAULT_STATE = {
   organizer: {
     name: 'Local Champions League',
@@ -25,24 +50,49 @@ const DEFAULT_STATE = {
   adminPin: '0000',
   draftMode: 'AUCTION', // 'AUCTION' | 'FREE'
   defaultBudget: 1000,
+  tiebreakerMode: 'GD_GF_H2H',
+  activeDraft: DEFAULT_ACTIVE_DRAFT,
   auditLog: [],
+  ownerUid: null,
+  ownerName: '',
+  ownerEmail: '',
+  coAdminUids: [],
+  coAdmins: [],
+  memberUids: [],
+  isPublic: true,
+  allowGuestPinLogin: true,
+  registrationSettings: DEFAULT_REGISTRATION_SETTINGS,
+  pinHashes: { admin: '', captains: {}, players: {} },
   _updatedAt: 0,
 };
 
 // ── Sanitize tournament state to prevent any undefined crashes ──
-export function sanitizeTournamentState(rawState) {
+export function sanitizeTournamentState(rawState, preserveSecretsFrom = null) {
   if (!rawState || typeof rawState !== 'object') {
     return { ...DEFAULT_STATE, _updatedAt: Date.now() };
   }
+
+  const prevPlayersById = new Map(
+    (preserveSecretsFrom?.players || []).map(p => [p.id, p])
+  );
+  const prevCaptainsById = new Map(
+    (preserveSecretsFrom?.captains || []).map(c => [c.id, c])
+  );
 
   const rawPlayers = Array.isArray(rawState.players) ? rawState.players : [];
   const players = rawPlayers.map(p => {
     if (!p || typeof p !== 'object') return null;
     const stats = p.stats || {};
+    const prev = prevPlayersById.get(p.id);
+    const resolvedPin = p.pin !== undefined && p.pin !== ''
+      ? String(p.pin)
+      : (prev?.pin || (preserveSecretsFrom ? '' : generatePin()));
     return {
       id: p.id || generateId('plr'),
       name: p.name || 'Unknown Player',
-      pin: p.pin ? String(p.pin) : generatePin(),
+      pin: resolvedPin,
+      uid: p.uid || null,
+      email: p.email || '',
       position: p.position || 'FLEX',
       rawPositions: Array.isArray(p.rawPositions)
         ? p.rawPositions
@@ -54,6 +104,8 @@ export function sanitizeTournamentState(rawState) {
       teamId: p.teamId || null,
       availability: p.availability || 'AVAILABLE',
       isOfficial: Boolean(p.isOfficial),
+      paymentStatus: p.paymentStatus || 'UNPAID',
+      paymentRef: p.paymentRef || '',
       stats: {
         matches: Number(stats.matches) || 0,
         goals: Number(stats.goals) || 0,
@@ -86,10 +138,16 @@ export function sanitizeTournamentState(rawState) {
   const rawCaptains = Array.isArray(rawState.captains) ? rawState.captains : [];
   const captains = rawCaptains.map(c => {
     if (!c || typeof c !== 'object') return null;
+    const prev = prevCaptainsById.get(c.id);
+    const resolvedPin = c.pin !== undefined && c.pin !== ''
+      ? String(c.pin)
+      : (prev?.pin || (preserveSecretsFrom ? '' : generatePin()));
     return {
       id: c.id || generateId('cap'),
       name: c.name || 'Captain',
-      pin: c.pin ? String(c.pin) : generatePin(),
+      pin: resolvedPin,
+      uid: c.uid || null,
+      email: c.email || '',
       teamId: c.teamId || null,
       avatar: c.avatar || '',
     };
@@ -102,11 +160,16 @@ export function sanitizeTournamentState(rawState) {
       ...m,
       events: Array.isArray(m.events) ? m.events : [],
       playerPerformance: Array.isArray(m.playerPerformance) ? m.playerPerformance : [],
+      rsvp: m.rsvp && typeof m.rsvp === 'object' ? m.rsvp : {},
+      lineups: m.lineups && typeof m.lineups === 'object' ? m.lineups : {},
     };
   }).filter(Boolean);
 
   const rawAwards = Array.isArray(rawState.awards) ? rawState.awards : [];
   const rawAuditLog = Array.isArray(rawState.auditLog) ? rawState.auditLog : [];
+  const resolvedAdminPin = rawState.adminPin
+    ? String(rawState.adminPin)
+    : (preserveSecretsFrom?.adminPin || (preserveSecretsFrom ? '' : '0000'));
 
   return {
     ...DEFAULT_STATE,
@@ -121,9 +184,29 @@ export function sanitizeTournamentState(rawState) {
     matches,
     awards: rawAwards,
     auditLog: rawAuditLog,
-    adminPin: rawState.adminPin ? String(rawState.adminPin) : '0000',
+    adminPin: resolvedAdminPin,
     draftMode: rawState.draftMode || 'AUCTION',
     defaultBudget: Number(rawState.defaultBudget) || 1000,
+    tiebreakerMode: rawState.tiebreakerMode || 'GD_GF_H2H',
+    activeDraft: {
+      ...DEFAULT_ACTIVE_DRAFT,
+      ...(rawState.activeDraft || {}),
+      bids: rawState.activeDraft?.bids && typeof rawState.activeDraft.bids === 'object' ? rawState.activeDraft.bids : {},
+    },
+    ownerUid: rawState.ownerUid || null,
+    ownerName: rawState.ownerName || '',
+    ownerEmail: rawState.ownerEmail || '',
+    coAdminUids: Array.isArray(rawState.coAdminUids) ? rawState.coAdminUids : [],
+    coAdmins: Array.isArray(rawState.coAdmins) ? rawState.coAdmins : [],
+    memberUids: Array.isArray(rawState.memberUids) ? rawState.memberUids : [],
+    isPublic: rawState.isPublic !== false,
+    allowGuestPinLogin: rawState.allowGuestPinLogin !== false,
+    registrationSettings: {
+      ...DEFAULT_REGISTRATION_SETTINGS,
+      ...(rawState.registrationSettings || {}),
+      maxPlayers: Number(rawState.registrationSettings?.maxPlayers) || 0,
+    },
+    pinHashes: rawState.pinHashes || { admin: '', captains: {}, players: {} },
     _updatedAt: rawState._updatedAt || 0,
   };
 }
@@ -413,6 +496,7 @@ export function recomputePlayerStats(players, matches) {
     }
 
     // 2. Process player performance records
+    const countedAppearanceIds = new Set();
     if (Array.isArray(match.playerPerformance) && match.playerPerformance.length > 0) {
       match.playerPerformance.forEach(perf => {
         const pStats = statsMap[perf.playerId];
@@ -420,6 +504,7 @@ export function recomputePlayerStats(players, matches) {
 
         if (perf.played !== false) {
           pStats.matches += 1;
+          countedAppearanceIds.add(perf.playerId);
         }
         if (perf.saves !== undefined && perf.saves !== null && perf.saves !== '') {
           pStats.saves += Number(perf.saves);
@@ -433,6 +518,22 @@ export function recomputePlayerStats(players, matches) {
       });
     }
 
+    // 2b. Fallback appearance count from submitted matchday lineups if not logged in playerPerformance
+    if (match.lineups && typeof match.lineups === 'object') {
+      Object.values(match.lineups).forEach(lineup => {
+        const playedIds = [
+          ...(Array.isArray(lineup?.starters) ? lineup.starters : []),
+          ...(Array.isArray(lineup?.subs) ? lineup.subs : []),
+        ];
+        playedIds.forEach(pid => {
+          if (statsMap[pid] && !countedAppearanceIds.has(pid)) {
+            statsMap[pid].matches += 1;
+            countedAppearanceIds.add(pid);
+          }
+        });
+      });
+    }
+
     // 3. Match MVP
     if (match.mvpPlayerId && statsMap[match.mvpPlayerId]) {
       statsMap[match.mvpPlayerId].mvpCount += 1;
@@ -441,7 +542,8 @@ export function recomputePlayerStats(players, matches) {
 
   const hasAnyLoggedMatchData = completedMatches.some(m =>
     (Array.isArray(m.events) && m.events.length > 0) ||
-    (Array.isArray(m.playerPerformance) && m.playerPerformance.length > 0)
+    (Array.isArray(m.playerPerformance) && m.playerPerformance.length > 0) ||
+    (m.lineups && Object.keys(m.lineups).length > 0)
   );
 
   return players.map(p => {
@@ -507,7 +609,99 @@ function tournamentReducer(state, action) {
         return state;
       }
 
-      return sanitizeTournamentState({ ...incoming, _updatedAt: remoteTime || Date.now() });
+      return sanitizeTournamentState({ ...incoming, _updatedAt: remoteTime || Date.now() }, state);
+    }
+
+    case 'SYNC_SECRETS': {
+      const secrets = action.payload;
+      if (!secrets || typeof secrets !== 'object') return state;
+      const capPins = secrets.captainPins || {};
+      const plrPins = secrets.playerPins || {};
+      return {
+        ...state,
+        adminPin: secrets.adminPin ? String(secrets.adminPin) : state.adminPin,
+        captains: state.captains.map(c =>
+          capPins[c.id] ? { ...c, pin: String(capPins[c.id]) } : c
+        ),
+        players: state.players.map(p =>
+          plrPins[p.id] ? { ...p, pin: String(plrPins[p.id]) } : p
+        ),
+      };
+    }
+
+    case 'SET_OWNERSHIP':
+      return {
+        ...state,
+        ownerUid: action.payload.ownerUid || null,
+        ownerName: action.payload.ownerName || '',
+        ownerEmail: action.payload.ownerEmail || '',
+        _updatedAt: Date.now(),
+      };
+
+    case 'ADD_CO_ADMIN': {
+      const entry = action.payload;
+      if (!entry?.uid || entry.uid === state.ownerUid) return state;
+      const uids = Array.isArray(state.coAdminUids) ? state.coAdminUids : [];
+      const list = Array.isArray(state.coAdmins) ? state.coAdmins : [];
+      if (uids.includes(entry.uid)) return state;
+      return {
+        ...state,
+        coAdminUids: [...uids, entry.uid],
+        coAdmins: [...list, entry],
+        _updatedAt: Date.now(),
+      };
+    }
+
+    case 'REMOVE_CO_ADMIN': {
+      const targetUid = action.payload;
+      return {
+        ...state,
+        coAdminUids: (state.coAdminUids || []).filter(id => id !== targetUid),
+        coAdmins: (state.coAdmins || []).filter(a => a.uid !== targetUid),
+        _updatedAt: Date.now(),
+      };
+    }
+
+    case 'SET_VISIBILITY':
+      return {
+        ...state,
+        isPublic: Boolean(action.payload),
+        _updatedAt: Date.now(),
+      };
+
+    case 'SET_GUEST_PIN_LOGIN':
+      return {
+        ...state,
+        allowGuestPinLogin: Boolean(action.payload),
+        _updatedAt: Date.now(),
+      };
+
+    case 'UPDATE_REGISTRATION_SETTINGS':
+      return {
+        ...state,
+        registrationSettings: {
+          ...DEFAULT_REGISTRATION_SETTINGS,
+          ...(state.registrationSettings || {}),
+          ...action.payload,
+        },
+        _updatedAt: Date.now(),
+      };
+
+    case 'LINK_MEMBER_UID': {
+      const { role, entityId, uid, email } = action.payload;
+      if (role === 'CAPTAIN') {
+        const captains = state.captains.map(c =>
+          c.id === entityId ? { ...c, uid: uid || null, email: email || '' } : c
+        );
+        return { ...state, captains, _updatedAt: Date.now() };
+      }
+      if (role === 'PLAYER') {
+        const players = state.players.map(p =>
+          p.id === entityId ? { ...p, uid: uid || null, email: email || '' } : p
+        );
+        return { ...state, players, _updatedAt: Date.now() };
+      }
+      return state;
     }
 
     case 'UPDATE_ORGANIZER':
@@ -768,6 +962,136 @@ function tournamentReducer(state, action) {
         players: recomputePlayerStats(state.players, state.matches),
       };
 
+    case 'SET_TIEBREAKER_MODE':
+      return {
+        ...state,
+        tiebreakerMode: action.payload || 'GD_GF_H2H',
+        _updatedAt: Date.now(),
+      };
+
+    case 'SET_ACTIVE_DRAFT':
+      return {
+        ...state,
+        activeDraft: {
+          ...DEFAULT_ACTIVE_DRAFT,
+          ...(state.activeDraft || {}),
+          ...action.payload,
+          updatedAt: Date.now(),
+        },
+        _updatedAt: Date.now(),
+      };
+
+    case 'PLACE_DRAFT_BID': {
+      const { teamId, amount, byUid } = action.payload;
+      const cur = state.activeDraft || DEFAULT_ACTIVE_DRAFT;
+      const cleanAmt = Math.max(0, Number(amount) || 0);
+      const nextBids = {
+        ...(cur.bids || {}),
+        [teamId]: { amount: cleanAmt, updatedAt: Date.now(), byUid: byUid || null },
+      };
+
+      let highestTeamId = null;
+      let highestBid = 0;
+      Object.entries(nextBids).forEach(([tid, entry]) => {
+        const val = typeof entry === 'number' ? entry : (entry?.amount || 0);
+        if (val > highestBid) {
+          highestBid = val;
+          highestTeamId = tid;
+        }
+      });
+
+      return {
+        ...state,
+        activeDraft: {
+          ...cur,
+          bids: nextBids,
+          highestTeamId,
+          highestBid,
+          updatedAt: Date.now(),
+        },
+        _updatedAt: Date.now(),
+      };
+    }
+
+    case 'AUTO_FILL_UNDRAFTED': {
+      if (state.teams.length === 0) return state;
+      const posOrder = { GK: 0, DEF: 1, MID: 2, FWD: 3, FLEX: 4 };
+      const undrafted = state.players
+        .filter(p => p.status !== 'DRAFTED' && !p.teamId)
+        .sort((a, b) => (posOrder[a.position] ?? 4) - (posOrder[b.position] ?? 4));
+      if (undrafted.length === 0) return state;
+
+      const teamCounts = new Map(state.teams.map(t => [t.id, (t.rosterIds || []).length]));
+      const additions = new Map(state.teams.map(t => [t.id, []]));
+      const playerTeamAssign = new Map();
+
+      undrafted.forEach(p => {
+        // Assign to the team with the fewest players currently
+        let targetTeamId = state.teams[0].id;
+        let minCount = Infinity;
+        state.teams.forEach(t => {
+          const c = teamCounts.get(t.id) ?? 0;
+          if (c < minCount) {
+            minCount = c;
+            targetTeamId = t.id;
+          }
+        });
+        teamCounts.set(targetTeamId, minCount + 1);
+        additions.get(targetTeamId).push(p.id);
+        playerTeamAssign.set(p.id, targetTeamId);
+      });
+
+      return {
+        ...state,
+        players: state.players.map(p =>
+          playerTeamAssign.has(p.id)
+            ? { ...p, teamId: playerTeamAssign.get(p.id), status: 'DRAFTED' }
+            : p
+        ),
+        teams: state.teams.map(t => ({
+          ...t,
+          rosterIds: [...(t.rosterIds || []), ...(additions.get(t.id) || [])],
+        })),
+        activeDraft: {
+          ...(state.activeDraft || DEFAULT_ACTIVE_DRAFT),
+          phase: 'IDLE',
+          playerId: null,
+          bids: {},
+          highestTeamId: null,
+          highestBid: 0,
+        },
+        _updatedAt: Date.now(),
+      };
+    }
+
+    case 'SET_MATCH_RSVP': {
+      const { matchId, playerId, status } = action.payload;
+      return {
+        ...state,
+        matches: state.matches.map(m =>
+          m.id === matchId
+            ? { ...m, rsvp: { ...(m.rsvp || {}), [playerId]: status } }
+            : m
+        ),
+        _updatedAt: Date.now(),
+      };
+    }
+
+    case 'SET_MATCH_LINEUP': {
+      const { matchId, teamId, starters, subs } = action.payload;
+      const updatedMatches = state.matches.map(m =>
+        m.id === matchId
+          ? { ...m, lineups: { ...(m.lineups || {}), [teamId]: { starters, subs } } }
+          : m
+      );
+      return {
+        ...state,
+        matches: updatedMatches,
+        players: recomputePlayerStats(state.players, updatedMatches),
+        _updatedAt: Date.now(),
+      };
+    }
+
     case 'ADD_AWARD':
       return { ...state, awards: [...state.awards, action.payload] };
 
@@ -822,18 +1146,44 @@ function tournamentReducer(state, action) {
 const TournamentContext = createContext(null);
 
 export function TournamentProvider({ children, storageKey = 'mt_state_default' }) {
-  const [state, dispatch] = useReducer(
-    tournamentReducer,
-    null,
-    () => loadState(storageKey)
-  );
-
+  const { user } = useAuth();
   const tournamentId = storageKey.startsWith('mt_state_')
     ? storageKey.replace('mt_state_', '')
     : storageKey;
 
+  const [state, dispatch] = useReducer(
+    tournamentReducer,
+    null,
+    () => {
+      const loaded = loadState(storageKey);
+      if (!loaded.registrationSettings?.joinCode) {
+        return {
+          ...loaded,
+          registrationSettings: {
+            ...DEFAULT_REGISTRATION_SETTINGS,
+            ...(loaded.registrationSettings || {}),
+            joinCode: generateJoinCode(tournamentId),
+          },
+        };
+      }
+      return loaded;
+    }
+  );
+
   const isRemoteUpdate = useRef(false);
   const hasLocalChanges = useRef(false);
+
+  const isOwner = Boolean(user?.uid && state.ownerUid && state.ownerUid === user.uid);
+  const isCoAdmin = Boolean(user?.uid && Array.isArray(state.coAdminUids) && state.coAdminUids.includes(user.uid));
+  const isLinkedMember = Boolean(
+    user?.uid && (
+      state.captains?.some(c => c.uid === user.uid) ||
+      state.players?.some(p => p.uid === user.uid)
+    )
+  );
+  const canWriteCloud = Boolean(
+    user?.uid && (!state.ownerUid || isOwner || isCoAdmin || isLinkedMember)
+  );
 
   // Local dispatch wrapper: only local user-initiated actions trigger a Firestore upload
   const dispatchLocal = useCallback((action) => {
@@ -841,7 +1191,7 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
     dispatch(action);
   }, []);
 
-  // Realtime Cloud Listener for active tournament
+  // Realtime Cloud Listener for active tournament public state
   useEffect(() => {
     if (!isFirebaseConfigured() || !tournamentId) return;
 
@@ -855,6 +1205,18 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
     return () => unsubscribe();
   }, [tournamentId]);
 
+  // Realtime Cloud Listener for private secrets (owner & co-admins only)
+  useEffect(() => {
+    if (!isFirebaseConfigured() || !tournamentId || !(isOwner || isCoAdmin)) return;
+
+    const unsubscribe = subscribeTournamentSecrets(tournamentId, (secrets) => {
+      isRemoteUpdate.current = true;
+      dispatch({ type: 'SYNC_SECRETS', payload: secrets });
+    });
+
+    return () => unsubscribe();
+  }, [tournamentId, isOwner, isCoAdmin]);
+
   // Persist state to local storage and Cloud (only when modified locally)
   useEffect(() => {
     saveState(storageKey, state);
@@ -865,13 +1227,22 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
         hasLocalChanges.current = false;
       } else if (hasLocalChanges.current) {
         hasLocalChanges.current = false;
-        saveTournamentCloud(tournamentId, state);
+        if (canWriteCloud) {
+          saveTournamentCloud(tournamentId, state, {
+            saveSecrets: isOwner || isCoAdmin || !state.ownerUid,
+          });
+        }
       }
     }
-  }, [state, storageKey, tournamentId]);
+  }, [state, storageKey, tournamentId, canWriteCloud, isOwner, isCoAdmin]);
 
   const value = {
     state,
+    tournamentId,
+    isOwner,
+    isCoAdmin,
+    isLinkedMember,
+    canWriteCloud,
     dispatch: dispatchLocal,
     updateOrganizer:  useCallback((d)    => dispatchLocal({ type: 'UPDATE_ORGANIZER',   payload: d }),                        [dispatchLocal]),
     bulkImport:       useCallback((d)    => dispatchLocal({ type: 'BULK_IMPORT',        payload: d }),                        [dispatchLocal]),
@@ -902,6 +1273,19 @@ export function TournamentProvider({ children, storageKey = 'mt_state_default' }
     setAdminPin:      useCallback((pin)  => dispatchLocal({ type: 'SET_ADMIN_PIN',      payload: pin }),                      [dispatchLocal]),
     setDraftMode:     useCallback((mode) => dispatchLocal({ type: 'SET_DRAFT_MODE',     payload: mode }),                     [dispatchLocal]),
     setDefaultBudget: useCallback((n)    => dispatchLocal({ type: 'SET_DEFAULT_BUDGET', payload: n }),                        [dispatchLocal]),
+    setTiebreakerMode: useCallback((m)   => dispatchLocal({ type: 'SET_TIEBREAKER_MODE', payload: m }),                       [dispatchLocal]),
+    setActiveDraft:   useCallback((d)    => dispatchLocal({ type: 'SET_ACTIVE_DRAFT',   payload: d }),                        [dispatchLocal]),
+    placeDraftBid:    useCallback((b)    => dispatchLocal({ type: 'PLACE_DRAFT_BID',    payload: b }),                        [dispatchLocal]),
+    autoFillUndrafted: useCallback(()    => dispatchLocal({ type: 'AUTO_FILL_UNDRAFTED' }),                                   [dispatchLocal]),
+    setMatchRsvp:     useCallback((data) => dispatchLocal({ type: 'SET_MATCH_RSVP',     payload: data }),                     [dispatchLocal]),
+    setMatchLineup:   useCallback((data) => dispatchLocal({ type: 'SET_MATCH_LINEUP',   payload: data }),                     [dispatchLocal]),
+    setOwnership:     useCallback((own)  => dispatchLocal({ type: 'SET_OWNERSHIP',      payload: own }),                      [dispatchLocal]),
+    addCoAdmin:       useCallback((adm)  => dispatchLocal({ type: 'ADD_CO_ADMIN',       payload: adm }),                      [dispatchLocal]),
+    removeCoAdmin:    useCallback((uid)  => dispatchLocal({ type: 'REMOVE_CO_ADMIN',    payload: uid }),                      [dispatchLocal]),
+    setVisibility:    useCallback((pub)  => dispatchLocal({ type: 'SET_VISIBILITY',     payload: pub }),                      [dispatchLocal]),
+    setGuestPinLogin: useCallback((allow)=> dispatchLocal({ type: 'SET_GUEST_PIN_LOGIN',payload: allow }),                    [dispatchLocal]),
+    updateRegistrationSettings: useCallback((patch) => dispatchLocal({ type: 'UPDATE_REGISTRATION_SETTINGS', payload: patch }), [dispatchLocal]),
+    linkMemberUid:    useCallback((data) => dispatchLocal({ type: 'LINK_MEMBER_UID',    payload: data }),                     [dispatchLocal]),
     resetState:       useCallback(()     => dispatchLocal({ type: 'RESET_STATE' }),                                           [dispatchLocal]),
     exportState:      useCallback(()     => JSON.stringify(state, null, 2), [state]),
     importState:      useCallback((json) => {

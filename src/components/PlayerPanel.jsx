@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTournament } from '../context/TournamentContext';
 import { useAuth } from '../context/AuthContext';
+import ImageUploadButton from './ImageUploadButton';
+import {
+  isFirebaseConfigured,
+  subscribeMyClaimRequest,
+  submitClaimRequest,
+} from '../services/firebase';
 import {
   User, Edit3, Save, X, Shield, Calendar, Crown,
   Heart, AlertTriangle, CircleDot, Trophy, Target, Zap, Award,
-  Key, Eye, EyeOff, Check, Smile, Trash2, Link, ShieldCheck
+  Key, Eye, EyeOff, Check, Smile, Trash2, Link, ShieldCheck, Link2, LogIn
 } from 'lucide-react';
 
 const POSITION_COLORS = {
@@ -26,8 +32,19 @@ const AVATAR_PRESETS = [
 ];
 
 export default function PlayerPanel() {
-  const { state, updatePlayer } = useTournament();
-  const { authenticatedId, logout } = useAuth();
+  const { state, tournamentId, isOwner, isCoAdmin, updatePlayer, setMatchRsvp, linkMemberUid } = useTournament();
+  const { authenticatedId, logout, user, signInGoogle } = useAuth();
+  const [myClaimRequest, setMyClaimRequest] = useState(null);
+  const [linkingGoogle, setLinkingGoogle] = useState(false);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured() || !tournamentId || !user?.uid) {
+      setMyClaimRequest(null);
+      return;
+    }
+    const unsub = subscribeMyClaimRequest(tournamentId, user.uid, setMyClaimRequest);
+    return () => unsub();
+  }, [tournamentId, user?.uid]);
 
   const players    = state?.players    || [];
   const teams      = state?.teams      || [];
@@ -248,6 +265,74 @@ export default function PlayerPanel() {
         </div>
       )}
 
+      {/* ── Connect Google Account Card ── */}
+      {isFirebaseConfigured() && (
+        <div className="sketch-border bg-[#050814]/60 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-xl border ${player.uid ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300' : 'bg-cyan-950/40 border-cyan-500/30 text-cyan-300'}`}>
+              <Link2 className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-serif text-sm text-amber-100 font-bold">
+                {player.uid ? 'Google Account Connected' : 'Connect Your Google Account'}
+              </p>
+              <p className="text-[11px] text-amber-500/60">
+                {player.uid
+                  ? `Linked to ${player.email || 'your Google ID'} — 1-click access enabled without PIN.`
+                  : myClaimRequest?.status === 'PENDING'
+                    ? 'Link request sent (PIN Verified ✓) — waiting for organizer confirmation.'
+                    : 'Link your Google ID to keep your existing stats & profile with 1-click sign-in.'}
+              </p>
+            </div>
+          </div>
+
+          {!player.uid && (
+            !user ? (
+              <button
+                type="button"
+                onClick={() => signInGoogle().catch(() => {})}
+                className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold flex items-center gap-1.5 shrink-0"
+              >
+                <LogIn className="w-3.5 h-3.5" /> Sign in with Google
+              </button>
+            ) : myClaimRequest?.status === 'PENDING' ? (
+              <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+                Pending Approval
+              </span>
+            ) : (
+              <button
+                type="button"
+                disabled={linkingGoogle}
+                onClick={async () => {
+                  setLinkingGoogle(true);
+                  try {
+                    if (isOwner || isCoAdmin || !state.ownerUid) {
+                      linkMemberUid({ role: 'PLAYER', entityId: player.id, uid: user.uid, email: user.email || '' });
+                    } else {
+                      await submitClaimRequest(tournamentId, user.uid, {
+                        email: user.email || '',
+                        displayName: user.displayName || '',
+                        photoURL: user.photoURL || '',
+                        targetRole: 'PLAYER',
+                        targetId: player.id,
+                        targetName: player.name,
+                        pinVerified: true,
+                      });
+                    }
+                  } finally {
+                    setLinkingGoogle(false);
+                  }
+                }}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-semibold flex items-center gap-1.5 shrink-0"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                {linkingGoogle ? 'Linking…' : `Connect ${user.email}`}
+              </button>
+            )
+          )}
+        </div>
+      )}
+
       {/* ── Security & Cipher PIN Card ── */}
       <div className="sketch-border bg-[#050814]/60 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -359,23 +444,49 @@ export default function PlayerPanel() {
         </div>
       )}
 
-      {/* ── Upcoming Matches ── */}
+      {/* ── Upcoming Matches + Per-Match RSVP ── */}
       {upcomingMatches.length > 0 && (
         <div className="sketch-border bg-[#0b132b]/50 rounded-2xl p-5 space-y-3">
           <h3 className="font-serif text-base text-amber-200 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-purple-400" /> Impending Clashes
+            <Calendar className="w-4 h-4 text-purple-400" /> Impending Clashes &amp; Matchday RSVP
           </h3>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {upcomingMatches.map(match => {
               const teamA = state.teams.find(t => t.id === match.teamAId);
               const teamB = state.teams.find(t => t.id === match.teamBId);
+              const myRsvp = match.rsvp?.[player.id] || '';
               return (
-                <div key={match.id} className="flex items-center justify-between bg-[#050814]/70 border border-amber-900/30 rounded-xl px-3.5 py-2.5 font-serif text-xs">
-                  <span className="text-amber-100 font-medium">{teamA?.logo} {teamA?.name || '?'}</span>
-                  <span className="text-[9px] font-mono uppercase tracking-widest text-amber-400 bg-amber-950/40 border border-amber-900/50 px-2.5 py-0.5 rounded-full">
-                    {match.stage} • R{match.round}
-                  </span>
-                  <span className="text-amber-100 font-medium">{teamB?.name || '?'} {teamB?.logo}</span>
+                <div key={match.id} className="bg-[#050814]/70 border border-amber-900/30 rounded-xl p-3 space-y-2.5">
+                  <div className="flex items-center justify-between font-serif text-xs gap-2">
+                    <span className="text-amber-100 font-medium truncate">{teamA?.logo} {teamA?.name || '?'}</span>
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-amber-400 bg-amber-950/40 border border-amber-900/50 px-2.5 py-0.5 rounded-full shrink-0">
+                      {match.stage} {match.round ? `• R${match.round}` : ''}
+                    </span>
+                    <span className="text-amber-100 font-medium truncate text-right">{teamB?.name || '?'} {teamB?.logo}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-dashed border-amber-900/30">
+                    <span className="text-[10px] font-mono uppercase text-amber-500/60">Your RSVP:</span>
+                    <div className="flex gap-1.5">
+                      {[
+                        { val: 'GOING', label: 'Going', activeCls: 'bg-emerald-600/30 text-emerald-200 border-emerald-500/50' },
+                        { val: 'LATE',  label: 'Late',  activeCls: 'bg-amber-600/30 text-amber-200 border-amber-500/50' },
+                        { val: 'OUT',   label: 'Out',   activeCls: 'bg-red-600/30 text-red-200 border-red-500/50' },
+                      ].map(opt => (
+                        <button
+                          key={opt.val}
+                          type="button"
+                          onClick={() => setMatchRsvp({ matchId: match.id, playerId: player.id, status: opt.val })}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-mono uppercase border transition-colors ${
+                            myRsvp === opt.val
+                              ? opt.activeCls
+                              : 'bg-[#0b132b] border-amber-900/30 text-amber-500/60 hover:text-amber-200'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -446,7 +557,15 @@ export default function PlayerPanel() {
                       {(form.name || 'W').charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div className="flex-1 space-y-1.5">
+                  <div className="flex-1 space-y-2">
+                    <ImageUploadButton
+                      storagePath="avatars/players"
+                      label="Upload Photo"
+                      onUploaded={(url) => {
+                        setAvatarUrlError(false);
+                        setForm(f => ({ ...f, avatar: url }));
+                      }}
+                    />
                     {/* URL input */}
                     <div>
                       <label className="text-[10px] font-mono text-amber-500/60 block mb-1 flex items-center gap-1 uppercase tracking-wider">

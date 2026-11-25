@@ -1,55 +1,20 @@
 import React, { useMemo, useState } from 'react';
 import { useTournament } from '../context/TournamentContext';
+import { useAuth } from '../context/AuthContext';
+import { computeLeagueTable, TIEBREAKER_OPTIONS } from '../utils/standings';
 import { TrendingUp, Target, Zap, Shield, Star, Trophy, Users } from 'lucide-react';
 
-/* ── Compute league table from completed matches ── */
-function computeTable(teams, matches) {
-  const rows = teams.map(t => ({
-    id: t.id,
-    name: t.name,
-    logo: t.logo,
-    primaryColor: t.primaryColor,
-    P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, GD: 0, Pts: 0,
-  }));
-
-  const leagueCompleted = matches.filter(m => m.stage === 'LEAGUE' && m.status === 'COMPLETED');
-
-  leagueCompleted.forEach(m => {
-    const a = rows.find(r => r.id === m.teamAId);
-    const b = rows.find(r => r.id === m.teamBId);
-    if (!a || !b) return;
-
-    const sA = m.scoreA ?? 0;
-    const sB = m.scoreB ?? 0;
-
-    a.P++; a.GF += sA; a.GA += sB;
-    b.P++; b.GF += sB; b.GA += sA;
-
-    if (sA > sB)      { a.W++; a.Pts += 3; b.L++; }
-    else if (sB > sA) { b.W++; b.Pts += 3; a.L++; }
-    else              { a.D++; a.Pts += 1; b.D++; b.Pts += 1; }
-  });
-
-  rows.forEach(r => { r.GD = r.GF - r.GA; });
-
-  // Sort: Pts → GD → GF → name
-  rows.sort((a, b) =>
-    b.Pts - a.Pts ||
-    b.GD  - a.GD  ||
-    b.GF  - a.GF  ||
-    a.name.localeCompare(b.name)
-  );
-
-  return rows;
-}
-
 export default function LeagueStandings() {
-  const { state } = useTournament();
+  const { state, setTiebreakerMode } = useTournament();
+  const { role } = useAuth();
   const [viewTab, setViewTab] = useState('TABLE'); // 'TABLE' | 'LEADERBOARD'
 
+  const tiebreakerMode = state.tiebreakerMode || 'GD_GF_H2H';
+  const activePreset = TIEBREAKER_OPTIONS.find(o => o.id === tiebreakerMode) || TIEBREAKER_OPTIONS[0];
+
   const table = useMemo(
-    () => computeTable(state.teams, state.matches),
-    [state.teams, state.matches]
+    () => computeLeagueTable(state.teams, state.matches, tiebreakerMode),
+    [state.teams, state.matches, tiebreakerMode]
   );
 
   const hasLeague = state.matches.some(m => m.stage === 'LEAGUE');
@@ -135,6 +100,23 @@ export default function LeagueStandings() {
           </div>
         ) : (
           <div className="sketch-border bg-[#0b132b]/60 rounded-2xl overflow-hidden shadow-2xl p-4 sm:p-6">
+            <div className="flex items-center justify-between flex-wrap gap-2 pb-3 mb-2 border-b border-dashed border-amber-900/30">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-500/70">
+                Tiebreaker: <span className="text-amber-300">{activePreset.label}</span>
+              </span>
+              {role === 'ADMIN' && (
+                <select
+                  value={tiebreakerMode}
+                  onChange={e => setTiebreakerMode(e.target.value)}
+                  className="bg-[#050814] border border-amber-900/50 rounded-lg px-2.5 py-1 text-[11px] font-mono text-amber-200 focus:outline-none focus:border-amber-500"
+                  title="Select standings tiebreaker order"
+                >
+                  {TIEBREAKER_OPTIONS.map(opt => (
+                    <option key={opt.id} value={opt.id}>{opt.label}</option>
+                  ))}
+                </select>
+              )}
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
@@ -148,6 +130,7 @@ export default function LeagueStandings() {
                     <th className={colBase + ' px-2.5 hidden sm:table-cell'}>GF</th>
                     <th className={colBase + ' px-2.5 hidden sm:table-cell'}>GA</th>
                     <th className={colBase + ' px-2.5'}>GD</th>
+                    <th className={colBase + ' px-2.5 hidden md:table-cell'}>Form</th>
                     <th className={colBase + ' px-2.5 font-bold text-amber-300'}>Pts</th>
                   </tr>
                 </thead>
@@ -191,6 +174,22 @@ export default function LeagueStandings() {
                         <td className={colBase + ' px-2.5 text-amber-100/50 hidden sm:table-cell'}>{row.GA}</td>
                         <td className={colBase + ' px-2.5 font-bold ' + (row.GD > 0 ? 'text-emerald-400' : row.GD < 0 ? 'text-red-400' : 'text-amber-100/60')}>
                           {row.GD > 0 ? `+${row.GD}` : row.GD}
+                        </td>
+                        <td className="px-2.5 hidden md:table-cell">
+                          <div className="flex items-center justify-end gap-1">
+                            {(row.form || []).map((res, i) => (
+                              <span
+                                key={i}
+                                className={`w-4 h-4 rounded text-[9px] font-mono font-bold flex items-center justify-center ${
+                                  res === 'W' ? 'bg-emerald-500/20 text-emerald-300' :
+                                  res === 'D' ? 'bg-amber-500/20 text-amber-300' :
+                                                'bg-red-500/20 text-red-300'
+                                }`}
+                              >
+                                {res}
+                              </span>
+                            ))}
+                          </div>
                         </td>
                         <td className={colBase + ' px-2.5 font-bold text-amber-200 text-base drop-shadow-[0_0_6px_rgba(251,191,36,0.3)]'}>
                           {row.Pts}

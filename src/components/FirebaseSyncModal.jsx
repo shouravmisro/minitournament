@@ -9,11 +9,13 @@ import {
 } from '../services/firebase';
 import { useGlobal, useOrganizer } from '../context/GlobalContext';
 import { useTournament } from '../context/TournamentContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function FirebaseSyncModal({ onClose }) {
   const { global } = useGlobal();
   const { organizer } = useOrganizer();
   const { state: tournamentState } = useTournament();
+  const { user } = useAuth();
 
   const [currentConfig, setCurrentConfig] = useState(getFirebaseConfig);
   const [configInput, setConfigInput] = useState('');
@@ -92,7 +94,8 @@ export default function FirebaseSyncModal({ onClose }) {
         global.activeTournamentId,
         tournamentState,
         global,
-        organizer
+        organizer,
+        user
       );
       setStatusMessage('All local tournaments, teams, players & matches synced to Cloud! Everyone opening the link will now see live data.');
     } catch (err) {
@@ -226,9 +229,9 @@ export default function FirebaseSyncModal({ onClose }) {
                 <ol className="list-decimal list-inside space-y-1 text-amber-500/60 text-[11px]">
                   <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noreferrer" className="text-amber-400 underline">console.firebase.google.com</a> and click <strong>"Add project"</strong> (100% Free).</li>
                   <li>Click the Web icon <strong>(&lt;/&gt;)</strong> to register an app. Copy the <code>firebaseConfig</code> code snippet.</li>
-                  <li>In the left sidebar, click <strong>Build → Firestore Database</strong> → <strong>Create database</strong>.</li>
-                  <li>Choose <strong>"Start in test mode"</strong> (allows public read/write by you and friends) and click Enable.</li>
-                  <li>Paste the config above and click <strong>"Connect & Start Live Cloud Sync"</strong>!</li>
+                  <li>In the left sidebar, click <strong>Build → Authentication → Sign-in method</strong> and enable <strong>Google</strong>.</li>
+                  <li>Click <strong>Build → Firestore Database</strong> → <strong>Create database</strong>, then deploy the project&apos;s <code>firestore.rules</code>.</li>
+                  <li>Paste the config above, sign in with Google, and click <strong>&quot;Connect &amp; Start Live Cloud Sync&quot;</strong>!</li>
                 </ol>
               </div>
             )}

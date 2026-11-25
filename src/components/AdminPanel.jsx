@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTournament, generateId, generatePin } from '../context/TournamentContext';
+import { useAuth } from '../context/AuthContext';
 import OrganizerProfile from './OrganizerProfile';
 import BulkDumpWizard   from './BulkDumpWizard';
 import AwardsSystem     from './AwardsSystem';
 import FirebaseSyncModal from './FirebaseSyncModal';
-import { isFirebaseConfigured } from '../services/firebase';
+import RegistrationQueuePanel from './RegistrationQueuePanel';
+import {
+  isFirebaseConfigured,
+  findUserByEmail,
+  subscribeAllRegistrations,
+  subscribeAllClaimRequests,
+} from '../services/firebase';
 import {
   Shield, Users, UserPlus, Crown, Trash2, Sparkles, Download, Upload,
   Key, Eye, EyeOff, Edit3, Save, X, AlertCircle, ChevronDown, ChevronUp,
   Settings, Dices, Trophy, Calendar, Copy, Check, Palette, Coins, UserCheck, Cloud,
-  RefreshCw, BookOpen, ShieldCheck, History
+  RefreshCw, BookOpen, ShieldCheck, History, Globe, Lock, Link2
 } from 'lucide-react';
 
 const POSITION_COLORS = {
@@ -28,13 +35,36 @@ const COLOR_PRESETS = [
 
 export default function AdminPanel() {
   const {
-    state, dispatch,
+    state, dispatch, tournamentId, isOwner, isCoAdmin,
     addPlayer, updatePlayer, deletePlayer, toggleCaptain, toggleOfficial,
     addCaptain, updateCaptain, deleteCaptain,
     addTeam, updateTeam, deleteTeam,
     exportState, importState, setAdminPin, resetState,
     setDraftMode, setDefaultBudget, recomputeStats, clearAuditLog,
+    setOwnership, addCoAdmin, removeCoAdmin, setVisibility, setGuestPinLogin, linkMemberUid,
   } = useTournament();
+  const { user, signInGoogle } = useAuth();
+
+  const [registrations, setRegistrations] = useState([]);
+  const [claimRequests, setClaimRequests] = useState([]);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured() || !tournamentId || !(isOwner || isCoAdmin)) {
+      setRegistrations([]);
+      setClaimRequests([]);
+      return;
+    }
+    const unsubReg = subscribeAllRegistrations(tournamentId, setRegistrations);
+    const unsubClaim = subscribeAllClaimRequests(tournamentId, setClaimRequests);
+    return () => {
+      unsubReg();
+      unsubClaim();
+    };
+  }, [tournamentId, isOwner, isCoAdmin]);
+
+  const pendingRegistrationsCount = registrations.filter(r => r.status === 'PENDING').length;
+  const pendingClaimsCount = claimRequests.filter(c => c.status === 'PENDING').length;
+  const totalPendingOnboarding = pendingRegistrationsCount + pendingClaimsCount;
 
   const [showWizard, setShowWizard] = useState(false);
   const [showPins, setShowPins] = useState(false);
@@ -49,6 +79,15 @@ export default function AdminPanel() {
   const [copiedCapPins, setCopiedCapPins] = useState(false);
   const [copiedPlayerPins, setCopiedPlayerPins] = useState(false);
   const [showCloudModal, setShowCloudModal] = useState(false);
+
+  // Access control & linking state
+  const [coAdminEmail, setCoAdminEmail] = useState('');
+  const [coAdminMsg, setCoAdminMsg] = useState('');
+  const [coAdminBusy, setCoAdminBusy] = useState(false);
+  const [linkTargetKey, setLinkTargetKey] = useState(''); // e.g. "PLAYER:plr_1" or "CAPTAIN:cap_1"
+  const [linkEmail, setLinkEmail] = useState('');
+  const [linkMsg, setLinkMsg] = useState('');
+  const [linkBusy, setLinkBusy] = useState(false);
 
   /* ── Copy PINs ── */
   function copyCaptainPins() {
@@ -284,10 +323,57 @@ export default function AdminPanel() {
         </div>
       </div>
 
+      {/* Unclaimed Legacy Tournament Banner */}
+      {isFirebaseConfigured() && !state.ownerUid && (
+        <div className="sketch-border bg-emerald-950/35 border border-emerald-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-serif font-bold text-emerald-200 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              Claim This Tournament with Your Google Account
+            </p>
+            <p className="text-xs text-emerald-200/75 mt-0.5">
+              Keep all your existing players, matches, teams, and stats while locking Admin access to your Google login.
+            </p>
+          </div>
+          {user ? (
+            <button
+              type="button"
+              onClick={() => setOwnership({
+                ownerUid: user.uid,
+                ownerName: user.displayName || 'Organizer',
+                ownerEmail: user.email || '',
+              })}
+              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shrink-0"
+            >
+              Claim Ownership ({user.email})
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => signInGoogle().catch(() => {})}
+              className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shrink-0"
+            >
+              Sign in with Google to Claim
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ── 1. Tournament Info Section ── */}
       <SectionToggle id="organizer" label="Tournament Info & Details" icon={Settings} />
       {expandedSection === 'organizer' && (
         <OrganizerProfile editable={true} />
+      )}
+
+      {/* ── 1b. Player Registrations, Google Links & Waitlist ── */}
+      <SectionToggle
+        id="registrations"
+        label="Registrations, Google Links & Waitlist"
+        icon={UserPlus}
+        count={totalPendingOnboarding > 0 ? `${totalPendingOnboarding} pending` : registrations.length + claimRequests.length}
+      />
+      {expandedSection === 'registrations' && (
+        <RegistrationQueuePanel registrations={registrations} claimRequests={claimRequests} />
       )}
 
       {/* ── 2. Players Section (Full Edit) ── */}
@@ -1082,10 +1168,234 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* ── 5. Admin Settings & Master Controls ── */}
-      <SectionToggle id="settings" label="Admin Master PIN & Data Management" icon={Key} />
+      {/* ── 5. Admin Settings, Access Control & Data Management ── */}
+      <SectionToggle id="settings" label="Access Control, PINs & Data Management" icon={Key} />
       {expandedSection === 'settings' && (
-        <div className="space-y-4 sketch-border bg-[#0b132b]/70 rounded-2xl p-6 border-dashed border-amber-900/30">
+        <div className="space-y-5 sketch-border bg-[#0b132b]/70 rounded-2xl p-6 border-dashed border-amber-900/30">
+
+          {/* Ownership, Co-Admins & Visibility */}
+          {isFirebaseConfigured() && (
+            <div className="bg-[#050814]/80 border border-amber-900/40 rounded-xl p-4 space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <p className="text-xs font-semibold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" /> Google Ownership &amp; Co-Admins
+                  </p>
+                  <p className="text-[11px] text-amber-500/60 mt-0.5">
+                    {state.ownerUid
+                      ? `Owned by ${state.ownerName || 'Organizer'} (${state.ownerEmail || state.ownerUid})`
+                      : 'Unclaimed tournament — claim ownership with your Google account to lock Cloud writes.'}
+                  </p>
+                </div>
+
+                {!state.ownerUid && (
+                  user ? (
+                    <button
+                      type="button"
+                      onClick={() => setOwnership({
+                        ownerUid: user.uid,
+                        ownerName: user.displayName || 'Organizer',
+                        ownerEmail: user.email || '',
+                      })}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors"
+                    >
+                      Claim Ownership
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => signInGoogle().catch(() => {})}
+                      className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold transition-colors"
+                    >
+                      Sign in with Google to Claim
+                    </button>
+                  )
+                )}
+              </div>
+
+              {/* Visibility & Guest PIN toggles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-amber-900/30">
+                <button
+                  type="button"
+                  onClick={() => setVisibility(!state.isPublic)}
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-[#0b132b] border border-amber-900/40 text-left hover:border-amber-500/40 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    {state.isPublic !== false
+                      ? <Globe className="w-4 h-4 text-emerald-400" />
+                      : <Lock className="w-4 h-4 text-amber-400" />}
+                    <div>
+                      <p className="text-xs font-semibold text-amber-100">
+                        {state.isPublic !== false ? 'Public Arena' : 'Private / Link-Only'}
+                      </p>
+                      <p className="text-[10px] text-amber-500/60">
+                        {state.isPublic !== false ? 'Listed in Public Arenas' : 'Hidden from public list'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${state.isPublic !== false ? 'bg-emerald-500/20 text-emerald-300' : 'bg-gray-800 text-amber-300'}`}>
+                    {state.isPublic !== false ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setGuestPinLogin(state.allowGuestPinLogin === false)}
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-[#0b132b] border border-amber-900/40 text-left hover:border-amber-500/40 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Key className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <p className="text-xs font-semibold text-amber-100">Guest PIN Fallback</p>
+                      <p className="text-[10px] text-amber-500/60">Allow 4-digit PIN sign-in</p>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${state.allowGuestPinLogin !== false ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+                    {state.allowGuestPinLogin !== false ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Co-Admins Manager (Owner or Co-Admin can view; Owner can add/remove) */}
+              {(isOwner || isCoAdmin || !state.ownerUid) && (
+                <div className="space-y-2.5 pt-2 border-t border-amber-900/30">
+                  <p className="text-[11px] font-semibold text-amber-400/90 uppercase tracking-wider">Co-Admins</p>
+                  {Array.isArray(state.coAdmins) && state.coAdmins.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {state.coAdmins.map(ca => (
+                        <div key={ca.uid} className="flex items-center justify-between bg-[#0b132b] px-3 py-2 rounded-lg border border-amber-900/30">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-amber-100 truncate">{ca.name || ca.email}</p>
+                            <p className="text-[10px] font-mono text-amber-500/60 truncate">{ca.email}</p>
+                          </div>
+                          {isOwner && (
+                            <button
+                              type="button"
+                              onClick={() => removeCoAdmin(ca.uid)}
+                              className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-950/40"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-amber-500/50">No co-admins added yet.</p>
+                  )}
+
+                  {(isOwner || !state.ownerUid) && (
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        value={coAdminEmail}
+                        onChange={e => { setCoAdminEmail(e.target.value); setCoAdminMsg(''); }}
+                        placeholder="Co-admin Google email (must have signed in once)..."
+                        className="flex-1 bg-[#0b132b] border border-amber-900/40 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                      <button
+                        type="button"
+                        disabled={!coAdminEmail.trim() || coAdminBusy}
+                        onClick={async () => {
+                          setCoAdminBusy(true);
+                          setCoAdminMsg('');
+                          try {
+                            const found = await findUserByEmail(coAdminEmail);
+                            if (!found?.uid) {
+                              setCoAdminMsg('No user found with that email. Ask them to sign in with Google on this site once first.');
+                            } else if (found.uid === state.ownerUid) {
+                              setCoAdminMsg('That user is already the tournament owner.');
+                            } else {
+                              addCoAdmin({
+                                uid: found.uid,
+                                email: found.email || coAdminEmail.trim(),
+                                name: found.displayName || found.name || coAdminEmail.trim(),
+                                photoURL: found.photoURL || '',
+                              });
+                              setCoAdminEmail('');
+                              setCoAdminMsg(`Added ${found.displayName || found.email} as Co-Admin.`);
+                            }
+                          } finally {
+                            setCoAdminBusy(false);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-xs font-semibold shrink-0"
+                      >
+                        {coAdminBusy ? 'Checking…' : 'Add Co-Admin'}
+                      </button>
+                    </div>
+                  )}
+                  {coAdminMsg && <p className="text-[11px] text-amber-300">{coAdminMsg}</p>}
+                </div>
+              )}
+
+              {/* Link Google Account to Player / Captain */}
+              {(isOwner || isCoAdmin || !state.ownerUid) && (state.players.length > 0 || state.captains.length > 0) && (
+                <div className="space-y-2 pt-2 border-t border-amber-900/30">
+                  <p className="text-[11px] font-semibold text-cyan-300/90 uppercase tracking-wider flex items-center gap-1.5">
+                    <Link2 className="w-3.5 h-3.5" /> Link Google Account to Player or Captain
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <select
+                      value={linkTargetKey}
+                      onChange={e => { setLinkTargetKey(e.target.value); setLinkMsg(''); }}
+                      className="bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-xs text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="">-- Select Member --</option>
+                      {state.captains.map(c => (
+                        <option key={`CAPTAIN:${c.id}`} value={`CAPTAIN:${c.id}`}>
+                          👑 {c.name} {c.uid ? '✓' : ''}
+                        </option>
+                      ))}
+                      {state.players.map(p => (
+                        <option key={`PLAYER:${p.id}`} value={`PLAYER:${p.id}`}>
+                          ⚽ {p.name} {p.uid ? '✓' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="email"
+                      value={linkEmail}
+                      onChange={e => { setLinkEmail(e.target.value); setLinkMsg(''); }}
+                      placeholder="Member's Google email..."
+                      className="bg-[#0b132b] border border-amber-900/40 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                    <button
+                      type="button"
+                      disabled={!linkTargetKey || !linkEmail.trim() || linkBusy}
+                      onClick={async () => {
+                        setLinkBusy(true);
+                        setLinkMsg('');
+                        try {
+                          const [targetRole, targetId] = linkTargetKey.split(':');
+                          const found = await findUserByEmail(linkEmail);
+                          if (!found?.uid) {
+                            setLinkMsg('User not found. Ask them to sign in with Google once first.');
+                          } else {
+                            linkMemberUid({
+                              role: targetRole,
+                              entityId: targetId,
+                              uid: found.uid,
+                              email: found.email || linkEmail.trim(),
+                            });
+                            setLinkEmail('');
+                            setLinkMsg(`Linked ${found.displayName || found.email} (${targetRole.toLowerCase()}).`);
+                          }
+                        } finally {
+                          setLinkBusy(false);
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 text-white text-xs font-semibold"
+                    >
+                      {linkBusy ? 'Linking…' : 'Link Account'}
+                    </button>
+                  </div>
+                  {linkMsg && <p className="text-[11px] text-cyan-300">{linkMsg}</p>}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Admin Master PIN */}
           <div>
             <label className="text-xs font-semibold text-amber-500/60 uppercase tracking-wider">Admin Master PIN</label>

@@ -1,69 +1,66 @@
 import React, { useState, useMemo } from 'react';
 import { useTournament, generateId } from '../context/TournamentContext';
 import { useAuth } from '../context/AuthContext';
+import { seedKnockoutTeams, getMatchWinnerId } from '../utils/standings';
 import {
   GitBranch, Trophy, ChevronRight, Play, Save, X,
   Shuffle, AlertCircle, Crown, ShieldCheck
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────
-   Seed QF / SF / Final brackets from top-N teams
-   sorted by league standings. Supports 4 or 8 teams.
-───────────────────────────────────────── */
-function seedKnockout(teams, matches) {
-  const points = {};
-  teams.forEach(t => { points[t.id] = 0; });
-  matches.filter(m => m.stage === 'LEAGUE' && m.status === 'COMPLETED').forEach(m => {
-    const sA = m.scoreA ?? 0;
-    const sB = m.scoreB ?? 0;
-    if (sA > sB) points[m.teamAId] = (points[m.teamAId] ?? 0) + 3;
-    else if (sB > sA) points[m.teamBId] = (points[m.teamBId] ?? 0) + 3;
-    else { points[m.teamAId] = (points[m.teamAId] ?? 0) + 1; points[m.teamBId] = (points[m.teamBId] ?? 0) + 1; }
-  });
-  return [...teams].sort((a, b) => (points[b.id] ?? 0) - (points[a.id] ?? 0));
-}
-
-/* ─────────────────────────────────────────
-   Single bracket match card
+   Single bracket match card (supports Regulation + Penalty Shootout)
 ───────────────────────────────────────── */
 function BracketMatch({ match, isAdmin, onScore }) {
   const { state } = useTournament();
   const [editing, setEditing] = useState(false);
   const [sA, setSA] = useState('');
   const [sB, setSB] = useState('');
+  const [pA, setPA] = useState('');
+  const [pB, setPB] = useState('');
 
   const teamA = match?.teamAId ? state.teams.find(t => t.id === match.teamAId) : null;
   const teamB = match?.teamBId ? state.teams.find(t => t.id === match.teamBId) : null;
 
   if (!match) {
     return (
-      <div className="w-48 sketch-border rounded-xl p-4 text-center font-mono text-[10px] text-amber-500/30 uppercase tracking-widest bg-[#050814]/40">
+      <div className="w-52 sketch-border rounded-xl p-4 text-center font-mono text-[10px] text-amber-500/30 uppercase tracking-widest bg-[#050814]/40">
         Awaiting Destiny
       </div>
     );
   }
 
   const done  = match.status === 'COMPLETED';
-  const aWon  = done && match.scoreA > match.scoreB;
-  const bWon  = done && match.scoreB > match.scoreA;
+  const winnerId = getMatchWinnerId(match);
+  const aWon  = done && winnerId === match.teamAId;
+  const bWon  = done && winnerId === match.teamBId;
+  const hasPens = done && match.penaltiesA !== undefined && match.penaltiesA !== null && match.penaltiesB !== undefined && match.penaltiesB !== null;
+  const isRegDraw = sA !== '' && sB !== '' && parseInt(sA, 10) === parseInt(sB, 10);
 
   function save() {
     const scoreA = parseInt(sA, 10);
     const scoreB = parseInt(sB, 10);
-    if (isNaN(scoreA) || isNaN(scoreB) || scoreA === scoreB) return; // KO must have a winner
-    onScore({ ...match, scoreA, scoreB, status: 'COMPLETED' });
+    if (isNaN(scoreA) || isNaN(scoreB) || scoreA < 0 || scoreB < 0) return;
+
+    if (scoreA === scoreB) {
+      const penA = parseInt(pA, 10);
+      const penB = parseInt(pB, 10);
+      if (isNaN(penA) || isNaN(penB) || penA < 0 || penB < 0 || penA === penB) return;
+      onScore({ ...match, scoreA, scoreB, penaltiesA: penA, penaltiesB: penB, status: 'COMPLETED' });
+    } else {
+      onScore({ ...match, scoreA, scoreB, penaltiesA: null, penaltiesB: null, status: 'COMPLETED' });
+    }
     setEditing(false);
   }
 
   return (
     <div
-      className={`w-52 sketch-border rounded-xl overflow-hidden shadow-xl transition-all ${
+      className={`w-56 sketch-border rounded-xl overflow-hidden shadow-xl transition-all ${
         done ? 'bg-[#050814]/90' : 'bg-[#0b132b]/80'
       }`}
     >
       {/* Team A & B rows */}
-      {[{ team: teamA, score: match.scoreA, won: aWon, key: 'a' },
-        { team: teamB, score: match.scoreB, won: bWon, key: 'b' }].map(row => (
+      {[{ team: teamA, score: match.scoreA, pen: match.penaltiesA, won: aWon, key: 'a' },
+        { team: teamB, score: match.scoreB, pen: match.penaltiesB, won: bWon, key: 'b' }].map(row => (
         <div
           key={row.key}
           className={`flex items-center gap-2.5 px-3 py-2.5 border-b border-dashed border-amber-900/30 last:border-0 ${
@@ -89,6 +86,7 @@ function BracketMatch({ match, isAdmin, onScore }) {
               }`}
             >
               {row.score ?? '-'}
+              {hasPens && <span className="text-[10px] text-cyan-300 ml-1">({row.pen})</span>}
             </span>
           )}
         </div>
@@ -97,39 +95,63 @@ function BracketMatch({ match, isAdmin, onScore }) {
       {/* Score entry for Admin */}
       {isAdmin && !done && teamA && teamB && (
         editing ? (
-          <div className="bg-[#050814] p-2 flex items-center gap-1.5 border-t border-dashed border-amber-900/40">
-            <input
-              type="number"
-              min="0"
-              value={sA}
-              onChange={e => setSA(e.target.value)}
-              className="w-10 bg-[#0b132b] border border-amber-600/50 rounded text-amber-100 text-center font-mono text-xs py-1 focus:outline-none focus:border-amber-400"
-              autoFocus
-            />
-            <span className="text-amber-600 text-xs font-mono">-</span>
-            <input
-              type="number"
-              min="0"
-              value={sB}
-              onChange={e => setSB(e.target.value)}
-              className="w-10 bg-[#0b132b] border border-amber-600/50 rounded text-amber-100 text-center font-mono text-xs py-1 focus:outline-none focus:border-amber-400"
-            />
-            <button
-              onClick={save}
-              className="ml-auto bg-emerald-900/40 hover:bg-emerald-900/60 border border-emerald-500/50 text-emerald-300 p-1.5 rounded transition-colors"
-            >
-              <Save className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setEditing(false)}
-              className="text-amber-500/50 hover:text-amber-300 p-1.5 rounded transition-colors"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+          <div className="bg-[#050814] p-2.5 space-y-2 border-t border-dashed border-amber-900/40">
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min="0"
+                value={sA}
+                onChange={e => setSA(e.target.value)}
+                className="w-11 bg-[#0b132b] border border-amber-600/50 rounded text-amber-100 text-center font-mono text-xs py-1 focus:outline-none focus:border-amber-400"
+                autoFocus
+              />
+              <span className="text-amber-600 text-xs font-mono">-</span>
+              <input
+                type="number"
+                min="0"
+                value={sB}
+                onChange={e => setSB(e.target.value)}
+                className="w-11 bg-[#0b132b] border border-amber-600/50 rounded text-amber-100 text-center font-mono text-xs py-1 focus:outline-none focus:border-amber-400"
+              />
+              <button
+                onClick={save}
+                className="ml-auto bg-emerald-900/40 hover:bg-emerald-900/60 border border-emerald-500/50 text-emerald-300 p-1.5 rounded transition-colors"
+              >
+                <Save className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                className="text-amber-500/50 hover:text-amber-300 p-1.5 rounded transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {isRegDraw && (
+              <div className="flex items-center gap-1.5 pt-1 border-t border-amber-900/30">
+                <span className="text-[9px] font-mono uppercase text-cyan-300">Penalties:</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={pA}
+                  onChange={e => setPA(e.target.value)}
+                  placeholder="A"
+                  className="w-10 bg-[#0b132b] border border-cyan-500/40 rounded text-cyan-200 text-center font-mono text-xs py-0.5"
+                />
+                <span className="text-cyan-600 text-xs font-mono">-</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={pB}
+                  onChange={e => setPB(e.target.value)}
+                  placeholder="B"
+                  className="w-10 bg-[#0b132b] border border-cyan-500/40 rounded text-cyan-200 text-center font-mono text-xs py-0.5"
+                />
+              </div>
+            )}
           </div>
         ) : (
           <button
-            onClick={() => { setSA(''); setSB(''); setEditing(true); }}
+            onClick={() => { setSA(''); setSB(''); setPA(''); setPB(''); setEditing(true); }}
             className="w-full text-center py-2 text-[10px] font-mono tracking-widest uppercase text-amber-400 bg-amber-950/20 hover:bg-amber-950/40 border-t border-dashed border-amber-900/40 flex items-center justify-center gap-1.5 transition-colors"
           >
             <Play className="w-3 h-3 text-amber-500" /> Enter Score
@@ -183,7 +205,7 @@ export default function KnockoutBracket() {
     const n = state.teams.length;
     if (n < 2) return;
 
-    const seeded = seedKnockout(state.teams, state.matches);
+    const seeded = seedKnockoutTeams(state.teams, state.matches, state.tiebreakerMode || 'GD_GF_H2H');
 
     if (n >= 8) {
       const top8 = seeded.slice(0, 8);
@@ -218,6 +240,9 @@ export default function KnockoutBracket() {
       const teamA = state.teams.find(t => t.id === updated.teamAId);
       const teamB = state.teams.find(t => t.id === updated.teamBId);
       const stageName = updated.koStage === 'FINAL' ? 'Championship Final' : updated.koStage === 'SF' ? 'Semi-Final' : 'Quarter-Final';
+      const penText = (updated.penaltiesA !== null && updated.penaltiesA !== undefined)
+        ? ` (${updated.penaltiesA}-${updated.penaltiesB} pen)`
+        : '';
       addAuditLog({
         id: generateId('audit'),
         timestamp: Date.now(),
@@ -226,13 +251,13 @@ export default function KnockoutBracket() {
         userRole: updaterInfo.role,
         matchId: updated.id,
         action: 'KNOCKOUT_SCORED',
-        summary: `[${stageName}] ${teamA?.name || 'Team A'} ${updated.scoreA ?? '-'} - ${updated.scoreB ?? '-'} ${teamB?.name || 'Team B'}`,
+        summary: `[${stageName}] ${teamA?.name || 'Team A'} ${updated.scoreA ?? '-'} - ${updated.scoreB ?? '-'}${penText} ${teamB?.name || 'Team B'}`,
         details: `Recorded knockout stage match conclusion for ${stageName}`,
       });
     }
 
-    const winner = (updated.scoreA ?? 0) > (updated.scoreB ?? 0)
-      ? updated.teamAId : updated.teamBId;
+    const winner = getMatchWinnerId(updated);
+    if (!winner) return;
 
     if (updated.koStage === 'QF') {
       const qfIdx = qfMatches.findIndex(m => m.id === updated.id);
@@ -253,11 +278,8 @@ export default function KnockoutBracket() {
   }
 
   /* Find the champion */
-  const champion = fMatch?.status === 'COMPLETED'
-    ? state.teams.find(t => t.id === (
-        (fMatch.scoreA > fMatch.scoreB) ? fMatch.teamAId : fMatch.teamBId
-      ))
-    : null;
+  const championId = getMatchWinnerId(fMatch);
+  const champion = championId ? state.teams.find(t => t.id === championId) : null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">

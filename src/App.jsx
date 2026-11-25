@@ -178,6 +178,15 @@ function AppContent() {
 /* ── Router ── */
 function AppRouter() {
   const { global } = useGlobal();
+  const { syncTournamentSession } = useAuth();
+
+  const activeId = global.activeTournamentId || (global.tournaments?.[0]?.id) || 't_mvwya9yi';
+
+  React.useEffect(() => {
+    if (!global.showManager && activeId) {
+      syncTournamentSession(activeId);
+    }
+  }, [global.showManager, activeId, syncTournamentSession]);
 
   if (global.showManager) {
     return (
@@ -187,15 +196,11 @@ function AppRouter() {
     );
   }
 
-  const activeId = global.activeTournamentId || (global.tournaments?.[0]?.id) || 't_mvwya9yi';
-
   return (
     <TournamentProvider key={activeId} storageKey={`mt_state_${activeId}`}>
-      <AuthProvider>
-        <ErrorBoundary>
-          <AppContent />
-        </ErrorBoundary>
-      </AuthProvider>
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
     </TournamentProvider>
   );
 }
@@ -203,9 +208,11 @@ function AppRouter() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <GlobalProvider>
-        <AppRouter />
-      </GlobalProvider>
+      <AuthProvider>
+        <GlobalProvider>
+          <AppRouter />
+        </GlobalProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

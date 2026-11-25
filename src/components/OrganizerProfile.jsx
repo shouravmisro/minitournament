@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTournament } from '../context/TournamentContext';
 import { useGlobal } from '../context/GlobalContext';
+import ImageUploadButton from './ImageUploadButton';
 import {
   MapPin, Phone, FileText, Globe, Building2, Edit3, Save, X, ExternalLink
 } from 'lucide-react';
@@ -35,24 +36,35 @@ export default function OrganizerProfile({ editable = false }) {
         </div>
 
         <div className="grid gap-3">
-          {[
-            { key: 'name', label: 'Tournament Name', ph: 'Local Champions League' },
-            { key: 'hostName', label: 'Host / Guild Name', ph: 'City Sports Club' },
-            { key: 'venue', label: 'Arena / Colosseum', ph: 'Central Turf Arena' },
-            { key: 'mapLink', label: 'Location Map URL', ph: 'https://maps.google.com/...' },
-            { key: 'contactWhatsApp', label: 'Envoy Contact (WhatsApp)', ph: '+1234567890' },
-            { key: 'logoUrl', label: 'Emblem URL', ph: 'https://...' },
-          ].map(f => (
-            <div key={f.key}>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/70">{f.label}</label>
-              <input
-                value={form[f.key]}
-                onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                placeholder={f.ph}
-                className="w-full mt-1 bg-[#050814] border border-amber-900/50 rounded-xl px-3 py-2 text-amber-100 font-serif text-sm focus:outline-none focus:border-amber-500"
-              />
-            </div>
-          ))}
+          {
+            [
+              { key: 'name', label: 'Tournament Name', ph: 'Local Champions League' },
+              { key: 'hostName', label: 'Host / Guild Name', ph: 'City Sports Club' },
+              { key: 'venue', label: 'Arena / Colosseum', ph: 'Central Turf Arena' },
+              { key: 'mapLink', label: 'Location Map URL', ph: 'https://maps.google.com/...' },
+              { key: 'contactWhatsApp', label: 'Envoy Contact (WhatsApp)', ph: '+1234567890' },
+              { key: 'logoUrl', label: 'Emblem URL', ph: 'https://...' },
+            ].map(f => (
+              <div key={f.key}>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/70">{f.label}</label>
+                  {f.key === 'logoUrl' && (
+                    <ImageUploadButton
+                      storagePath="avatars/organizers"
+                      label="Upload Emblem"
+                      onUploaded={(url) => setForm(prev => ({ ...prev, logoUrl: url }))}
+                    />
+                  )}
+                </div>
+                <input
+                  value={form[f.key]?.startsWith('data:') && f.key === 'logoUrl' ? '' : (form[f.key] || '')}
+                  onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                  placeholder={f.ph}
+                  className="w-full mt-1 bg-[#050814] border border-amber-900/50 rounded-xl px-3 py-2 text-amber-100 font-serif text-sm focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            ))
+          }
 
           <div>
             <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/70">Tournament Format</label>

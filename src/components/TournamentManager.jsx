@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useGlobal, useOrganizer } from '../context/GlobalContext';
+import { useAuth } from '../context/AuthContext';
+import { isFirebaseConfigured } from '../services/firebase';
 import {
   Trophy, Plus, Trash2, Play, Calendar, Users, Crown,
   ChevronRight, Settings, Globe, Dices, X, Edit3, Check,
+  LogIn, LogOut, Lock, RefreshCw, Search, Shield
 } from 'lucide-react';
 
 const FORMAT_OPTIONS = [
@@ -41,7 +44,7 @@ function OrganizerProfileModal({ onClose }) {
 
         <div className="space-y-4">
           {[
-            { label: 'Your Name',  key: 'name',           placeholder: 'e.g. Shourav' },
+            { label: 'Your Name',  key: 'name',            placeholder: 'e.g. Shourav' },
             { label: 'Avatar URL', key: 'avatar',          placeholder: 'https://...' },
             { label: 'Bio',        key: 'bio',             placeholder: 'Organizer bio...' },
             { label: 'WhatsApp',   key: 'contactWhatsApp', placeholder: '+880...' },
@@ -72,26 +75,179 @@ function OrganizerProfileModal({ onClose }) {
   );
 }
 
+function TournamentCard({ t, user, canEdit, canDelete, onOpen, onEdit, confirmDelete, onRequestDelete, onCancelDelete, onConfirmDelete }) {
+  const color = FORMAT_COLORS[t.format] || FORMAT_COLORS.HYBRID;
+
+  let localPlayers = 0;
+  let localTeams = 0;
+  try {
+    const raw = localStorage.getItem(`mt_state_${t.id}`);
+    if (raw) {
+      const s = JSON.parse(raw);
+      localPlayers = s.players?.length ?? 0;
+      localTeams = s.teams?.length ?? 0;
+    }
+  } catch {}
+
+  const playersCount = t.playerCount ?? localPlayers;
+  const teamsCount = t.teamCount ?? localTeams;
+  const isOwner = Boolean(user?.uid && t.ownerUid === user.uid);
+  const isCoAdmin = Boolean(user?.uid && Array.isArray(t.coAdminUids) && t.coAdminUids.includes(user.uid));
+
+  return (
+    <div className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 hover:bg-[#0b132b]/90 transition-all group">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <h3 className="font-serif text-amber-100 text-lg truncate group-hover:text-amber-300 transition-colors">{t.name}</h3>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${color}`}>
+              {t.format}
+            </span>
+            {t.isPublic === false && (
+              <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-800 text-amber-300/80 border border-amber-900/50 flex items-center gap-1">
+                <Lock className="w-2.5 h-2.5" /> Private
+              </span>
+            )}
+            {isOwner && (
+              <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                Owner
+              </span>
+            )}
+            {!isOwner && isCoAdmin && (
+              <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                Co-Admin
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-4 text-xs text-amber-500/50 flex-wrap">
+            <span className="flex items-center gap-1">
+              <Users className="w-3 h-3" /> {playersCount} players
+            </span>
+            <span className="flex items-center gap-1">
+              <Crown className="w-3 h-3" /> {teamsCount} teams
+            </span>
+            {t.ownerName && (
+              <span className="flex items-center gap-1">
+                <Shield className="w-3 h-3" /> {t.ownerName}
+              </span>
+            )}
+            {t.createdAt && (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {new Date(t.createdAt).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {confirmDelete === t.id ? (
+            <>
+              <button
+                onClick={onCancelDelete}
+                className="text-xs px-2 py-1 rounded bg-gray-700 text-amber-100 hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => onConfirmDelete(t.id)}
+                className="text-xs px-2 py-1 rounded bg-red-700 text-white hover:bg-red-600 font-semibold"
+              >
+                Delete
+              </button>
+            </>
+          ) : (
+            <>
+              {canEdit && (
+                <button
+                  onClick={() => onEdit(t)}
+                  className="p-1.5 rounded-lg text-amber-500/40 hover:text-amber-400 hover:bg-gray-850 transition-colors"
+                  title="Edit tournament name & format"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={() => onRequestDelete(t.id)}
+                  className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors opacity-70 group-hover:opacity-100"
+                  title="Delete tournament"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={() => onOpen(t.id)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#050814] hover:bg-amber-600 text-sm font-semibold text-amber-100 hover:text-white transition-colors"
+              >
+                <Play className="w-3.5 h-3.5" />
+                Open
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TournamentManager() {
-  const { global, createTournament, deleteTournament, selectTournament, updateTournamentMeta } = useGlobal();
+  const {
+    myTournaments,
+    joinedTournaments,
+    discoverTournaments,
+    loadingPublic,
+    refreshPublicTournaments,
+    createTournament,
+    deleteTournament,
+    selectTournament,
+    updateTournamentMeta,
+    openTournamentByIdOrUrl,
+  } = useGlobal();
   const { organizer } = useOrganizer();
+  const { user, authLoading, authError, signInGoogle, signOutUser } = useAuth();
 
   const [showCreate, setShowCreate] = useState(false);
   const [showOrgProfile, setShowOrgProfile] = useState(false);
-  const [newName, setNewName]       = useState('');
-  const [newFormat, setNewFormat]   = useState('HYBRID');
+  const [newName, setNewName] = useState('');
+  const [newFormat, setNewFormat] = useState('HYBRID');
+  const [newIsPublic, setNewIsPublic] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [editingTournament, setEditingTournament] = useState(null);
   const [editName, setEditName] = useState('');
   const [editFormat, setEditFormat] = useState('HYBRID');
+  const [joinInput, setJoinInput] = useState('');
+  const [joinError, setJoinError] = useState('');
+  const [signingIn, setSigningIn] = useState(false);
 
-  function handleCreate() {
+  const hasCloud = isFirebaseConfigured();
+
+  async function handleGoogleSignIn() {
+    setSigningIn(true);
+    try {
+      await signInGoogle();
+    } catch {
+      // AuthContext holds authError
+    } finally {
+      setSigningIn(false);
+    }
+  }
+
+  async function handleCreate() {
     const name = newName.trim();
-    if (!name) return;
-    createTournament(name, newFormat);
-    setNewName('');
-    setNewFormat('HYBRID');
-    setShowCreate(false);
+    if (!name || creating) return;
+    setCreating(true);
+    try {
+      await createTournament(name, newFormat, { isPublic: newIsPublic });
+      setNewName('');
+      setNewFormat('HYBRID');
+      setNewIsPublic(true);
+      setShowCreate(false);
+    } finally {
+      setCreating(false);
+    }
   }
 
   function handleStartEditTournament(t) {
@@ -118,73 +274,156 @@ export default function TournamentManager() {
     setEditingTournament(null);
   }
 
-  function handleDelete(id) {
-    deleteTournament(id);
+  async function handleDelete(id) {
+    await deleteTournament(id);
     setConfirmDelete(null);
   }
 
-  // Get per-tournament player/team counts from their localStorage keys
-  function getTournamentStats(id) {
-    try {
-      const raw = localStorage.getItem(`mt_state_${id}`);
-      if (!raw) return { players: 0, teams: 0 };
-      const s = JSON.parse(raw);
-      return { players: s.players?.length ?? 0, teams: s.teams?.length ?? 0 };
-    } catch { return { players: 0, teams: 0 }; }
+  async function handleOpenById(e) {
+    e.preventDefault();
+    setJoinError('');
+    const res = await openTournamentByIdOrUrl(joinInput);
+    if (!res.ok) {
+      setJoinError(res.error || 'Could not open tournament.');
+    } else {
+      setJoinInput('');
+    }
   }
 
   return (
     <div className="min-h-screen bg-[#050814] text-amber-50">
       {/* Header */}
       <header className="sketch-border bg-[#0b132b]/80 border-b border-dashed border-amber-900/40 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Trophy className="w-6 h-6 text-amber-400" />
             <span className="font-bold text-white text-lg">Mini Tournament</span>
           </div>
-          <button
-            onClick={() => setShowOrgProfile(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#050814] hover:bg-gray-700 text-sm text-amber-100 hover:text-white transition-colors"
-          >
-            {organizer.avatar ? (
-              <img src={organizer.avatar} alt="" className="w-6 h-6 rounded-full object-cover" />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center text-xs font-bold text-white">
-                {(organizer.name || 'O')[0].toUpperCase()}
-              </div>
+
+          <div className="flex items-center gap-2">
+            {hasCloud && (
+              user ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowOrgProfile(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#050814] hover:bg-gray-800 text-sm text-amber-100 hover:text-white transition-colors border border-amber-900/40"
+                    title="Edit your organizer profile"
+                  >
+                    {(organizer.avatar || user.photoURL) ? (
+                      <img src={organizer.avatar || user.photoURL} alt="" className="w-6 h-6 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center text-xs font-bold text-white">
+                        {(organizer.name || user.displayName || 'O')[0].toUpperCase()}
+                      </div>
+                    )}
+                    <span className="hidden sm:inline">{organizer.name || user.displayName || 'Profile'}</span>
+                    <Settings className="w-3.5 h-3.5 text-amber-400" />
+                  </button>
+                  <button
+                    onClick={signOutUser}
+                    className="p-2 rounded-lg bg-[#050814] hover:bg-red-950/40 text-amber-500/60 hover:text-red-300 border border-amber-900/30 transition-colors"
+                    title="Sign out of Google"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={signingIn || authLoading}
+                  className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs sm:text-sm font-semibold transition-colors shadow-lg"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>{signingIn ? 'Signing in…' : 'Sign in with Google'}</span>
+                </button>
+              )
             )}
-            <span className="hidden sm:inline">{organizer.name || 'Set Profile'}</span>
-            <Settings className="w-3.5 h-3.5" />
-          </button>
+
+            {!hasCloud && (
+              <button
+                onClick={() => setShowOrgProfile(true)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#050814] hover:bg-gray-700 text-sm text-amber-100 hover:text-white transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{organizer.name || 'Set Profile'}</span>
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        {/* Welcome banner */}
-        <div className="sketch-border bg-[#0b132b]/70 rounded-2xl p-6 shadow-xl">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        {/* Welcome & Auth Banner */}
+        <div className="sketch-border bg-[#0b132b]/70 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           <h1 className="text-3xl font-serif text-amber-200 mb-1">
-            {organizer.name ? `Welcome back, ${organizer.name}!` : 'Welcome to Mini Tournament'}
+            {user
+              ? `Welcome back, ${organizer.name || user.displayName}!`
+              : organizer.name
+                ? `Welcome back, ${organizer.name}!`
+                : 'Welcome to Mini Tournament'}
           </h1>
-          <p className="text-amber-500/60 text-sm">
-            {global.tournaments.length === 0
-              ? 'Create your first tournament to get started.'
-              : `You have ${global.tournaments.length} tournament${global.tournaments.length !== 1 ? 's' : ''} running.`}
+          <p className="text-amber-500/70 text-sm">
+            {user
+              ? `Signed in as ${user.email}. Your tournaments & profile are isolated to your account.`
+              : hasCloud
+                ? 'Sign in with Google to create your own tournaments, invite co-admins, and sync live across devices.'
+                : 'Offline mode active. Create local tournaments in this browser.'}
           </p>
-          {!organizer.name && (
-            <button
-              onClick={() => setShowOrgProfile(true)}
-              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium transition-colors"
-            >
-              <Edit3 className="w-3.5 h-3.5" /> Set up your profile
-            </button>
+
+          {authError && (
+            <p className="mt-3 text-xs text-red-300 bg-red-950/40 border border-red-500/30 rounded-lg px-3 py-2">
+              {authError}
+            </p>
           )}
+
+          <div className="flex flex-wrap gap-2 mt-4">
+            {hasCloud && !user && (
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={signingIn || authLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                {signingIn ? 'Signing in…' : 'Sign in with Google'}
+              </button>
+            )}
+            {user && !organizer.name && (
+              <button
+                onClick={() => setShowOrgProfile(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/40 text-amber-100 text-sm font-medium transition-colors"
+              >
+                <Edit3 className="w-3.5 h-3.5" /> Complete Organizer Profile
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Create Tournament */}
+        {/* Open by Link or ID */}
+        <form onSubmit={handleOpenById} className="sketch-border bg-[#0b132b]/50 rounded-2xl p-4 flex flex-col sm:flex-row gap-2.5">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-amber-500/50 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              value={joinInput}
+              onChange={e => { setJoinInput(e.target.value); setJoinError(''); }}
+              placeholder="Paste tournament invite link, ID, or Join Code (e.g. ABC123)..."
+              className="w-full bg-[#050814] border border-amber-900/50 rounded-xl pl-9 pr-3 py-2 text-sm text-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={!joinInput.trim()}
+            className="px-4 py-2 rounded-xl bg-[#050814] hover:bg-amber-600/40 border border-amber-500/40 disabled:opacity-40 text-amber-200 text-xs font-mono uppercase tracking-wider transition-colors shrink-0"
+          >
+            Open Arena
+          </button>
+        </form>
+        {joinError && <p className="text-xs text-red-400 -mt-5 px-1">{joinError}</p>}
+
+        {/* My Tournaments */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-serif text-amber-200">Tournaments</h2>
+            <h2 className="text-2xl font-serif text-amber-200">My Tournaments</h2>
             <button
               onClick={() => setShowCreate(v => !v)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-colors"
@@ -204,7 +443,7 @@ export default function TournamentManager() {
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                  placeholder="e.g. Summer Football Cup 2025"
+                  placeholder="e.g. Summer Football Cup 2026"
                   autoFocus
                   className="w-full bg-[#050814] border border-amber-900/50 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
@@ -215,6 +454,7 @@ export default function TournamentManager() {
                 <div className="grid grid-cols-3 gap-2">
                   {FORMAT_OPTIONS.map(opt => (
                     <button
+                      type="button"
                       key={opt.value}
                       onClick={() => setNewFormat(opt.value)}
                       className={`p-3 rounded-lg border text-left transition-all ${
@@ -230,6 +470,22 @@ export default function TournamentManager() {
                 </div>
               </div>
 
+              <label className="flex items-center gap-2.5 text-xs text-amber-200/80 cursor-pointer pt-1">
+                <input
+                  type="checkbox"
+                  checked={newIsPublic}
+                  onChange={e => setNewIsPublic(e.target.checked)}
+                  className="rounded border-amber-700 bg-[#050814] text-amber-500 focus:ring-amber-500"
+                />
+                <span>List in Public Arenas directory (uncheck for link-only private tournament)</span>
+              </label>
+
+              {hasCloud && !user && (
+                <p className="text-xs text-amber-300/80 bg-amber-950/40 border border-amber-500/30 rounded-lg p-2.5">
+                  Note: You are not signed in with Google. This tournament will be saved only in this browser until you sign in and claim it.
+                </p>
+              )}
+
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowCreate(false)}
@@ -239,112 +495,108 @@ export default function TournamentManager() {
                 </button>
                 <button
                   onClick={handleCreate}
-                  disabled={!newName.trim()}
+                  disabled={!newName.trim() || creating}
                   className="flex-1 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 disabled:text-amber-500/40 text-white text-sm font-semibold transition-colors"
                 >
-                  Create
+                  {creating ? 'Creating…' : 'Create'}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Tournament List */}
-          {global.tournaments.length === 0 && !showCreate && (
-            <div className="text-center py-16 text-amber-500/40">
-              <Globe className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>No tournaments yet.</p>
-              <p className="text-sm mt-1">Click "New Tournament" to get started.</p>
+          {myTournaments.length === 0 && !showCreate && (
+            <div className="text-center py-10 sketch-border bg-[#0b132b]/30 rounded-2xl text-amber-500/50">
+              <Globe className="w-10 h-10 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">No personal tournaments yet.</p>
+              <p className="text-xs mt-1">Click "New Tournament" to host your own, or browse Public Arenas below.</p>
             </div>
           )}
 
           <div className="space-y-3">
-            {global.tournaments.map(t => {
-              const stats = getTournamentStats(t.id);
-              const color = FORMAT_COLORS[t.format] || FORMAT_COLORS.HYBRID;
-              return (
-                <div
-                  key={t.id}
-                  className="sketch-border bg-[#0b132b]/60 rounded-2xl p-5 hover:bg-[#0b132b]/90 transition-all group"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-serif text-amber-100 text-lg truncate group-hover:text-amber-300 transition-colors">{t.name}</h3>
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${color}`}>
-                          {t.format}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-amber-500/40">
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3" /> {stats.players} players
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Crown className="w-3 h-3" /> {stats.teams} teams
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(t.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      {confirmDelete === t.id ? (
-                        <>
-                          <button
-                            onClick={() => setConfirmDelete(null)}
-                            className="text-xs px-2 py-1 rounded bg-gray-700 text-amber-100 hover:bg-gray-600"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => handleDelete(t.id)}
-                            className="text-xs px-2 py-1 rounded bg-red-700 text-white hover:bg-red-600 font-semibold"
-                          >
-                            Delete
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => handleStartEditTournament(t)}
-                            className="p-1.5 rounded-lg text-amber-500/40 hover:text-amber-400 hover:bg-gray-850 transition-colors"
-                            title="Edit tournament name & format"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setConfirmDelete(t.id)}
-                            className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors opacity-0 group-hover:opacity-100"
-                            title="Delete tournament"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => selectTournament(t.id)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#050814] hover:bg-amber-600 text-sm font-semibold text-amber-100 hover:text-white transition-colors"
-                          >
-                            <Play className="w-3.5 h-3.5" />
-                            Open
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {myTournaments.map(t => (
+              <TournamentCard
+                key={t.id}
+                t={t}
+                user={user}
+                canEdit={!t.ownerUid || t.ownerUid === user?.uid || t.coAdminUids?.includes(user?.uid)}
+                canDelete={!t.ownerUid || t.ownerUid === user?.uid}
+                onOpen={selectTournament}
+                onEdit={handleStartEditTournament}
+                confirmDelete={confirmDelete}
+                onRequestDelete={setConfirmDelete}
+                onCancelDelete={() => setConfirmDelete(null)}
+                onConfirmDelete={handleDelete}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Tip box */}
-        {global.tournaments.length > 0 && (
-          <div className="sketch-border bg-[#050814]/60 rounded-xl p-4 text-xs font-serif text-amber-500/50 flex items-start gap-3">
-            <Dices className="w-4 h-4 mt-0.5 text-amber-500 shrink-0" />
-            <p>Each tournament has its own players, teams, draft, matches, and awards — fully isolated.</p>
+        {/* Joined Tournaments (where user is Captain or Player) */}
+        {joinedTournaments.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-xl font-serif text-cyan-200 flex items-center gap-2">
+              <Users className="w-5 h-5 text-cyan-400" />
+              Arenas I&apos;m Playing In
+            </h2>
+            <div className="space-y-3">
+              {joinedTournaments.map(t => (
+                <TournamentCard
+                  key={t.id}
+                  t={t}
+                  user={user}
+                  canEdit={false}
+                  canDelete={false}
+                  onOpen={selectTournament}
+                />
+              ))}
+            </div>
           </div>
         )}
+
+        {/* Public / Discoverable Arenas */}
+        {hasCloud && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-serif text-amber-200/90 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-emerald-400" />
+                Public Arenas
+              </h2>
+              <button
+                onClick={refreshPublicTournaments}
+                disabled={loadingPublic}
+                className="flex items-center gap-1.5 text-xs text-amber-400/80 hover:text-amber-300 px-2.5 py-1 rounded-lg bg-[#0b132b] border border-amber-900/40"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingPublic ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </div>
+
+            {discoverTournaments.length === 0 ? (
+              <p className="text-xs text-amber-500/40 py-4">
+                {loadingPublic ? 'Loading public arenas…' : 'No other public tournaments found right now.'}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {discoverTournaments.map(t => (
+                  <TournamentCard
+                    key={t.id}
+                    t={t}
+                    user={user}
+                    canEdit={false}
+                    canDelete={false}
+                    onOpen={selectTournament}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tip box */}
+        <div className="sketch-border bg-[#050814]/60 rounded-xl p-4 text-xs font-serif text-amber-500/50 flex items-start gap-3">
+          <Dices className="w-4 h-4 mt-0.5 text-amber-500 shrink-0" />
+          <p>Each tournament is isolated to its organizer &amp; co-admins, with separate players, teams, draft, matches, and awards.</p>
+        </div>
       </main>
 
       {showOrgProfile && <OrganizerProfileModal onClose={() => setShowOrgProfile(false)} />}
@@ -418,11 +670,9 @@ export default function TournamentManager() {
         </div>
       )}
 
-      {/* Confirm delete overlay */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setConfirmDelete(null)} />
       )}
     </div>
   );
 }
-

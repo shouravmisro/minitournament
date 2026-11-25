@@ -1,18 +1,149 @@
-rules_version='2'
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 12, 1);
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isTournamentOwner(data) {
+      return isSignedIn() && data.ownerUid == request.auth.uid;
+    }
+
+    function isTournamentCoAdmin(data) {
+      return isSignedIn()
+        && ('coAdminUids' in data)
+        && (data.coAdminUids is list)
+        && (request.auth.uid in data.coAdminUids);
+    }
+
+    function isTournamentMember(data) {
+      return isSignedIn()
+        && ('memberUids' in data)
+        && (data.memberUids is list)
+        && (request.auth.uid in data.memberUids);
+    }
+
+    function isUnownedTournament(data) {
+      return !('ownerUid' in data) || data.ownerUid == null || data.ownerUid == '';
+    }
+
+    // Per-user profiles (name, email, avatar, organizer profile)
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    // Multi-tenant tournaments
+    match /tournaments/{tournamentId} {
+      allow read: if resource == null
+        || resource.data.isPublic != false
+        || isTournamentOwner(resource.data)
+        || isTournamentCoAdmin(resource.data)
+        || isTournamentMember(resource.data);
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && !('adminPin' in request.resource.data);
+
+      allow update: if isSignedIn()
+        && !('adminPin' in request.resource.data)
+        && (
+          isTournamentOwner(resource.data)
+          || (isTournamentCoAdmin(resource.data)
+              && request.resource.data.ownerUid == resource.data.ownerUid)
+          || (isUnownedTournament(resource.data)
+              && request.resource.data.ownerUid == request.auth.uid)
+          || (isTournamentMember(resource.data)
+              && !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(['ownerUid', 'ownerName', 'ownerEmail', 'coAdminUids', 'coAdmins', 'pinHashes', 'isPublic', 'allowGuestPinLogin', 'registrationSettings', 'tiebreakerMode']))
+        );
+
+      allow delete: if isTournamentOwner(resource.data);
+
+      // Private secrets (plaintext PINs) — strictly Owner & Co-Admins only
+      match /private/{docId} {
+        allow read, write: if isSignedIn() && (
+          get(/databases/$(database)/documents/tournaments/$(tournamentId)).data.ownerUid == request.auth.uid
+          || (
+            ('coAdminUids' in get(/databases/$(database)/documents/tournaments/$(tournamentId)).data)
+            && (request.auth.uid in get(/databases/$(database)/documents/tournaments/$(tournamentId)).data.coAdminUids)
+          )
+        );
+      }
+
+      // Self-service player registrations & waitlist
+      match /registrations/{regUid} {
+        function parentData() {
+          return get(/databases/$(database)/documents/tournaments/$(tournamentId)).data;
+        }
+        function isAdminOfParent() {
+          return isSignedIn() && (
+            parentData().ownerUid == request.auth.uid
+            || (
+              ('coAdminUids' in parentData())
+              && (request.auth.uid in parentData().coAdminUids)
+            )
+          );
+        }
+
+        allow read: if (isSignedIn() && request.auth.uid == regUid) || isAdminOfParent();
+
+        allow create: if isSignedIn()
+          && request.auth.uid == regUid
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.status in ['PENDING', 'WAITLIST']
+          && request.resource.data.paymentStatus in ['UNPAID', 'SUBMITTED'];
+
+        allow update: if isAdminOfParent()
+          || (
+            isSignedIn()
+            && request.auth.uid == regUid
+            && resource.data.status in ['PENDING', 'WAITLIST']
+            && request.resource.data.status in ['PENDING', 'WAITLIST']
+            && (
+              request.resource.data.paymentStatus == resource.data.paymentStatus
+              || request.resource.data.paymentStatus in ['UNPAID', 'SUBMITTED']
+            )
+          );
+
+        allow delete: if (isSignedIn() && request.auth.uid == regUid) || isAdminOfParent();
+      }
+
+      // Existing player/captain Google account link requests
+      match /claimRequests/{reqUid} {
+        function parentData() {
+          return get(/databases/$(database)/documents/tournaments/$(tournamentId)).data;
+        }
+        function isAdminOfParent() {
+          return isSignedIn() && (
+            parentData().ownerUid == request.auth.uid
+            || (
+              ('coAdminUids' in parentData())
+              && (request.auth.uid in parentData().coAdminUids)
+            )
+          );
+        }
+
+        allow read: if (isSignedIn() && request.auth.uid == reqUid) || isAdminOfParent();
+
+        allow create, update: if isAdminOfParent()
+          || (
+            isSignedIn()
+            && request.auth.uid == reqUid
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.status == 'PENDING'
+          );
+
+        allow delete: if (isSignedIn() && request.auth.uid == reqUid) || isAdminOfParent();
+      }
+    }
+
+    // Legacy singletons locked to read-only so users cannot overwrite each other
+    match /system/{docId} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

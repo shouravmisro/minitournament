@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTournament } from '../context/TournamentContext';
 import { useAuth } from '../context/AuthContext';
+import ImageUploadButton from './ImageUploadButton';
+import {
+  isFirebaseConfigured,
+  subscribeMyClaimRequest,
+  submitClaimRequest,
+} from '../services/firebase';
 import {
   Crown, Users, Edit3, Save, X, Palette, Shield, User,
   Type, Smile, ChevronDown, ChevronUp, Dices, Key, Eye, EyeOff, Check,
-  Trash2, Link
+  Trash2, Link, Link2, LogIn
 } from 'lucide-react';
 
 const POSITION_COLORS = {
@@ -29,13 +35,27 @@ const COLOR_PRESETS = [
 ];
 
 export default function CaptainPanel() {
-  const { state, updateTeam, updateCaptain } = useTournament();
-  const { authenticatedId } = useAuth();
+  const { state, tournamentId, isOwner, isCoAdmin, updateTeam, updateCaptain, setMatchLineup, linkMemberUid } = useTournament();
+  const { authenticatedId, user, signInGoogle } = useAuth();
+  const [myClaimRequest, setMyClaimRequest] = useState(null);
+  const [linkingGoogle, setLinkingGoogle] = useState(false);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured() || !tournamentId || !user?.uid) {
+      setMyClaimRequest(null);
+      return;
+    }
+    const unsub = subscribeMyClaimRequest(tournamentId, user.uid, setMyClaimRequest);
+    return () => unsub();
+  }, [tournamentId, user?.uid]);
 
   const captain = state.captains.find(c => c.id === authenticatedId);
   const team = captain ? state.teams.find(t => t.id === captain.teamId) : null;
   const roster = team
     ? state.players.filter(p => team.rosterIds.includes(p.id) || p.teamId === team.id)
+    : [];
+  const upcomingMatches = team
+    ? state.matches.filter(m => (m.teamAId === team.id || m.teamBId === team.id) && m.status !== 'COMPLETED')
     : [];
 
   const [editingModal, setEditingModal] = useState(false);
@@ -43,6 +63,7 @@ export default function CaptainPanel() {
   const [capForm, setCapForm] = useState({});
   const [teamForm, setTeamForm] = useState({});
   const [showRoster, setShowRoster] = useState(true);
+  const [selectedMatchId, setSelectedMatchId] = useState('');
 
   // PIN change state
   const [showPin, setShowPin] = useState(false);
@@ -190,6 +211,74 @@ export default function CaptainPanel() {
         </div>
       </div>
 
+      {/* ── Connect Google Account Card ── */}
+      {isFirebaseConfigured() && (
+        <div className="sketch-border bg-[#050814]/60 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-xl border ${captain.uid ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300' : 'bg-amber-950/40 border-amber-500/30 text-amber-300'}`}>
+              <Link2 className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-serif text-sm text-amber-100 font-bold">
+                {captain.uid ? 'Google Account Connected' : 'Connect Your Google Account'}
+              </p>
+              <p className="text-[11px] text-amber-500/60">
+                {captain.uid
+                  ? `Linked to ${captain.email || 'your Google ID'} — 1-click Faction Leader access enabled.`
+                  : myClaimRequest?.status === 'PENDING'
+                    ? 'Link request sent (PIN Verified ✓) — waiting for organizer confirmation.'
+                    : 'Link your Google ID to access your captain & team panel without entering a PIN.'}
+              </p>
+            </div>
+          </div>
+
+          {!captain.uid && (
+            !user ? (
+              <button
+                type="button"
+                onClick={() => signInGoogle().catch(() => {})}
+                className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold flex items-center gap-1.5 shrink-0"
+              >
+                <LogIn className="w-3.5 h-3.5" /> Sign in with Google
+              </button>
+            ) : myClaimRequest?.status === 'PENDING' ? (
+              <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+                Pending Approval
+              </span>
+            ) : (
+              <button
+                type="button"
+                disabled={linkingGoogle}
+                onClick={async () => {
+                  setLinkingGoogle(true);
+                  try {
+                    if (isOwner || isCoAdmin || !state.ownerUid) {
+                      linkMemberUid({ role: 'CAPTAIN', entityId: captain.id, uid: user.uid, email: user.email || '' });
+                    } else {
+                      await submitClaimRequest(tournamentId, user.uid, {
+                        email: user.email || '',
+                        displayName: user.displayName || '',
+                        photoURL: user.photoURL || '',
+                        targetRole: 'CAPTAIN',
+                        targetId: captain.id,
+                        targetName: captain.name,
+                        pinVerified: true,
+                      });
+                    }
+                  } finally {
+                    setLinkingGoogle(false);
+                  }
+                }}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-semibold flex items-center gap-1.5 shrink-0"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                {linkingGoogle ? 'Linking…' : `Connect ${user.email}`}
+              </button>
+            )
+          )}
+        </div>
+      )}
+
       {/* ── Security & Cipher PIN Card ── */}
       <div className="sketch-border bg-[#050814]/60 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -272,6 +361,115 @@ export default function CaptainPanel() {
           </p>
         </div>
       </div>
+
+      {/* ── Matchday Starting Lineup & RSVP Builder ── */}
+      {team && upcomingMatches.length > 0 && roster.length > 0 && (() => {
+        const activeMatch = upcomingMatches.find(m => m.id === selectedMatchId) || upcomingMatches[0];
+        const oppId = activeMatch.teamAId === team.id ? activeMatch.teamBId : activeMatch.teamAId;
+        const opp = state.teams.find(t => t.id === oppId);
+        const savedLineup = activeMatch.lineups?.[team.id] || { starters: [], subs: [] };
+        const startersSet = new Set(savedLineup.starters || []);
+        const subsSet = new Set(savedLineup.subs || []);
+        const hasGkStarter = roster.some(p => startersSet.has(p.id) && p.position === 'GK');
+
+        function setPlayerSlot(playerId, slot) {
+          const nextStarters = new Set(startersSet);
+          const nextSubs = new Set(subsSet);
+          nextStarters.delete(playerId);
+          nextSubs.delete(playerId);
+          if (slot === 'STARTER') nextStarters.add(playerId);
+          if (slot === 'SUB') nextSubs.add(playerId);
+          setMatchLineup({
+            matchId: activeMatch.id,
+            teamId: team.id,
+            starters: Array.from(nextStarters),
+            subs: Array.from(nextSubs),
+          });
+        }
+
+        return (
+          <div className="sketch-border bg-[#0b132b]/50 rounded-2xl p-4 space-y-3 shadow-lg">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h3 className="font-serif text-lg text-amber-200 flex items-center gap-2">
+                <Shield className="w-5 h-5 text-cyan-400" /> Matchday Lineup Builder
+              </h3>
+              <select
+                value={activeMatch.id}
+                onChange={e => setSelectedMatchId(e.target.value)}
+                className="bg-[#050814] border border-amber-900/50 rounded-lg px-2.5 py-1.5 text-xs text-amber-100 font-serif"
+              >
+                {upcomingMatches.map(m => {
+                  const oId = m.teamAId === team.id ? m.teamBId : m.teamAId;
+                  const o = state.teams.find(t => t.id === oId);
+                  return (
+                    <option key={m.id} value={m.id}>
+                      vs {o?.name || 'TBD'} ({m.stage}{m.round ? ` R${m.round}` : ''})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div className="flex items-center justify-between text-xs font-mono text-amber-500/70 flex-wrap gap-2">
+              <span>
+                Opponent: <strong className="text-amber-200">{opp?.logo} {opp?.name || 'TBD'}</strong>
+              </span>
+              <span>
+                Starters: <strong className="text-emerald-300">{startersSet.size}</strong> • Subs: <strong className="text-cyan-300">{subsSet.size}</strong>
+              </span>
+            </div>
+
+            {startersSet.size > 0 && !hasGkStarter && (
+              <p className="text-[11px] font-mono text-amber-300 bg-amber-950/40 border border-amber-500/30 rounded-lg px-3 py-1.5">
+                Heads up: No Goalkeeper (GK) is currently marked as a Starter.
+              </p>
+            )}
+
+            <div className="space-y-1.5">
+              {roster.map(p => {
+                const rsvp = activeMatch.rsvp?.[p.id] || 'NO_REPLY';
+                const slot = startersSet.has(p.id) ? 'STARTER' : subsSet.has(p.id) ? 'SUB' : 'OUT';
+                return (
+                  <div key={p.id} className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#050814]/80 border border-amber-900/20 flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${POSITION_COLORS[p.position] || POSITION_COLORS.FLEX}`}>
+                        {p.position}
+                      </span>
+                      <span className="font-serif text-xs text-amber-100 truncate">{p.name}</span>
+                      <span className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded ${
+                        rsvp === 'GOING' ? 'bg-emerald-500/20 text-emerald-300' :
+                        rsvp === 'LATE'  ? 'bg-amber-500/20 text-amber-300' :
+                        rsvp === 'OUT'   ? 'bg-red-500/20 text-red-300' :
+                                           'bg-gray-800 text-amber-500/50'
+                      }`}>
+                        {rsvp === 'NO_REPLY' ? 'No RSVP' : rsvp}
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      {[
+                        { id: 'STARTER', label: 'Starter', cls: 'bg-emerald-600/30 text-emerald-200 border-emerald-500/50' },
+                        { id: 'SUB',     label: 'Sub',     cls: 'bg-cyan-600/30 text-cyan-200 border-cyan-500/50' },
+                        { id: 'OUT',     label: 'Rest',    cls: 'bg-gray-700/60 text-amber-200 border-amber-500/30' },
+                      ].map(btn => (
+                        <button
+                          key={btn.id}
+                          type="button"
+                          onClick={() => setPlayerSlot(p.id, btn.id)}
+                          className={`px-2 py-1 rounded text-[10px] font-mono uppercase border transition-colors ${
+                            slot === btn.id ? btn.cls : 'bg-[#0b132b] border-amber-900/30 text-amber-500/50 hover:text-amber-200'
+                          }`}
+                        >
+                          {btn.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Active Roster Section ── */}
       <div className="sketch-border bg-[#0b132b]/40 rounded-2xl overflow-hidden shadow-lg">
@@ -404,6 +602,11 @@ export default function CaptainPanel() {
                     )}
 
                     <div className="flex-1 space-y-2">
+                      <ImageUploadButton
+                        storagePath="avatars/captains"
+                        label="Upload Photo"
+                        onUploaded={(url) => setCapForm(f => ({ ...f, avatar: url }))}
+                      />
                       <div>
                         <label className="text-[10px] font-mono text-amber-500/60 block mb-1 flex items-center gap-1 uppercase tracking-wider">
                           <Link className="w-3 h-3 text-amber-400" /> Image URL Link
@@ -590,15 +793,21 @@ export default function CaptainPanel() {
                     </div>
                   )}
 
-                  <div>
-                    <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60 block mb-1">Direct Image URL</label>
+                  <div className="space-y-2">
+                    <ImageUploadButton
+                      storagePath="avatars/teams"
+                      label="Upload Squad Photo"
+                      maxWidth={960}
+                      maxHeight={540}
+                      onUploaded={(url) => setTeamForm(f => ({ ...f, photo: url }))}
+                    />
+                    <label className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60 block mb-1">Or Direct Image URL</label>
                     <input
-                      value={teamForm.photo || ''}
+                      value={teamForm.photo?.startsWith('data:') ? '' : (teamForm.photo || '')}
                       onChange={e => setTeamForm({ ...teamForm, photo: e.target.value.trim() })}
                       placeholder="https://example.com/squad-photo.jpg"
                       className="w-full bg-[#0b132b] border border-amber-900/50 rounded-lg px-2.5 py-1.5 text-xs text-amber-100 focus:outline-none focus:border-amber-500 font-mono"
                     />
-                    <p className="text-[10px] font-mono text-amber-500/40 mt-1 uppercase tracking-wider">Direct web link (JPG, PNG, WebP) to your faction squad scroll.</p>
                   </div>
                 </div>
               </div>
