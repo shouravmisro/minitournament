@@ -7,7 +7,7 @@ service cloud.firestore {
     }
 
     function isTournamentOwner(data) {
-      return isSignedIn() && data.ownerUid == request.auth.uid;
+      return isSignedIn() && ('ownerUid' in data) && data.ownerUid == request.auth.uid;
     }
 
     function isTournamentCoAdmin(data) {
@@ -38,7 +38,8 @@ service cloud.firestore {
     // Multi-tenant tournaments
     match /tournaments/{tournamentId} {
       allow read: if resource == null
-        || resource.data.isPublic != false
+        || !('isPublic' in resource.data)
+        || resource.data.isPublic == true
         || isTournamentOwner(resource.data)
         || isTournamentCoAdmin(resource.data)
         || isTournamentMember(resource.data);
