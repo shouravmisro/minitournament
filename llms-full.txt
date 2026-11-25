@@ -1,0 +1,299 @@
+# ArenaPro — Complete Platform & Editorial Knowledge Base
+
+Canonical URL: https://mini-tournament-45ac1.web.app/
+Last Updated: 2026-11-25
+
+## Platform Overview
+ArenaPro is a free all-in-one sports tournament and club management platform. Run player registration, waitlists, live auction drafts, round-robin fixtures, knockout brackets, tiebreakers, club rosters, and player career stats.
+
+## Homepage FAQs
+### What is ArenaPro and what sports does it support?
+ArenaPro is a free web-based tournament, club, and matchday management platform built for football, 5-a-side/7-a-side turf leagues, cricket, esports, and local campus cups. It combines registration, live auction or wheel drafts, automated fixtures, standings with tiebreakers, knockout brackets, persistent clubs, and player career passports.
+
+### Is ArenaPro free for organizers, captains, and players?
+Yes. Organizers can create unlimited tournaments, share 6-character join codes, run multi-device live player auctions, publish schedules, and track career stats for free without downloading an app.
+
+### How do live synced auction drafts and spin-the-wheel drafts work?
+Captains sign in on their own devices using Google or a Captain PIN and bid live while the organizer controls nominations. ArenaPro automatically enforces squad budget guardrails and minimum reserve protection, or organizers can run an animated Spin-the-Wheel draft for balanced social leagues.
+
+### How do players join a tournament and claim existing stats?
+Players enter a 6-character Join Code or click a direct invite URL to self-register into an available slot or automatic waitlist. Returning players who already appear in a legacy tournament can sign in with Google and link their existing profile so past goals, assists, and ratings merge into one verified career passport.
+
+### How are league tiebreakers and head-to-head results calculated?
+Organizers choose custom tiebreaker priority rules—such as Goal Difference, Head-to-Head record, Goals Scored, or Wins—and ArenaPro updates the league table and Head-to-Head matrix instantly as final scores and shootout results are logged.
+
+## Matchday & Feature Stories
+- **ArenaPro: From Join Code to Trophy** [Platform Tour]: A complete A–Z tournament & club platform built for organizers, captains, and players — zero spreadsheet chaos.
+- **Join Code & Fan Prediction Polls** [Features]: Share a 6-character Join Code so players register themselves, link Google accounts, and vote on matchday winners.
+- **Live Standings, Form & Tiebreakers** [Standings]: Configurable tiebreakers (GD, Head-to-Head, Goals For) and automatic 5-match form badges updated on every whistle.
+- **Head-to-Head Results Matrix** [Analytics]: See every team vs. every rival in one instant visual score grid — no digging through weeks of match logs.
+- **5-Axis Player Radar & Career Passport** [Player Stats]: Compare any two players side-by-side across Goals, Assists, Matches, Defense, and Ratings across all seasons.
+- **Team Squads, Captains & Budgets** [Squads]: Track drafted squads, captains, matchday attendance RSVPs, and starting lineups in real time.
+
+---
+
+## How to Use ArenaPro: Complete A–Z Guide, Why Organizers Switch & Full Feature Tour (With Screenshots)
+URL: https://mini-tournament-45ac1.web.app/blog/how-to-use-arenapro-complete-guide-with-screenshots/
+Category: Guide | Read time: 7 min
+Summary: Learn how to run a sports tournament from A to Z with ArenaPro. Includes real screenshots, step-by-step setup for organizers, captains, and players, and why it replaces WhatsApp & Excel.
+
+### Quick Answer
+ArenaPro is a free, real-time web platform for running sports tournaments and clubs from registration to trophy. Organizers sign in with Google, create a league/knockout/hybrid tournament in 30 seconds, share a 6-character Join Code for player signups, run a live multi-device auction or spin-wheel draft, and publish automatic standings, Head-to-Head matrices, knockout penalties, and verified player career stats.
+
+### Key Takeaways
+- Zero spreadsheets or messy WhatsApp lists: bulk-import rosters or open self-registration with automatic waitlists and fee verification.
+- Multi-organizer isolation & Co-Admins: every organizer owns their tournaments securely via Google Sign-In, while existing PIN players can link their Google accounts with zero data loss.
+- Live multi-device Auction Room with Max-Safe-Bid guardrails prevents captains from overspending before completing their squads.
+- Complete matchday workflow: player RSVP (Going/Late/Out), captain Starting Lineup builder, live standings, Head-to-Head matrix, and penalty shootouts.
+- Persistent Clubs and cross-tournament Player Career Passports with 5-axis SVG Radar comparison charts.
+
+### Why Use ArenaPro Instead of WhatsApp Groups & Spreadsheets?
+Most local leagues, campus cups, and turf tournaments start in a WhatsApp group and a fragile Excel sheet. Within two matchdays, organizers face duplicate player entries, arguments over goal difference vs. head-to-head tiebreakers, outdated screenshots of standings, and captains who do not know which players are actually showing up.
+
+ArenaPro replaces every scattered tool with one live, mobile-first competition operating system. When a score is saved, league tables, Head-to-Head matrices, Golden Boot leaderboards, and player career passports update instantly across every device.
+
+| Workflow Step | WhatsApp + Excel Setup | ArenaPro Platform |
+| --- | --- | --- |
+| Player Onboarding | Manual copy-paste from chat messages | 6-char Join Code, Waitlist & Duplicate Merge |
+| Draft / Team Selection | In-person only or chaotic voice calls | Live Multi-Device Auction & Spin Wheel + Bid Guardrails |
+| Standings & Tiebreakers | Manual formulas prone to errors | Real-time Pts, GD, GF, H2H & 5-Match Form |
+| Matchday Lineups | Last-minute texts before kickoff | Per-Match Player RSVP + Captain Lineup Builder |
+| Player & Club History | Deleted after the tournament ends | Permanent Clubs & Verified Career Passports |
+
+[Screenshot: The ArenaPro Homepage: jump straight into live tournaments, clubs, player career passports, or enter a 6-character Join Code.]
+
+
+### Step 1: Sign In with Google & Create or Open a Tournament
+Visit ArenaPro and click Sign in with Google in the top navigation bar. Your organizer profile, hosted tournaments, and player history stay tied to your account—isolated from other organizers using the platform.
+
+Click Tournaments → New Tournament to choose League (round-robin), Knockout (elimination), or Hybrid (group league followed by playoffs), and set visibility to Public or Link-Only Private. You can also invite Co-Admins by their Google email so co-organizers can share scoring and management duties.
+
+[Screenshot: Filter tournaments by format (League, Knockout, Hybrid), clone previous seasons in one click, or open any tournament by ID or Join Code.]
+
+
+### Step 2: Onboard Players Without Friction (Join Codes, Waitlists & Google Linking)
+Every tournament automatically receives a 6-character Join Code (for example, ZRGSZM) and a direct registration link (?t=<id>&join=1). Organizers can configure a player capacity limit, registration deadline, entry fee, and payment instructions inside Admin → Registrations, Google Links & Waitlist.
+
+Already imported players from a WhatsApp list? Existing players do not need to register twice. They simply click Connect Google on the Tournament Hub, select their existing roster name, and verify their 4-digit PIN (or request organizer approval) to keep 100% of their stats, team, and history.
+
+[Screenshot: The Tournament Center Hub: players can register, link their existing profile to Google, or copy a WhatsApp-ready Matchday Digest.]
+
+
+### Step 3: Run a Fair Live Draft (Multi-Device Auction or Spin Wheel)
+Open the Draft tab as Admin. When you spin the animated wheel, the nominated player syncs live to every Captain’s phone. Captains place live bids directly from their own devices using quick-bid buttons.
+
+ArenaPro includes automatic Max-Safe-Bid guardrails: based on minimum squad size and reserve price per remaining slot, the system calculates each team’s maximum safe bid so a captain can never burn their entire budget early and fail to field a full squad.
+
+[Screenshot: Teams Overview: inspect every squad, captain assignment, team colors, and match record.]
+
+
+### Step 4: Automated Standings, H2H Matrix & Knockout Penalties
+Generate round-robin schedules in seconds and log match scores, goals, assists, saves, clean sheets, and MVPs. Standings calculate Points, Goal Difference, Goals For, and 5-match Form automatically.
+
+Organizers can choose their preferred tiebreaker order (Points → GD → GF → H2H, or UEFA-style Head-to-Head priority), inspect the interactive H2H Matrix grid, and settle drawn knockout ties with full Penalty Shootout score tracking.
+
+[Screenshot: Live Standings with configurable tiebreakers and recent 5-match Form badges.]
+
+
+### Step 5: Head-to-Head Matrix, Matchday Lineups & Player Radar Passports
+Before kickoff, players mark per-match RSVP (Going, Late, or Out) in their Player Panel, and Captains build their Starting XI and Substitutes in the Matchday Lineup Builder (with automatic Goalkeeper coverage checks).
+
+After the whistle, every verified player builds a permanent Career Passport across all tournaments they play, complete with a 5-axis SVG Performance Radar for side-by-side player comparisons.
+
+[Screenshot: Cross-Tournament Player Career Passport with the 5-Axis SVG Performance Radar and side-by-side comparison selector.]
+
+### Frequently Asked Questions
+**Q: Is ArenaPro free to use for local tournaments and clubs?**
+A: Yes. Hosting tournaments, player registration, live synced drafts, standings, knockout brackets, clubs, and player career passports are 100% free.
+
+**Q: Do players who were already added by an organizer need to register again?**
+A: No. Existing players can click "Connect Google" on the tournament Hub, pick their existing roster name, and verify with their 4-digit PIN (or ask the organizer to approve) so all their existing stats and team data stay intact.
+
+**Q: Can captains bid from separate phones during a player auction?**
+A: Yes. ArenaPro syncs the active player on the auction block and live bids in real time via Firestore so captains can bid remotely from their own devices.
+
+**Q: What happens if a knockout match ends in a draw?**
+A: The Knockout Bracket supports regulation draw scores paired with Penalty Shootout inputs (for example, 1–1 and 4–2 on penalties), advancing the shootout winner without distorting league goal totals.
+
+**Q: Can multiple organizers manage the same tournament?**
+A: Yes. The tournament owner can add Co-Admins by Google email inside Admin → Access Control, PINs & Data Management.
+
+---
+
+## How to Organize a Local Football or Turf Tournament from Scratch (2026 Step-by-Step Checklist)
+URL: https://mini-tournament-45ac1.web.app/blog/how-to-organize-local-football-turf-tournament-2026/
+Category: Guide | Read time: 5 min
+Summary: A complete 2026 blueprint for organizing a 5-a-side, 7-a-side, or 11-a-side local football tournament: formats, registration caps, budgeting, fixtures, and tiebreakers.
+
+### Quick Answer
+To organize a smooth local football or turf tournament: (1) lock venue hours and choose a format (League for 4–6 teams, Hybrid for 6–12 teams), (2) open online registration with a strict player cap and waitlist, (3) collect entry fees before the draft, (4) publish round-robin fixtures with clear tiebreaker rules upfront, and (5) track live scores, cards, and awards in one shared link.
+
+### Key Takeaways
+- Hybrid format (short round-robin + Semi-Finals & Final) delivers the highest engagement for 6 to 8 teams in a single weekend or multi-week turf league.
+- Always set a Max Players cap with an automatic Waitlist—dropouts happen in nearly 15% of amateur signups.
+- Publish tiebreaker rules (Goal Difference vs. Head-to-Head) and knockout penalty rules before Matchday 1 to avoid disputes.
+
+### 1. Pick the Right Format for Your Team Count & Turf Hours
+The biggest mistake new organizers make is booking turf hours before calculating total matches. A 4-team single round-robin takes 6 matches; a 6-team round-robin takes 15 matches; an 8-team round-robin takes 28 matches.
+
+For 4–5 teams, a double round-robin League plus a Grand Final guarantees every squad plays plenty of minutes. For 6–12 teams, a Hybrid format (group stage followed by Quarter-Finals or Semi-Finals) keeps lower-ranked teams alive late into the event.
+
+
+### 2. Replace Chat Signups with Structured Registration & Waitlists
+Collecting names in a messaging thread leads to missing positions, duplicate entries, and unpaid spots. Instead, share a single Join Code link where players submit their preferred position, jersey number, and payment reference.
+
+Setting a hard capacity cap (for example, 28 players for four 7-a-side squads) with an automatic waitlist ensures late applicants can fill last-minute injuries without scrambling.
+
+[Screenshot: Using a single Join Code link centralizes capacity limits, payment instructions, and player profiles.]
+
+
+### 3. Lock Matchday Attendance & Share Live Standings
+Two hours before kickoff, use per-match RSVP check-ins so captains know who is Going, Late, or Out. After each game, enter goals, assists, and clean sheets right away so players see live Golden Boot and standings movement on their phones.
+
+### Frequently Asked Questions
+**Q: How many players should each squad have for a 7-a-side turf tournament?**
+A: Aim for 9 to 10 players per squad (7 starters plus 2–3 rolling substitutes) to cover fatigue and minor knocks across multiple matches.
+
+**Q: What is the best format for a one-day 6-team tournament?**
+A: Two groups of 3 teams playing 2 group matches each (6 matches total), followed by Semi-Finals and a Final (3 knockout matches), fits comfortably into a 4–5 hour turf booking.
+
+---
+
+## Auction Draft vs. Spin-the-Wheel vs. Snake Draft: Which Team Selection Format Fits Your League?
+URL: https://mini-tournament-45ac1.web.app/blog/auction-draft-vs-spin-wheel-vs-snake-draft-leagues/
+Category: Draft Recap | Read time: 5 min
+Summary: Compare Auction Drafts, Spin-the-Wheel drafts, and Snake Drafts for amateur sports leagues. Learn how budget guardrails prevent lopsided squads.
+
+### Quick Answer
+Auction Drafts create the most competitive balance and excitement when player skill levels vary widely, because every captain can bid on any star using a shared coin budget. Spin-the-Wheel drafts are ideal for casual, social tournaments where surprise matters most, while Snake Drafts work best when speed and predictable turn order are top priorities.
+
+### Key Takeaways
+- Auction Drafts prevent one lucky first pick from dominating an entire tournament when skill gaps exist.
+- Always enforce a Max-Safe-Bid reserve rule so captains cannot spend 95% of their budget on two players and leave slots empty.
+- Combining a Spin Wheel nomination with live Auction bidding gives you both suspense and fair pricing.
+
+### Comparing the Three Most Popular Draft Formats
+In community leagues where players range from former academy standouts to weekend regulars, unbalanced teams ruin the season by Week 2. Selecting the right draft mechanic solves parity before a single ball is kicked.
+
+| Criteria | Auction Draft | Spin-the-Wheel | Snake Draft |
+| --- | --- | --- | --- |
+| Competitive Parity | Very High (market pricing) | Medium (random) | High (if pool is even) |
+| Event Excitement | High (live bidding wars) | High (roulette suspense) | Medium |
+| Average Duration | 35–60 mins | 15–25 mins | 20–30 mins |
+| Best For | Competitive leagues & big gaps | Friendly / mixed-skill cups | Fast, structured drafts |
+
+
+### Why Budget Guardrails Are Essential in Amateur Auctions
+A classic amateur auction mistake happens when an inexperienced captain spends 900 out of 1,000 coins on two forwards and has only 100 coins left to sign six defenders and a goalkeeper.
+
+ArenaPro solves this automatically in its Live Auction Room by computing Max Safe Bid = Remaining Budget − (Remaining Required Slots × Minimum Reserve Price). Captains can bid aggressively from their phones without ever breaking squad math.
+
+[Screenshot: Balanced squads after a guarded draft in FC CHOMPA PREMIER LEAGUE.]
+
+### Frequently Asked Questions
+**Q: How does the Spin Wheel + Auction hybrid work?**
+A: The organizer filters undrafted players (for example, Goalkeepers only), spins the wheel to randomly nominate the next player on the block, and captains then bid live for that player.
+
+**Q: What happens to leftover undrafted players at the end of a draft?**
+A: ArenaPro includes an Auto-Fill Remaining button that distributes undrafted players evenly across teams by position.
+
+---
+
+## League Tiebreakers Explained: Goal Difference vs. Head-to-Head vs. Goals Scored
+URL: https://mini-tournament-45ac1.web.app/blog/league-tiebreakers-goal-difference-vs-head-to-head/
+Category: Guide | Read time: 4 min
+Summary: Understand the difference between Goal Difference and Head-to-Head tiebreakers in football leagues, how H2H matrices resolve ties, and which rule prevents stat-padding.
+
+### Quick Answer
+Under Goal Difference (GD) priority (used in the Premier League), overall Goals For minus Goals Against across all matches breaks ties first. Under Head-to-Head (H2H) priority (used in UEFA and La Liga), the direct results between the tied teams come first—which discourages teams from running up 10–0 scores against bottom-table opponents.
+
+### Key Takeaways
+- Goal Difference rewards consistency across the full season and keeps every goal meaningful.
+- Head-to-Head priority rewards beating your direct title rivals and reduces blowouts against weaker sides.
+- Displaying a Head-to-Head Results Matrix alongside the standings table makes tiebreakers transparent to every fan and captain.
+
+### Seeing Both Tiebreakers in Action
+In short amateur leagues (4 to 8 teams), tied point totals happen constantly. Look at the live standings snapshot below: two teams sit level on 13 points after 9 matches, separated cleanly by Goal Difference (+6 vs 0).
+
+[Screenshot: Real tournament standings where two teams tied on 13 points are separated by +6 vs 0 Goal Difference.]
+
+
+### Why a Head-to-Head Matrix Eliminates Confusion
+When organizers switch to Head-to-Head priority (Pts → H2H → GD → GF), captains always ask: "Wait, who won our direct games?" An interactive Head-to-Head Matrix puts every matchup between any two teams in a single grid cell so everyone can verify the tiebreaker at a glance.
+
+[Screenshot: ArenaPro H2H Matrix: inspect every head-to-head scoreline across the league in one grid.]
+
+### Frequently Asked Questions
+**Q: Which tiebreaker is fairer for 7-a-side local leagues?**
+A: If team skill levels vary widely, Head-to-Head (Pts → H2H → GD → GF) prevents one team from winning the title solely by scoring 12 goals against an undermanned opponent. If teams are evenly matched, Goal Difference (Pts → GD → GF → H2H) encourages attacking play.
+
+**Q: Can I change the tiebreaker order in ArenaPro?**
+A: Yes. Admins can switch between Pts → GD → GF → H2H, Pts → H2H → GD → GF, and Pts → GF → GD → H2H directly from the Standings view, and Knockout seeding automatically follows the same order.
+
+---
+
+## How to Manage Player Registrations, Waitlists & Entry Fees Without WhatsApp Chaos
+URL: https://mini-tournament-45ac1.web.app/blog/stop-whatsapp-registration-chaos-join-codes-waitlists/
+Category: Announcement | Read time: 4 min
+Summary: Learn how self-service Join Codes, capacity caps, automatic waitlists, duplicate merging, and payment verification simplify tournament onboarding.
+
+### Quick Answer
+To eliminate WhatsApp registration chaos, publish a single tournament Join Code and invite link backed by Google Sign-In. Set a maximum player cap so extra signups flow into an ordered waitlist automatically, verify entry fee transaction IDs in one dashboard, and merge incoming signups with any pre-imported player names to prevent duplicates.
+
+### Key Takeaways
+- Google-authenticated registration prevents fake signups and ties players directly to their verified accounts.
+- Private contact fields (such as WhatsApp numbers) remain visible only to organizers, never exposed on public pages.
+- Duplicate Merge lets organizers combine a self-registered player with an already-imported WhatsApp list entry in one click.
+
+### One Link for New Signups and Existing Players
+Every tournament runs into two kinds of players: newcomers applying for a spot, and returning regulars who were already added by the organizer. With ArenaPro, both groups use the exact same Tournament Center link.
+
+New players fill out their preferred positions, jersey number, photo, and optional payment reference. Returning players simply switch to "Already on Roster", pick their name, and link their Google account with their 4-digit PIN.
+
+[Screenshot: Both new applicants and returning players onboard cleanly from the same Tournament Hub banner.]
+
+
+### Waitlists & Entry Fee Tracking Without Spreadsheets
+Once approved players hit your configured cap, new applicants automatically enter the Waitlist in timestamp order. If someone drops out, the Admin Console surfaces a 1-click "Promote Next from Waitlist" button while tracking fee statuses (Unpaid → Submitted → Verified).
+
+### Frequently Asked Questions
+**Q: Are player phone numbers visible to everyone on the public page?**
+A: No. Registration phone/WhatsApp fields are stored in a protected subcollection readable only by the applicant and the tournament’s Owner/Co-Admins.
+
+**Q: Can a player withdraw their application if they cannot make it?**
+A: Yes. While an application is Pending or Waitlisted, the player can edit their details or withdraw directly from the registration modal.
+
+---
+
+## Why Local Clubs Need Persistent Rosters & Verified Player Career Passports Across Seasons
+URL: https://mini-tournament-45ac1.web.app/blog/why-amateur-clubs-need-persistent-rosters-and-player-passports/
+Category: Club News | Read time: 5 min
+Summary: Why amateur football clubs and community players benefit from permanent club pages, recruitment requests, and cross-tournament career stats with radar charts.
+
+### Quick Answer
+Persistent club profiles and verified player career passports solve the biggest gap in grassroots sports: lost history. When players link a Google account across tournaments, every match played, goal, assist, clean sheet, and rating compounds into a permanent career record—while clubs keep their roster, recruitment pipeline, and trophy cabinet between seasons.
+
+### Key Takeaways
+- Players build a multi-season track record instead of resetting to zero every tournament.
+- Clubs can stay open for recruitment year-round with structured join applications and manager approvals.
+- 5-Axis SVG Performance Radars let captains scout and compare players visually across Attack, Playmaking, Appearances, Defense, and Rating.
+
+### From One-Off Weekend Cups to Real Club Identity
+In most local sports scenes, teams form for three weeks, play a cup, and vanish from memory. Creating a permanent Club gives captains a home ground, crest, motto, trophy cabinet, and year-round squad roster.
+
+Players looking for a weekend game can browse recruiting clubs by city and apply directly—no more asking friends of friends for an open spot.
+
+
+### Visual Scouting with Career Passports & Radar Comparisons
+Every time a verified player competes in a public ArenaPro tournament, their Career Passport aggregates their total appearances, goals, assists, clean sheets, MVPs, and ratings automatically.
+
+Captains preparing for an upcoming auction can open any player’s Career Passport and overlay a second player on the 5-Axis Performance Radar to spot undervalued midfielders or clinical finishers.
+
+[Screenshot: A live Player Career Passport displaying verified matches, assists, competition history, and the 5-Axis Radar.]
+
+### Frequently Asked Questions
+**Q: How are career stats calculated across multiple tournaments?**
+A: ArenaPro aggregates player stats across tournaments by matching their verified Google UID (or player name for legacy rosters) and computing totals and average match ratings.
+
+**Q: Can any player edit their global Career Passport bio and portrait?**
+A: Yes. Signed-in users can update their display name, preferred position, preferred foot, city, bio, and compressed portrait from the Players directory.
