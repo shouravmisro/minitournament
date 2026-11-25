@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useGlobal } from '../../context/GlobalContext';
 import ImageUploadButton from '../ImageUploadButton';
@@ -12,11 +12,143 @@ import {
 } from '../../services/firebase';
 import {
   Newspaper, Flame, Plus, Heart, Trash2, X, Search,
-  Clock, BookOpen, LogIn, ExternalLink, ChevronLeft, ChevronRight
+  Clock, BookOpen, LogIn, ExternalLink, ChevronLeft, ChevronRight,
+  CheckCircle2, HelpCircle, Share2, Check, Sparkles
 } from 'lucide-react';
 
-const CATEGORIES = ['ALL', 'Match Report', 'Draft Recap', 'Club News', 'Announcement', 'Guide'];
-const STORY_TAGS = ['Goal Alert', 'Draft Steal', 'Matchday', 'Trophy', 'MVP'];
+const CATEGORIES = ['ALL', 'Guide', 'Match Report', 'Draft Recap', 'Club News', 'Announcement'];
+const STORY_TAGS = ['Platform Tour', 'Features', 'Standings', 'Analytics', 'Player Stats', 'Squads', 'Goal Alert', 'Matchday'];
+
+function StructuredArticleContent({ post }) {
+  const [openFaq, setOpenFaq] = useState(0);
+
+  return (
+    <div className="space-y-6">
+      {/* AEO Quick Answer Box */}
+      {post.quickAnswer && (
+        <div className="rounded-2xl bg-emerald-950/35 border border-emerald-500/40 p-4 space-y-1.5">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-300 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" /> Quick Answer
+          </p>
+          <p className="text-sm text-emerald-50 leading-relaxed font-medium">
+            {post.quickAnswer}
+          </p>
+        </div>
+      )}
+
+      {/* GEO Key Takeaways */}
+      {Array.isArray(post.keyTakeaways) && post.keyTakeaways.length > 0 && (
+        <div className="rounded-2xl bg-[#050814]/80 border border-amber-500/30 p-4 space-y-2">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-amber-300">
+            Key Takeaways
+          </p>
+          <ul className="space-y-1.5">
+            {post.keyTakeaways.map((item, idx) => (
+              <li key={idx} className="text-xs sm:text-sm text-slate-200 flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Structured Sections (Headings, Paragraphs, Tables, Screenshots) */}
+      {Array.isArray(post.sections) && post.sections.length > 0 ? (
+        <div className="space-y-6">
+          {post.sections.map((sec, idx) => (
+            <section key={idx} className="space-y-3">
+              {sec.heading && (
+                <h2 className="text-lg sm:text-xl font-bold text-amber-200 border-b border-slate-800 pb-1.5">
+                  {sec.heading}
+                </h2>
+              )}
+              {Array.isArray(sec.paragraphs) && sec.paragraphs.map((p, pIdx) => (
+                <p key={pIdx} className="text-sm text-slate-200 leading-relaxed">
+                  {p}
+                </p>
+              ))}
+              {sec.table && (
+                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-[#050814]/70">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-amber-300 font-mono uppercase text-[10px]">
+                        {sec.table.headers.map((h, hi) => (
+                          <th key={hi} className="p-2.5">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/70">
+                      {sec.table.rows.map((row, ri) => (
+                        <tr key={ri}>
+                          {row.map((cell, ci) => (
+                            <td key={ci} className={`p-2.5 ${ci === 0 ? 'font-semibold text-white' : 'text-slate-300'}`}>
+                              {cell}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {sec.screenshot && (
+                <figure className="rounded-2xl overflow-hidden border border-amber-500/30 bg-[#050814] shadow-lg">
+                  <img
+                    src={sec.screenshot.src}
+                    alt={sec.screenshot.alt || sec.heading}
+                    className="w-full h-auto object-cover"
+                    loading="lazy"
+                  />
+                  {sec.screenshot.caption && (
+                    <figcaption className="px-3.5 py-2 text-[11px] text-slate-400 border-t border-slate-800">
+                      {sec.screenshot.caption}
+                    </figcaption>
+                  )}
+                </figure>
+              )}
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
+          {post.body}
+        </div>
+      )}
+
+      {/* AEO FAQ Accordion (paired with Schema.org FAQPage JSON-LD) */}
+      {Array.isArray(post.faqs) && post.faqs.length > 0 && (
+        <div className="space-y-2.5 pt-4 border-t border-slate-800">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-cyan-400" /> Frequently Asked Questions
+          </h3>
+          <div className="space-y-2">
+            {post.faqs.map((faq, i) => {
+              const isOpen = openFaq === i;
+              return (
+                <div key={i} className="rounded-xl bg-[#050814]/80 border border-slate-800 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? -1 : i)}
+                    className="w-full text-left px-4 py-3 text-xs sm:text-sm font-semibold text-amber-100 flex items-center justify-between gap-2"
+                  >
+                    <span>{faq.q}</span>
+                    <span className="text-amber-400 font-mono">{isOpen ? '−' : '+'}</span>
+                  </button>
+                  {isOpen && (
+                    <p className="px-4 pb-3 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-slate-800/70 pt-2">
+                      {faq.a}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function StoriesAndBlogPage({
   posts = [],
@@ -32,6 +164,7 @@ export default function StoriesAndBlogPage({
   const [search, setSearch] = useState('');
   const [activePost, setActivePost] = useState(initialPost);
   const [activeStory, setActiveStory] = useState(initialStory);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const [showWritePost, setShowWritePost] = useState(false);
   const [showCreateStory, setShowCreateStory] = useState(false);
@@ -54,6 +187,69 @@ export default function StoriesAndBlogPage({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
+  useEffect(() => {
+    if (initialPost) setActivePost(initialPost);
+  }, [initialPost]);
+
+  useEffect(() => {
+    if (initialStory) setActiveStory(initialStory);
+  }, [initialStory]);
+
+  // Dynamic SEO / GEO / AEO meta + Schema.org JSON-LD when viewing an article
+  useEffect(() => {
+    const prevTitle = document.title;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    const prevDesc = metaDesc?.getAttribute('content') || '';
+
+    const existingLd = document.getElementById('article-jsonld');
+    if (existingLd) existingLd.remove();
+
+    if (!activePost) return;
+
+    document.title = `${activePost.title} | ArenaPro`;
+    if (metaDesc && (activePost.metaDescription || activePost.summary)) {
+      metaDesc.setAttribute('content', activePost.metaDescription || activePost.summary);
+    }
+
+    const ldObjects = [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: activePost.title,
+        description: activePost.metaDescription || activePost.summary || '',
+        author: { '@type': 'Organization', name: activePost.authorName || 'ArenaPro' },
+        publisher: { '@type': 'Organization', name: 'ArenaPro' },
+        datePublished: new Date(activePost.createdAt || Date.now()).toISOString(),
+        keywords: Array.isArray(activePost.keywords) ? activePost.keywords.join(', ') : '',
+      },
+    ];
+
+    if (Array.isArray(activePost.faqs) && activePost.faqs.length > 0) {
+      ldObjects.push({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: activePost.faqs.map(f => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      });
+    }
+
+    const script = document.createElement('script');
+    script.id = 'article-jsonld';
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(ldObjects);
+    document.head.appendChild(script);
+
+    return () => {
+      document.title = prevTitle;
+      if (metaDesc && prevDesc) metaDesc.setAttribute('content', prevDesc);
+      const s = document.getElementById('article-jsonld');
+      if (s) s.remove();
+    };
+  }, [activePost]);
+
   const filteredPosts = posts.filter(p => {
     if (category !== 'ALL' && p.category !== category) return false;
     if (search.trim()) {
@@ -67,6 +263,14 @@ export default function StoriesAndBlogPage({
     }
     return true;
   });
+
+  function copyPostUrl(post) {
+    const slug = post.slug || post.id;
+    const url = `${window.location.origin}${window.location.pathname}?page=blog&post=${encodeURIComponent(slug)}`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  }
 
   async function handlePublishPost(e) {
     e.preventDefault();
@@ -135,7 +339,7 @@ export default function StoriesAndBlogPage({
             <Newspaper className="w-6 h-6 text-amber-400" /> Stories &amp; Sports Blog
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Matchday highlights, draft recaps, tournament announcements, and community press reports.
+            Platform guides, matchday highlights, draft strategies, and organizer playbooks.
           </p>
         </div>
 
@@ -172,41 +376,35 @@ export default function StoriesAndBlogPage({
       {/* ── Stories Strip ── */}
       <section className="space-y-3">
         <h2 className="text-sm font-mono uppercase tracking-widest text-amber-300 flex items-center gap-2">
-          <Flame className="w-4 h-4" /> Matchday Stories ({stories.length})
+          <Flame className="w-4 h-4" /> Matchday &amp; Feature Stories ({stories.length})
         </h2>
 
-        {stories.length === 0 ? (
-          <div className="pro-glass rounded-2xl p-6 text-center text-xs text-slate-400">
-            No stories posted yet. Click <strong>Post Story</strong> above to share a matchday highlight!
-          </div>
-        ) : (
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-            {stories.map(story => (
-              <button
-                key={story.id}
-                type="button"
-                onClick={() => setActiveStory(story)}
-                className="w-36 shrink-0 group text-left"
-              >
-                <div className="w-36 h-48 rounded-2xl p-0.5 bg-gradient-to-tr from-amber-500 via-rose-500 to-cyan-400 group-hover:scale-[1.02] transition-transform">
-                  <div className="w-full h-full rounded-[14px] overflow-hidden bg-[#050814] relative flex flex-col justify-end p-2.5">
-                    {story.imageUrl ? (
-                      <img src={story.imageUrl} alt={story.title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
-                    ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-[#0b132b] to-emerald-950" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                    <span className="relative z-10 text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-400/30 w-fit mb-1">
-                      {story.tag || 'Highlight'}
-                    </span>
-                    <p className="relative z-10 text-xs font-bold text-white line-clamp-2">{story.title}</p>
-                    <p className="relative z-10 text-[10px] text-slate-300 truncate">{story.authorName}</p>
-                  </div>
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+          {stories.map(story => (
+            <button
+              key={story.id}
+              type="button"
+              onClick={() => setActiveStory(story)}
+              className="w-36 shrink-0 group text-left"
+            >
+              <div className="w-36 h-48 rounded-2xl p-0.5 bg-gradient-to-tr from-amber-500 via-rose-500 to-cyan-400 group-hover:scale-[1.02] transition-transform">
+                <div className="w-full h-full rounded-[14px] overflow-hidden bg-[#050814] relative flex flex-col justify-end p-2.5">
+                  {story.imageUrl ? (
+                    <img src={story.imageUrl} alt={story.title} className="absolute inset-0 w-full h-full object-cover opacity-85" />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-[#0b132b] to-emerald-950" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent" />
+                  <span className="relative z-10 text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-400/30 w-fit mb-1">
+                    {story.tag || 'Highlight'}
+                  </span>
+                  <p className="relative z-10 text-xs font-bold text-white line-clamp-2">{story.title}</p>
+                  <p className="relative z-10 text-[10px] text-slate-300 truncate">{story.authorName}</p>
                 </div>
-              </button>
-            ))}
-          </div>
-        )}
+              </div>
+            </button>
+          ))}
+        </div>
       </section>
 
       {/* ── Editorial Blog Feed ── */}
@@ -244,7 +442,6 @@ export default function StoriesAndBlogPage({
           <div className="pro-glass rounded-2xl p-12 text-center space-y-2">
             <BookOpen className="w-10 h-10 text-slate-600 mx-auto" />
             <p className="text-sm font-semibold text-slate-300">No articles found</p>
-            <p className="text-xs text-slate-500">Be the first to publish a match report or tournament story.</p>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -254,8 +451,11 @@ export default function StoriesAndBlogPage({
                 <article key={post.id} className="pro-card rounded-2xl overflow-hidden flex flex-col justify-between hover:border-amber-400/45 transition-all">
                   <div>
                     {post.coverUrl && (
-                      <div className="h-44 w-full bg-[#050814] overflow-hidden">
-                        <img src={post.coverUrl} alt={post.title} className="w-full h-full object-cover" />
+                      <div
+                        onClick={() => setActivePost(post)}
+                        className="h-44 w-full bg-[#050814] overflow-hidden cursor-pointer"
+                      >
+                        <img src={post.coverUrl} alt={post.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                       </div>
                     )}
                     <div className="p-5 space-y-2.5">
@@ -264,7 +464,7 @@ export default function StoriesAndBlogPage({
                           {post.category || 'Match Report'}
                         </span>
                         <span className="text-slate-400 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {post.readMins || 2} min read
+                          <Clock className="w-3 h-3" /> {post.readMins || 3} min read
                         </span>
                       </div>
 
@@ -294,19 +494,20 @@ export default function StoriesAndBlogPage({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => user?.uid && togglePostLikeCloud(post.id, user.uid, post.likedByUids)}
-                        className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border transition-colors ${
-                          isLiked
-                            ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                            : 'bg-[#050814] text-slate-400 border-slate-800 hover:text-rose-300'
-                        }`}
-                        title={user ? 'Like article' : 'Sign in to like'}
-                      >
-                        <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`} />
-                        <span>{post.likesCount || 0}</span>
-                      </button>
+                      {!post.isOfficial && (
+                        <button
+                          type="button"
+                          onClick={() => user?.uid && togglePostLikeCloud(post.id, user.uid, post.likedByUids)}
+                          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg border transition-colors ${
+                            isLiked
+                              ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                              : 'bg-[#050814] text-slate-400 border-slate-800 hover:text-rose-300'
+                          }`}
+                        >
+                          <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`} />
+                          <span>{post.likesCount || 0}</span>
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => setActivePost(post)}
@@ -329,29 +530,47 @@ export default function StoriesAndBlogPage({
           className="fixed inset-0 bg-black/85 backdrop-blur-md z-[200] flex items-center justify-center p-3 sm:p-5"
           onClick={e => { if (e.target === e.currentTarget) { setActivePost(null); onClearInitial?.(); } }}
         >
-          <div className="pro-card bg-[#0b132b] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+          <div className="pro-card bg-[#0b132b] rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
             {activePost.coverUrl && (
-              <div className="h-56 w-full bg-[#050814] shrink-0">
+              <div className="h-52 sm:h-64 w-full bg-[#050814] shrink-0 relative">
                 <img src={activePost.coverUrl} alt={activePost.title} className="w-full h-full object-cover" />
-              </div>
-            )}
-            <div className="p-6 overflow-y-auto space-y-4 flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                  {activePost.category}
-                </span>
                 <button
                   onClick={() => { setActivePost(null); onClearInitial?.(); }}
-                  className="text-slate-400 hover:text-white p-1"
+                  className="absolute top-3 right-3 p-2 rounded-full bg-black/70 text-white hover:bg-black"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
+            )}
+            <div className="p-6 overflow-y-auto space-y-5 flex-1">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                  {activePost.category}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => copyPostUrl(activePost)}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-lg bg-[#050814] border border-slate-800 text-slate-200 hover:text-white"
+                  >
+                    {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5 text-amber-400" />}
+                    <span>{copiedLink ? 'Copied URL' : 'Share'}</span>
+                  </button>
+                  {!activePost.coverUrl && (
+                    <button
+                      onClick={() => { setActivePost(null); onClearInitial?.(); }}
+                      className="text-slate-400 hover:text-white p-1"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
 
-              <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight">{activePost.title}</h2>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">{activePost.title}</h1>
 
               <div className="flex items-center justify-between flex-wrap gap-2 text-xs text-slate-400 border-b border-slate-800 pb-3">
-                <span>By <strong className="text-slate-200">{activePost.authorName}</strong> • {new Date(activePost.createdAt).toLocaleDateString()}</span>
+                <span>By <strong className="text-slate-200">{activePost.authorName}</strong> • {new Date(activePost.createdAt).toLocaleDateString()} • {activePost.readMins || 3} min read</span>
                 {activePost.tournamentId && (
                   <button
                     type="button"
@@ -363,11 +582,9 @@ export default function StoriesAndBlogPage({
                 )}
               </div>
 
-              <div className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
-                {activePost.body}
-              </div>
+              <StructuredArticleContent post={activePost} />
 
-              {user?.uid === activePost.authorUid && (
+              {!activePost.isOfficial && user?.uid === activePost.authorUid && (
                 <div className="pt-4 border-t border-slate-800 flex justify-end">
                   <button
                     type="button"
@@ -392,15 +609,14 @@ export default function StoriesAndBlogPage({
           className="fixed inset-0 bg-black/92 backdrop-blur-md z-[210] flex items-center justify-center p-4"
           onClick={e => { if (e.target === e.currentTarget) { setActiveStory(null); onClearInitial?.(); } }}
         >
-          <div className="w-full max-w-sm h-[78vh] max-h-[640px] rounded-3xl overflow-hidden bg-[#050814] border border-amber-500/40 relative flex flex-col justify-between shadow-2xl">
+          <div className="w-full max-w-md h-[80vh] max-h-[680px] rounded-3xl overflow-hidden bg-[#050814] border border-amber-500/40 relative flex flex-col justify-between shadow-2xl">
             {activeStory.imageUrl ? (
-              <img src={activeStory.imageUrl} alt={activeStory.title} className="absolute inset-0 w-full h-full object-cover" />
+              <img src={activeStory.imageUrl} alt={activeStory.title} className="absolute inset-0 w-full h-full object-contain bg-[#050814]" />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-[#0b132b] to-emerald-950" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-black/60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/70" />
 
-            {/* Top bar */}
             <div className="relative z-10 p-4 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 {activeStory.authorAvatar ? (
@@ -412,11 +628,11 @@ export default function StoriesAndBlogPage({
                 )}
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-white truncate">{activeStory.authorName}</p>
-                  <p className="text-[10px] text-slate-300">{activeStory.tag}</p>
+                  <p className="text-[10px] text-amber-300">{activeStory.tag}</p>
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                {user?.uid === activeStory.authorUid && (
+                {!activeStory.isOfficial && user?.uid === activeStory.authorUid && (
                   <button
                     type="button"
                     onClick={async () => { await deleteStoryCloud(activeStory.id); setActiveStory(null); }}
@@ -436,7 +652,6 @@ export default function StoriesAndBlogPage({
               </div>
             </div>
 
-            {/* Prev / Next arrows */}
             {stories.length > 1 && (
               <>
                 <button
@@ -456,7 +671,6 @@ export default function StoriesAndBlogPage({
               </>
             )}
 
-            {/* Caption */}
             <div className="relative z-10 p-5 space-y-2">
               <h3 className="text-xl font-bold text-white">{activeStory.title}</h3>
               {activeStory.caption && (

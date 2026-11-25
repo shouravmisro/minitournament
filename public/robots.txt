@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mini-tournament-45ac1.web.app/sitemap.xml

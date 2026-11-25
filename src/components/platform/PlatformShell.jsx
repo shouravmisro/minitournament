@@ -14,6 +14,7 @@ import ClubsPage from './ClubsPage';
 import PlayersDirectoryPage from './PlayersDirectoryPage';
 import StoriesAndBlogPage from './StoriesAndBlogPage';
 import TournamentManager from '../TournamentManager';
+import { OFFICIAL_POSTS, OFFICIAL_STORIES } from '../../data/editorialContent';
 import {
   Trophy, Home, Shield, Users, Newspaper, LogIn, LogOut,
   Bell, X, Menu
@@ -43,25 +44,55 @@ export default function PlatformShell() {
   const [showBell, setShowBell] = useState(false);
 
   const [clubs, setClubs] = useState([]);
-  const [posts, setPosts] = useState([]);
-  const [stories, setStories] = useState([]);
+  const [cloudPosts, setCloudPosts] = useState([]);
+  const [cloudStories, setCloudStories] = useState([]);
   const [usersList, setUsersList] = useState([]);
   const [fullTournaments, setFullTournaments] = useState([]);
 
+  const posts = useMemo(() => {
+    const map = new Map();
+    OFFICIAL_POSTS.forEach(p => map.set(p.id, p));
+    cloudPosts.forEach(p => map.set(p.id, p));
+    return Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }, [cloudPosts]);
+
+  const stories = useMemo(() => {
+    const map = new Map();
+    OFFICIAL_STORIES.forEach(s => map.set(s.id, s));
+    cloudStories.forEach(s => map.set(s.id, s));
+    return Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }, [cloudStories]);
+
   const [initialStory, setInitialStory] = useState(null);
-  const [initialPost, setInitialPost] = useState(null);
+  const [initialPost, setInitialPost] = useState(() => {
+    try {
+      const slug = new URLSearchParams(window.location.search).get('post');
+      if (slug) return OFFICIAL_POSTS.find(p => p.slug === slug || p.id === slug) || null;
+    } catch {}
+    return null;
+  });
 
   const hasCloud = isFirebaseConfigured();
 
   useEffect(() => {
     if (!hasCloud) return;
     const u1 = subscribeClubs(setClubs);
-    const u2 = subscribePosts(setPosts);
-    const u3 = subscribeStories(setStories);
+    const u2 = subscribePosts(setCloudPosts);
+    const u3 = subscribeStories(setCloudStories);
     return () => {
       u1(); u2(); u3();
     };
   }, [hasCloud]);
+
+  useEffect(() => {
+    try {
+      const slug = new URLSearchParams(window.location.search).get('post');
+      if (slug && !initialPost) {
+        const found = posts.find(p => p.slug === slug || p.id === slug);
+        if (found) setInitialPost(found);
+      }
+    } catch {}
+  }, [posts, initialPost]);
 
   const loadDirectoryData = React.useCallback(async () => {
     if (!hasCloud) return;
