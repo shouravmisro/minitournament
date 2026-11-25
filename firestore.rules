@@ -28,11 +28,65 @@ service cloud.firestore {
       return !('ownerUid' in data) || data.ownerUid == null || data.ownerUid == '';
     }
 
-    // Per-user profiles (name, email, avatar, organizer profile)
+    // Per-user profiles & Player Passport (public read for directory, self-write only)
     match /users/{uid} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create, update: if isSignedIn() && request.auth.uid == uid;
       allow delete: if false;
+    }
+
+    // Persistent Clubs across tournaments
+    match /clubs/{clubId} {
+      function isClubManager(data) {
+        return isSignedIn() && (
+          data.ownerUid == request.auth.uid
+          || (('managerUids' in data) && (data.managerUids is list) && (request.auth.uid in data.managerUids))
+        );
+      }
+
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isClubManager(resource.data);
+      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+
+      match /requests/{reqUid} {
+        function clubData() {
+          return get(/databases/$(database)/documents/clubs/$(clubId)).data;
+        }
+        function isParentClubMgr() {
+          return isSignedIn() && (
+            clubData().ownerUid == request.auth.uid
+            || (('managerUids' in clubData()) && (request.auth.uid in clubData().managerUids))
+          );
+        }
+
+        allow read: if (isSignedIn() && request.auth.uid == reqUid) || isParentClubMgr();
+        allow create, update: if isParentClubMgr()
+          || (isSignedIn() && request.auth.uid == reqUid && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'PENDING');
+        allow delete: if (isSignedIn() && request.auth.uid == reqUid) || isParentClubMgr();
+      }
+    }
+
+    // Editorial Blog Posts & Match Reports
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.authorUid == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.authorUid == request.auth.uid
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount', 'likedByUids'])
+      );
+      allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
+    // Matchday Stories
+    match /stories/{storyId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.authorUid == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.authorUid == request.auth.uid
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewsCount'])
+      );
+      allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
     }
 
     // Multi-tenant tournaments
@@ -138,6 +192,13 @@ service cloud.firestore {
           );
 
         allow delete: if (isSignedIn() && request.auth.uid == reqUid) || isAdminOfParent();
+      }
+
+      // Pre-match fan prediction votes
+      match /votes/{voteId} {
+        allow read: if true;
+        allow create, update: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+        allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
       }
     }
 

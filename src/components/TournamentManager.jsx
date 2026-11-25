@@ -5,7 +5,7 @@ import { isFirebaseConfigured } from '../services/firebase';
 import {
   Trophy, Plus, Trash2, Play, Calendar, Users, Crown,
   ChevronRight, Settings, Globe, Dices, X, Edit3, Check,
-  LogIn, LogOut, Lock, RefreshCw, Search, Shield
+  LogIn, LogOut, Lock, RefreshCw, Search, Shield, Copy
 } from 'lucide-react';
 
 const FORMAT_OPTIONS = [
@@ -75,7 +75,7 @@ function OrganizerProfileModal({ onClose }) {
   );
 }
 
-function TournamentCard({ t, user, canEdit, canDelete, onOpen, onEdit, confirmDelete, onRequestDelete, onCancelDelete, onConfirmDelete }) {
+function TournamentCard({ t, user, canEdit, canDelete, canClone, onOpen, onEdit, onClone, confirmDelete, onRequestDelete, onCancelDelete, onConfirmDelete }) {
   const color = FORMAT_COLORS[t.format] || FORMAT_COLORS.HYBRID;
 
   let localPlayers = 0;
@@ -158,6 +158,15 @@ function TournamentCard({ t, user, canEdit, canDelete, onOpen, onEdit, confirmDe
             </>
           ) : (
             <>
+              {canClone && (
+                <button
+                  onClick={() => onClone(t)}
+                  className="p-1.5 rounded-lg text-amber-500/40 hover:text-cyan-300 hover:bg-cyan-950/30 transition-colors"
+                  title="Clone tournament for a new season"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              )}
               {canEdit && (
                 <button
                   onClick={() => onEdit(t)}
@@ -192,7 +201,7 @@ function TournamentCard({ t, user, canEdit, canDelete, onOpen, onEdit, confirmDe
   );
 }
 
-export default function TournamentManager() {
+export default function TournamentManager({ embedded = false }) {
   const {
     myTournaments,
     joinedTournaments,
@@ -200,6 +209,7 @@ export default function TournamentManager() {
     loadingPublic,
     refreshPublicTournaments,
     createTournament,
+    cloneTournament,
     deleteTournament,
     selectTournament,
     updateTournamentMeta,
@@ -221,6 +231,8 @@ export default function TournamentManager() {
   const [joinInput, setJoinInput] = useState('');
   const [joinError, setJoinError] = useState('');
   const [signingIn, setSigningIn] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [formatFilter, setFormatFilter] = useState('ALL');
 
   const hasCloud = isFirebaseConfigured();
 
@@ -290,9 +302,29 @@ export default function TournamentManager() {
     }
   }
 
+  const filterList = (list) => list.filter(t => {
+    if (formatFilter !== 'ALL' && (t.format || 'HYBRID') !== formatFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (t.name || '').toLowerCase().includes(q) || (t.ownerName || '').toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  const filteredMy = filterList(myTournaments);
+  const filteredJoined = filterList(joinedTournaments);
+  const filteredDiscover = filterList(discoverTournaments);
+
+  async function handleClone(t) {
+    const newSeasonName = window.prompt('Name for cloned season:', `${t.name} (Season 2)`);
+    if (!newSeasonName || !newSeasonName.trim()) return;
+    await cloneTournament(t.id, newSeasonName.trim());
+  }
+
   return (
-    <div className="min-h-screen bg-[#050814] text-amber-50">
-      {/* Header */}
+    <div className={embedded ? 'text-amber-50' : 'min-h-screen bg-[#050814] text-amber-50'}>
+      {/* Header (only when standalone) */}
+      {!embedded && (
       <header className="sketch-border bg-[#0b132b]/80 border-b border-dashed border-amber-900/40 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -351,8 +383,9 @@ export default function TournamentManager() {
           </div>
         </div>
       </header>
+      )}
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <main className={embedded ? 'space-y-6' : 'max-w-4xl mx-auto px-4 py-8 space-y-8'}>
         {/* Welcome & Auth Banner */}
         <div className="sketch-border bg-[#0b132b]/70 rounded-2xl p-6 shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
@@ -419,6 +452,35 @@ export default function TournamentManager() {
           </button>
         </form>
         {joinError && <p className="text-xs text-red-400 -mt-5 px-1">{joinError}</p>}
+
+        {/* Search & Format Filter */}
+        <div className="flex flex-col sm:flex-row gap-2.5 sm:items-center justify-between">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-4 h-4 text-amber-500/50 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Filter tournaments by name or host..."
+              className="w-full bg-[#050814] border border-amber-900/50 rounded-xl pl-9 pr-3 py-2 text-xs text-amber-100 focus:outline-none focus:border-amber-400"
+            />
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto">
+            {['ALL', 'LEAGUE', 'KNOCKOUT', 'HYBRID'].map(fmt => (
+              <button
+                key={fmt}
+                type="button"
+                onClick={() => setFormatFilter(fmt)}
+                className={`px-3 py-1.5 rounded-xl text-[11px] font-mono uppercase transition-colors ${
+                  formatFilter === fmt
+                    ? 'bg-amber-500 text-slate-950 font-bold'
+                    : 'bg-[#0b132b] text-amber-200/70 border border-amber-900/40'
+                }`}
+              >
+                {fmt}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* My Tournaments */}
         <div className="space-y-3">
@@ -513,15 +575,17 @@ export default function TournamentManager() {
           )}
 
           <div className="space-y-3">
-            {myTournaments.map(t => (
+            {filteredMy.map(t => (
               <TournamentCard
                 key={t.id}
                 t={t}
                 user={user}
                 canEdit={!t.ownerUid || t.ownerUid === user?.uid || t.coAdminUids?.includes(user?.uid)}
                 canDelete={!t.ownerUid || t.ownerUid === user?.uid}
+                canClone={!t.ownerUid || t.ownerUid === user?.uid}
                 onOpen={selectTournament}
                 onEdit={handleStartEditTournament}
+                onClone={handleClone}
                 confirmDelete={confirmDelete}
                 onRequestDelete={setConfirmDelete}
                 onCancelDelete={() => setConfirmDelete(null)}
@@ -532,14 +596,14 @@ export default function TournamentManager() {
         </div>
 
         {/* Joined Tournaments (where user is Captain or Player) */}
-        {joinedTournaments.length > 0 && (
+        {filteredJoined.length > 0 && (
           <div className="space-y-3">
             <h2 className="text-xl font-serif text-cyan-200 flex items-center gap-2">
               <Users className="w-5 h-5 text-cyan-400" />
-              Arenas I&apos;m Playing In
+              Tournaments I&apos;m Playing In
             </h2>
             <div className="space-y-3">
-              {joinedTournaments.map(t => (
+              {filteredJoined.map(t => (
                 <TournamentCard
                   key={t.id}
                   t={t}
@@ -559,7 +623,7 @@ export default function TournamentManager() {
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-serif text-amber-200/90 flex items-center gap-2">
                 <Globe className="w-5 h-5 text-emerald-400" />
-                Public Arenas
+                Public Tournaments
               </h2>
               <button
                 onClick={refreshPublicTournaments}
@@ -571,13 +635,13 @@ export default function TournamentManager() {
               </button>
             </div>
 
-            {discoverTournaments.length === 0 ? (
+            {filteredDiscover.length === 0 ? (
               <p className="text-xs text-amber-500/40 py-4">
-                {loadingPublic ? 'Loading public arenas…' : 'No other public tournaments found right now.'}
+                {loadingPublic ? 'Loading public tournaments…' : 'No other public tournaments found right now.'}
               </p>
             ) : (
               <div className="space-y-3">
-                {discoverTournaments.map(t => (
+                {filteredDiscover.map(t => (
                   <TournamentCard
                     key={t.id}
                     t={t}

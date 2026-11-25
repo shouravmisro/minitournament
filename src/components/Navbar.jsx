@@ -69,10 +69,10 @@ export default function Navbar() {
   }
 
   const roleBadge = {
-    PUBLIC:  { label: 'Public Hub',     icon: Home,   color: 'bg-[#0b132b] text-amber-200/80 border border-amber-900/40' },
-    ADMIN:   { label: 'Admin Council',  icon: Shield, color: 'bg-red-950/40 text-red-300 border border-red-500/30' },
-    CAPTAIN: { label: 'Faction Leader', icon: Crown,  color: 'bg-amber-950/40 text-amber-300 border border-amber-500/30' },
-    PLAYER:  { label: 'Warrior Scroll', icon: User,   color: 'bg-cyan-950/40 text-cyan-300 border border-cyan-500/30' },
+    PUBLIC:  { label: 'Tournament Hub',  icon: Home,   color: 'bg-[#0b132b] text-amber-200/80 border border-amber-900/40' },
+    ADMIN:   { label: 'Organizer Admin', icon: Shield, color: 'bg-red-950/40 text-red-300 border border-red-500/30' },
+    CAPTAIN: { label: 'Team Captain',    icon: Crown,  color: 'bg-amber-950/40 text-amber-300 border border-amber-500/30' },
+    PLAYER:  { label: 'Player Profile',  icon: User,   color: 'bg-cyan-950/40 text-cyan-300 border border-cyan-500/30' },
   };
 
   const current = roleBadge[role];
@@ -189,11 +189,11 @@ export default function Navbar() {
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={handleBack}
-              title="All Tournaments"
+              title="Back to ArenaPro Platform"
               className="flex items-center gap-1 text-amber-500/70 hover:text-amber-300 transition-colors shrink-0 p-1.5 rounded-lg hover:bg-amber-950/30"
             >
               <ChevronLeft className="w-5 h-5 text-amber-500" />
-              <span className="hidden sm:inline font-mono tracking-widest uppercase text-[10px] text-amber-500/70">Arenas</span>
+              <span className="hidden sm:inline font-mono tracking-widest uppercase text-[10px] text-amber-500/70">Platform</span>
             </button>
 
             <div className="flex items-center gap-2 min-w-0">

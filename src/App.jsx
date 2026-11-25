@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { GlobalProvider, useGlobal } from './context/GlobalContext';
-import { TournamentProvider } from './context/TournamentContext';
+import { TournamentProvider, useTournament } from './context/TournamentContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar            from './components/Navbar';
-import TournamentManager from './components/TournamentManager';
+import PlatformShell     from './components/platform/PlatformShell';
 import ErrorBoundary     from './components/ErrorBoundary';
 import PublicHub         from './components/PublicHub';
 import AdminPanel        from './components/AdminPanel';
@@ -113,6 +113,7 @@ function TabBar({ tabs, active, onChange }) {
 
 function AppContent() {
   const { role } = useAuth();
+  const { state } = useTournament();
   const [tab, setTab] = useState('hub');
 
   React.useEffect(() => {
@@ -167,7 +168,7 @@ function AppContent() {
 
         <footer className="border-t border-amber-900/30 py-6 text-center bg-[#050814]/50 backdrop-blur-sm">
           <p className="text-[10px] font-mono tracking-widest uppercase text-amber-500/60">
-            The Codex Arena • FC Chompa Premier League
+            ArenaPro • {state.organizer?.name || 'Tournament Center'}
           </p>
         </footer>
       </div>
@@ -191,7 +192,7 @@ function AppRouter() {
   if (global.showManager) {
     return (
       <ErrorBoundary>
-        <TournamentManager />
+        <PlatformShell />
       </ErrorBoundary>
     );
   }

@@ -10,65 +10,66 @@
   }
 }
 
-/* --- Van Gogh Canvas Texture --- */
+/* --- Subtle Stadium Texture --- */
 .canvas-noise {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
   pointer-events: none;
   z-index: 10;
-  opacity: 0.15;
+  opacity: 0.08;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* --- Starry Night Turbulent Animations --- */
+/* --- Ambient Lights --- */
 @keyframes swirl-1 {
   0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-  33% { transform: translate(5%, -5%) rotate(120deg) scale(1.1); }
-  66% { transform: translate(-5%, 5%) rotate(240deg) scale(0.9); }
+  33% { transform: translate(5%, -5%) rotate(120deg) scale(1.08); }
+  66% { transform: translate(-5%, 5%) rotate(240deg) scale(0.94); }
   100% { transform: translate(0, 0) rotate(360deg) scale(1); }
 }
 @keyframes swirl-2 {
-  0% { transform: translate(0, 0) rotate(360deg) scale(1.2); }
-  50% { transform: translate(-10%, 10%) rotate(180deg) scale(0.8); }
-  100% { transform: translate(0, 0) rotate(0deg) scale(1.2); }
+  0% { transform: translate(0, 0) rotate(360deg) scale(1.12); }
+  50% { transform: translate(-8%, 8%) rotate(180deg) scale(0.88); }
+  100% { transform: translate(0, 0) rotate(0deg) scale(1.12); }
 }
-.bg-starry-1 { animation: swirl-1 25s infinite linear; }
-.bg-starry-2 { animation: swirl-2 30s infinite ease-in-out; }
+.bg-starry-1 { animation: swirl-1 28s infinite linear; }
+.bg-starry-2 { animation: swirl-2 34s infinite ease-in-out; }
 
-/* --- Da Vinci Sketch Elements --- */
-.sketch-border {
-  border: 1px solid rgba(217, 119, 6, 0.4); /* amber-600 */
+/* --- Modern Athletic Card Surface (backward-compatible with .sketch-border) --- */
+.sketch-border,
+.pro-card {
+  border: 1px solid rgba(245, 158, 11, 0.22);
   position: relative;
-  background: rgba(10, 17, 40, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(11, 19, 43, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
-.sketch-border::after {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border: 1px dashed rgba(251, 191, 36, 0.25); /* amber-400 */
-  border-radius: inherit;
-  pointer-events: none;
+
+.pro-glass {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(9, 14, 34, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 /* --- Navigation Button Underlines --- */
 .nav-button {
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   position: relative;
 }
 .nav-button.active {
-  color: #fcd34d; /* amber-300 */
-  text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+  color: #fcd34d;
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
 }
 .nav-button.active::after {
   content: '';
   position: absolute;
   bottom: -4px;
-  left: 10%;
-  width: 80%;
-  height: 1px;
-  background: #fcd34d;
-  box-shadow: 0 0 8px #fcd34d;
+  left: 8%;
+  width: 84%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f59e0b, #10b981);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
 }

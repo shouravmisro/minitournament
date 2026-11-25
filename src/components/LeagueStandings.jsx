@@ -74,7 +74,17 @@ export default function LeagueStandings() {
                 : 'text-amber-500/60 hover:text-amber-200'
             }`}
           >
-            Standings Ledger
+            Standings
+          </button>
+          <button
+            onClick={() => setViewTab('MATRIX')}
+            className={`px-3.5 py-1.5 rounded-lg font-serif transition-all ${
+              viewTab === 'MATRIX'
+                ? 'bg-amber-950/50 text-amber-300 border border-amber-500/30 shadow-[0_0_8px_rgba(217,119,6,0.2)]'
+                : 'text-amber-500/60 hover:text-amber-200'
+            }`}
+          >
+            H2H Matrix
           </button>
           <button
             onClick={() => setViewTab('LEADERBOARD')}
@@ -84,12 +94,73 @@ export default function LeagueStandings() {
                 : 'text-amber-500/60 hover:text-amber-200'
             }`}
           >
-            Warrior Honors
+            Top Players
           </button>
         </div>
       </div>
 
-      {viewTab === 'TABLE' ? (
+      {viewTab === 'MATRIX' ? (
+        state.teams.length < 2 ? (
+          <div className="text-center py-12 sketch-border rounded-2xl text-amber-500/60 text-sm">
+            At least 2 teams are needed for a Head-to-Head Matrix.
+          </div>
+        ) : (
+          <div className="sketch-border bg-[#0b132b]/60 rounded-2xl p-4 sm:p-6 overflow-x-auto shadow-2xl">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-amber-400 mb-3">
+              Head-to-Head Results Grid (Row Team vs Column Team)
+            </p>
+            <table className="w-full text-xs border-collapse min-w-[460px]">
+              <thead>
+                <tr className="border-b border-amber-900/40 text-amber-400 font-mono">
+                  <th className="text-left p-2">Team</th>
+                  {state.teams.map(col => (
+                    <th key={col.id} className="p-2 text-center" title={col.name}>
+                      <span className="text-base">{col.logo}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-amber-900/20">
+                {state.teams.map(row => (
+                  <tr key={row.id}>
+                    <td className="p-2 font-serif text-amber-100 font-semibold whitespace-nowrap">
+                      {row.logo} {row.name}
+                    </td>
+                    {state.teams.map(col => {
+                      if (row.id === col.id) {
+                        return <td key={col.id} className="p-2 text-center bg-[#050814]/80 text-amber-900/50 font-mono">—</td>;
+                      }
+                      const h2h = state.matches.filter(
+                        m => m.stage === 'LEAGUE' && m.status === 'COMPLETED' &&
+                        ((m.teamAId === row.id && m.teamBId === col.id) || (m.teamAId === col.id && m.teamBId === row.id))
+                      );
+                      if (h2h.length === 0) {
+                        return <td key={col.id} className="p-2 text-center text-amber-500/30 font-mono">·</td>;
+                      }
+                      return (
+                        <td key={col.id} className="p-2 text-center font-mono">
+                          <div className="flex flex-col gap-0.5 items-center">
+                            {h2h.map(m => {
+                              const sRow = m.teamAId === row.id ? (m.scoreA ?? 0) : (m.scoreB ?? 0);
+                              const sCol = m.teamAId === row.id ? (m.scoreB ?? 0) : (m.scoreA ?? 0);
+                              const cls = sRow > sCol ? 'text-emerald-300 bg-emerald-500/15' : sRow < sCol ? 'text-red-300 bg-red-500/15' : 'text-amber-300 bg-amber-500/15';
+                              return (
+                                <span key={m.id} className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${cls}`}>
+                                  {sRow}–{sCol}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : viewTab === 'TABLE' ? (
         !hasLeague || table.length === 0 ? (
           <div className="text-center py-16 sketch-border rounded-2xl flex flex-col items-center">
             <TrendingUp className="w-12 h-12 mb-3 text-amber-900/40" />

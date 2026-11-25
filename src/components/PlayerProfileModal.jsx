@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTournament } from '../context/TournamentContext';
-import { X, Crown, Shield, Activity, Target, Crosshair, Star, Hand, HeartPulse } from 'lucide-react';
+import PlayerRadarChart from './PlayerRadarChart';
+import { X, Crown, Shield, Activity, Target, Crosshair, Star, Hand, HeartPulse, GitCompare } from 'lucide-react';
 
 const POSITION_COLORS = {
   GK:   'text-yellow-400 border-yellow-500/30 bg-yellow-500/10',
@@ -11,6 +12,7 @@ const POSITION_COLORS = {
 };
 
 export default function PlayerProfileModal({ player, team, captain, onClose }) {
+  const [compareId, setCompareId] = useState('');
   let contextState = null;
   try {
     const { state } = useTournament();
@@ -21,6 +23,8 @@ export default function PlayerProfileModal({ player, team, captain, onClose }) {
 
   const effectiveTeam = team || (contextState?.teams?.find(t => t.id === player.teamId));
   const effectiveCaptain = captain || (effectiveTeam ? contextState?.captains?.find(c => c.id === effectiveTeam.captainId) : null);
+  const allPlayers = contextState?.players || [];
+  const comparePlayer = compareId ? allPlayers.find(p => p.id === compareId) || null : null;
 
   const stats = player.stats || {
     matches: 0, goals: 0, assists: 0, cleanSheets: 0, saves: 0, avgRating: 0, mvpCount: 0
@@ -160,6 +164,28 @@ export default function PlayerProfileModal({ player, team, captain, onClose }) {
               </span>
               <span className="font-mono text-[9px] text-amber-600 uppercase tracking-widest mt-1">Rating</span>
             </div>
+          </div>
+
+          {/* Tactical Radar & Player Comparison */}
+          <div className="bg-[#050814]/60 border border-amber-900/30 rounded-xl p-3.5 space-y-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                <GitCompare className="w-3.5 h-3.5" /> Performance Radar
+              </span>
+              {allPlayers.length > 1 && (
+                <select
+                  value={compareId}
+                  onChange={e => setCompareId(e.target.value)}
+                  className="bg-[#0b132b] border border-amber-900/50 rounded-lg px-2 py-1 text-[10px] font-mono text-amber-100 max-w-[140px]"
+                >
+                  <option value="">Compare with…</option>
+                  {allPlayers.filter(p => p.id !== player.id).map(p => (
+                    <option key={p.id} value={p.id}>{p.name} ({p.position})</option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <PlayerRadarChart playerA={player} playerB={comparePlayer} size={200} />
           </div>
 
           {/* Footer Badges */}

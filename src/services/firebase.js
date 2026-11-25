@@ -764,6 +764,234 @@ export async function updateClaimRequestRecord(tournamentId, reqUid, patch) {
   return true;
 }
 
+// ── Persistent Clubs (clubs/{clubId}) ──
+
+function subscribeSortedCollection(colPathSegments, sortKey, onData) {
+  const db = getDb();
+  if (!db) {
+    onData([]);
+    return () => {};
+  }
+  try {
+    const colRef = collection(db, ...colPathSegments);
+    return onSnapshot(colRef, (snap) => {
+      const list = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0));
+      onData(list);
+    }, (err) => {
+      if (err?.code !== 'permission-denied') {
+        console.warn(`Firestore subscribe error (${colPathSegments.join('/')}):`, err);
+      }
+    });
+  } catch {
+    return () => {};
+  }
+}
+
+export function subscribeClubs(onData) {
+  return subscribeSortedCollection(['clubs'], 'createdAt', onData);
+}
+
+export async function createClubCloud(clubData) {
+  const db = getDb();
+  if (!db || !clubData?.ownerUid) throw new Error('Sign in with Google to create a club.');
+  const id = clubData.id || `club_${Date.now().toString(36)}`;
+  const now = Date.now();
+  const payload = {
+    ...clubData,
+    id,
+    joinCode: clubData.joinCode || generateJoinCode(id),
+    managerUids: Array.isArray(clubData.managerUids) ? clubData.managerUids : [clubData.ownerUid],
+    members: Array.isArray(clubData.members) ? clubData.members : [],
+    honors: Array.isArray(clubData.honors) ? clubData.honors : [],
+    createdAt: now,
+    _updatedAt: now,
+  };
+  await setDoc(doc(db, 'clubs', id), payload, { merge: true });
+  return payload;
+}
+
+export async function updateClubCloud(clubId, patch) {
+  const db = getDb();
+  if (!db || !clubId) return false;
+  await setDoc(doc(db, 'clubs', clubId), { ...patch, _updatedAt: Date.now() }, { merge: true });
+  return true;
+}
+
+export async function deleteClubCloud(clubId) {
+  const db = getDb();
+  if (!db || !clubId) return false;
+  await deleteDoc(doc(db, 'clubs', clubId));
+  return true;
+}
+
+export function subscribeClubRequests(clubId, onData) {
+  return subscribeSortedCollection(['clubs', clubId, 'requests'], 'createdAt', onData);
+}
+
+export function subscribeMyClubRequest(clubId, uid, onData) {
+  const db = getDb();
+  if (!db || !clubId || !uid) {
+    onData(null);
+    return () => {};
+  }
+  try {
+    return onSnapshot(doc(db, 'clubs', clubId, 'requests', uid), (snap) => {
+      onData(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+    }, () => {});
+  } catch {
+    return () => {};
+  }
+}
+
+export async function submitClubJoinRequest(clubId, uid, data) {
+  const db = getDb();
+  if (!db || !clubId || !uid) throw new Error('Sign in with Google to apply.');
+  const now = Date.now();
+  const payload = { ...data, uid, status: 'PENDING', createdAt: now, _updatedAt: now };
+  await setDoc(doc(db, 'clubs', clubId, 'requests', uid), payload, { merge: true });
+  return payload;
+}
+
+export async function updateClubRequestRecord(clubId, reqUid, patch) {
+  const db = getDb();
+  if (!db || !clubId || !reqUid) return false;
+  await setDoc(doc(db, 'clubs', clubId, 'requests', reqUid), { ...patch, _updatedAt: Date.now() }, { merge: true });
+  return true;
+}
+
+export async function withdrawClubJoinRequest(clubId, uid) {
+  const db = getDb();
+  if (!db || !clubId || !uid) return false;
+  await deleteDoc(doc(db, 'clubs', clubId, 'requests', uid));
+  return true;
+}
+
+// ── Blog Posts & Matchday Stories ──
+
+export function subscribePosts(onData) {
+  return subscribeSortedCollection(['posts'], 'createdAt', onData);
+}
+
+export async function createPostCloud(postData) {
+  const db = getDb();
+  if (!db || !postData?.authorUid) throw new Error('Sign in with Google to publish a post.');
+  const id = postData.id || `post_${Date.now().toString(36)}`;
+  const now = Date.now();
+  const payload = {
+    ...postData,
+    id,
+    likesCount: 0,
+    likedByUids: [],
+    createdAt: now,
+    _updatedAt: now,
+  };
+  await setDoc(doc(db, 'posts', id), payload, { merge: true });
+  return payload;
+}
+
+export async function togglePostLikeCloud(postId, uid, currentLikedBy = []) {
+  const db = getDb();
+  if (!db || !postId || !uid) return false;
+  const set = new Set(Array.isArray(currentLikedBy) ? currentLikedBy : []);
+  if (set.has(uid)) set.delete(uid);
+  else set.add(uid);
+  const next = Array.from(set);
+  await setDoc(doc(db, 'posts', postId), { likedByUids: next, likesCount: next.length }, { merge: true });
+  return true;
+}
+
+export async function deletePostCloud(postId) {
+  const db = getDb();
+  if (!db || !postId) return false;
+  await deleteDoc(doc(db, 'posts', postId));
+  return true;
+}
+
+export function subscribeStories(onData) {
+  return subscribeSortedCollection(['stories'], 'createdAt', onData);
+}
+
+export async function createStoryCloud(storyData) {
+  const db = getDb();
+  if (!db || !storyData?.authorUid) throw new Error('Sign in with Google to post a story.');
+  const id = storyData.id || `story_${Date.now().toString(36)}`;
+  const now = Date.now();
+  const payload = {
+    ...storyData,
+    id,
+    viewsCount: 0,
+    createdAt: now,
+    _updatedAt: now,
+  };
+  await setDoc(doc(db, 'stories', id), payload, { merge: true });
+  return payload;
+}
+
+export async function deleteStoryCloud(storyId) {
+  const db = getDb();
+  if (!db || !storyId) return false;
+  await deleteDoc(doc(db, 'stories', storyId));
+  return true;
+}
+
+// ── Global Player Directory & Cross-Tournament Career Fetching ──
+
+export async function fetchAllUsersPublic() {
+  const db = getDb();
+  if (!db) return [];
+  try {
+    const snap = await getDocs(collection(db, 'users'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    console.warn('Failed to fetch users directory:', err);
+    return [];
+  }
+}
+
+export async function fetchPublicTournamentsFull(extraTournamentIds = []) {
+  const db = getDb();
+  if (!db) return [];
+  try {
+    const byId = new Map();
+    const pubSnap = await getDocs(query(collection(db, 'tournaments'), where('isPublic', '==', true)));
+    pubSnap.docs.forEach(d => byId.set(d.id, { id: d.id, ...d.data() }));
+
+    for (const id of extraTournamentIds) {
+      if (id && !byId.has(id)) {
+        try {
+          const snap = await getDoc(doc(db, 'tournaments', id));
+          if (snap.exists()) byId.set(snap.id, { id: snap.id, ...snap.data() });
+        } catch {}
+      }
+    }
+    return Array.from(byId.values());
+  } catch (err) {
+    console.warn('Failed to fetch full public tournaments:', err);
+    return [];
+  }
+}
+
+// ── Pre-Match Fan Prediction Votes (tournaments/{id}/votes) ──
+
+export function subscribeTournamentVotes(tournamentId, onData) {
+  return subscribeSortedCollection(['tournaments', tournamentId, 'votes'], 'updatedAt', onData);
+}
+
+export async function castMatchVoteCloud(tournamentId, matchId, uid, choice) {
+  const db = getDb();
+  if (!db || !tournamentId || !matchId || !uid) return false;
+  const voteId = `${matchId}_${uid}`;
+  await setDoc(doc(db, 'tournaments', tournamentId, 'votes', voteId), {
+    matchId,
+    uid,
+    choice, // 'A' | 'DRAW' | 'B'
+    updatedAt: Date.now(),
+  });
+  return true;
+}
+
 // Legacy read-only fallback for existing system/global tournaments
 export async function fetchLegacyGlobalTournaments() {
   const db = getDb();

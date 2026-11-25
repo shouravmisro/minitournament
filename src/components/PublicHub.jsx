@@ -3,17 +3,23 @@ import { useTournament } from '../context/TournamentContext';
 import { useAuth } from '../context/AuthContext';
 import OrganizerProfile from './OrganizerProfile';
 import PlayerRegistrationModal from './PlayerRegistrationModal';
+import { computeLeagueTable } from '../utils/standings';
 import {
   subscribeMyRegistration,
   subscribeMyClaimRequest,
+  subscribeTournamentVotes,
+  castMatchVoteCloud,
   generateJoinCode,
   isFirebaseConfigured,
 } from '../services/firebase';
-import { Trophy, Calendar, Shield, Users, UserPlus, CheckCircle, Clock, Copy, Check, Link2 } from 'lucide-react';
+import {
+  Trophy, Calendar, Shield, Users, UserPlus, CheckCircle, Clock,
+  Copy, Check, Link2, Share2, Flame
+} from 'lucide-react';
 
 export default function PublicHub() {
   const { state, tournamentId } = useTournament();
-  const { user, login } = useAuth();
+  const { user, login, signInGoogle } = useAuth();
   const isEmpty = state.teams.length === 0 && state.players.length === 0;
 
   const [regModalMode, setRegModalMode] = useState(() => {
@@ -25,7 +31,9 @@ export default function PublicHub() {
   });
   const [myRegistration, setMyRegistration] = useState(null);
   const [myClaimRequest, setMyClaimRequest] = useState(null);
+  const [votes, setVotes] = useState([]);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedSummary, setCopiedSummary] = useState(false);
 
   const regSettings = state.registrationSettings || {};
   const regEnabled = regSettings.enabled !== false;
@@ -34,6 +42,12 @@ export default function PublicHub() {
   const linkedPlayer = user?.uid ? state.players.find(p => p.uid === user.uid) : null;
   const linkedCaptain = user?.uid ? state.captains.find(c => c.uid === user.uid) : null;
   const hasUnlinkedRoster = state.players.some(p => !p.uid) || state.captains.some(c => !c.uid);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured() || !tournamentId) return;
+    const unsubVotes = subscribeTournamentVotes(tournamentId, setVotes);
+    return () => unsubVotes();
+  }, [tournamentId]);
 
   useEffect(() => {
     if (!isFirebaseConfigured() || !tournamentId || !user?.uid) {
@@ -56,10 +70,53 @@ export default function PublicHub() {
     setTimeout(() => setCopiedCode(false), 2000);
   }
 
+  function copyMatchdayDigest() {
+    const table = computeLeagueTable(state.teams, state.matches, state.tiebreakerMode);
+    const recent = state.matches.filter(m => m.status === 'COMPLETED').slice(-3).reverse();
+    const lines = [
+      `🏆 *${state.organizer?.name || 'Tournament Update'}*`,
+      state.organizer?.venue ? `📍 ${state.organizer.venue}` : '',
+      '',
+      recent.length > 0 ? '⚽ *Latest Results:*' : '',
+      ...recent.map(m => {
+        const a = state.teams.find(t => t.id === m.teamAId);
+        const b = state.teams.find(t => t.id === m.teamBId);
+        return `• ${a?.name || 'Team A'} ${m.scoreA ?? 0} - ${m.scoreB ?? 0} ${b?.name || 'Team B'}`;
+      }),
+      '',
+      table.length > 0 ? '📊 *Top Standings:*' : '',
+      ...table.slice(0, 5).map((r, i) => `${i + 1}. ${r.name} — ${r.Pts} pts (GD ${r.GD >= 0 ? `+${r.GD}` : r.GD})`),
+      '',
+      `🔗 Live Hub: ${window.location.origin}${window.location.pathname}?t=${tournamentId}`,
+    ].filter(Boolean);
+
+    navigator.clipboard.writeText(lines.join('\n'));
+    setCopiedSummary(true);
+    setTimeout(() => setCopiedSummary(false), 2500);
+  }
+
+  const upcomingMatches = state.matches
+    .filter(m => m.status !== 'COMPLETED' && m.teamAId && m.teamBId)
+    .slice(0, 4);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
       {/* Organizer Profile banner */}
       <OrganizerProfile editable={false} />
+
+      {/* Shareable Matchday Digest Bar */}
+      {!isEmpty && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={copyMatchdayDigest}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0b132b] hover:bg-amber-950/40 border border-amber-500/35 text-xs font-mono text-amber-200 transition-colors"
+          >
+            {copiedSummary ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5 text-amber-400" />}
+            <span>{copiedSummary ? 'Copied WhatsApp Digest!' : 'Copy Shareable Matchday Digest'}</span>
+          </button>
+        </div>
+      )}
 
       {/* Player Self-Registration & Existing Profile Link Callout */}
       {(regEnabled || myRegistration || myClaimRequest || linkedPlayer || linkedCaptain || hasUnlinkedRoster) && (
@@ -122,7 +179,7 @@ export default function PublicHub() {
                     onClick={() => login('PLAYER', linkedPlayer.id)}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-serif font-bold transition-colors shadow-lg"
                   >
-                    <CheckCircle className="w-4 h-4" /> My Warrior Scroll
+                    <CheckCircle className="w-4 h-4" /> My Player Panel
                   </button>
                 )}
                 {linkedCaptain && (
@@ -131,7 +188,7 @@ export default function PublicHub() {
                     onClick={() => login('CAPTAIN', linkedCaptain.id)}
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-serif font-bold transition-colors shadow-lg"
                   >
-                    <CheckCircle className="w-4 h-4" /> My Faction
+                    <CheckCircle className="w-4 h-4" /> My Team Panel
                   </button>
                 )}
               </div>
@@ -167,11 +224,82 @@ export default function PublicHub() {
       {isEmpty && (
         <div className="text-center py-16 sketch-border rounded-2xl flex flex-col items-center">
           <Trophy className="w-14 h-14 mx-auto mb-3 text-amber-900/40" />
-          <p className="font-serif text-xl text-amber-200">The Arena Awaits Alignment</p>
-          <p className="font-serif text-sm text-amber-500/60 mt-1">The grand organizers are assembling factions and champion scrolls.</p>
+          <p className="font-serif text-xl text-amber-200">Tournament Setup in Progress</p>
+          <p className="font-serif text-sm text-amber-500/60 mt-1">Organizers are currently assembling teams and registering players.</p>
           <p className="text-[10px] font-mono tracking-widest uppercase text-amber-500/40 mt-2">
-            Inspect <span className="text-amber-300">Warriors</span> &amp; <span className="text-amber-300">Factions</span> in the scrolls above.
+            Browse <span className="text-amber-300">Players</span> &amp; <span className="text-amber-300">Teams</span> in the navigation above.
           </p>
+        </div>
+      )}
+
+      {/* Pre-Match Fan Prediction Polls */}
+      {upcomingMatches.length > 0 && isFirebaseConfigured() && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-dashed border-amber-900/40 pb-2">
+            <h3 className="text-lg sm:text-xl font-serif text-amber-200 flex items-center gap-2">
+              <Flame className="w-5 h-5 text-amber-400" /> Matchday Fan Predictions
+            </h3>
+            <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500/50">Live Community Vote</span>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            {upcomingMatches.map(match => {
+              const teamA = state.teams.find(t => t.id === match.teamAId);
+              const teamB = state.teams.find(t => t.id === match.teamBId);
+              const mVotes = votes.filter(v => v.matchId === match.id);
+              const total = mVotes.length;
+              const cA = mVotes.filter(v => v.choice === 'A').length;
+              const cD = mVotes.filter(v => v.choice === 'DRAW').length;
+              const cB = mVotes.filter(v => v.choice === 'B').length;
+              const myVote = user?.uid ? mVotes.find(v => v.uid === user.uid)?.choice : null;
+
+              const pctA = total > 0 ? Math.round((cA / total) * 100) : 0;
+              const pctD = total > 0 ? Math.round((cD / total) * 100) : 0;
+              const pctB = total > 0 ? Math.round((cB / total) * 100) : 0;
+
+              async function vote(choice) {
+                if (!user?.uid) {
+                  signInGoogle().catch(() => {});
+                  return;
+                }
+                await castMatchVoteCloud(tournamentId, match.id, user.uid, choice);
+              }
+
+              return (
+                <div key={match.id} className="sketch-border bg-[#0b132b]/70 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between text-xs font-serif">
+                    <span className="font-bold text-amber-100 truncate">{teamA?.logo} {teamA?.name || 'TBD'}</span>
+                    <span className="text-[10px] font-mono text-amber-500/60 px-2">vs</span>
+                    <span className="font-bold text-amber-100 truncate text-right">{teamB?.name || 'TBD'} {teamB?.logo}</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[
+                      { id: 'A', label: teamA?.name?.split(' ')[0] || 'Team A', pct: pctA },
+                      { id: 'DRAW', label: 'Draw', pct: pctD },
+                      { id: 'B', label: teamB?.name?.split(' ')[0] || 'Team B', pct: pctB },
+                    ].map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => vote(opt.id)}
+                        className={`py-1.5 px-2 rounded-lg border text-[11px] font-mono transition-colors ${
+                          myVote === opt.id
+                            ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 font-bold'
+                            : 'bg-[#050814]/80 border-amber-900/40 text-amber-200/80 hover:border-amber-500/50'
+                        }`}
+                      >
+                        {opt.label} {total > 0 ? `(${opt.pct}%)` : ''}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] font-mono text-amber-500/50 text-center">
+                    {total} vote{total !== 1 ? 's' : ''} {!user ? '• Sign in with Google to vote' : ''}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -180,9 +308,9 @@ export default function PublicHub() {
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-dashed border-amber-900/40 pb-2.5">
             <h3 className="text-xl font-serif text-amber-200 flex items-center gap-2.5">
-              <Calendar className="w-5 h-5 text-purple-400 stroke-[1.5]" /> Recent Clashes &amp; Chronicles
+              <Calendar className="w-5 h-5 text-purple-400 stroke-[1.5]" /> Recent Results
             </h3>
-            <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500/50">Historic Records</span>
+            <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500/50">Latest Scores</span>
           </div>
 
           <div className="space-y-2.5">
@@ -233,9 +361,9 @@ export default function PublicHub() {
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between border-b border-dashed border-amber-900/40 pb-2.5">
             <h3 className="text-xl font-serif text-amber-200 flex items-center gap-2.5">
-              <Trophy className="w-5 h-5 text-amber-400 stroke-[1.5]" /> Hall of Relics
+              <Trophy className="w-5 h-5 text-amber-400 stroke-[1.5]" /> Tournament Awards
             </h3>
-            <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500/50">Imperial Accolades</span>
+            <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500/50">Honors</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
@@ -265,9 +393,9 @@ export default function PublicHub() {
       {!isEmpty && (
         <div className="grid grid-cols-3 gap-3 pt-2">
           {[
-            { icon: Users,  label: 'Warriors Enlisted', value: state.players.length, color: 'text-cyan-400' },
-            { icon: Shield, label: 'Factions Ordained', value: state.teams.length,   color: 'text-amber-300' },
-            { icon: Trophy, label: 'Relics Forged',      value: state.awards.length,  color: 'text-emerald-400' },
+            { icon: Users,  label: 'Registered Players', value: state.players.length, color: 'text-cyan-400' },
+            { icon: Shield, label: 'Participating Teams', value: state.teams.length,   color: 'text-amber-300' },
+            { icon: Trophy, label: 'Awards',             value: state.awards.length,  color: 'text-emerald-400' },
           ].map(s => {
             const Icon = s.icon;
             return (

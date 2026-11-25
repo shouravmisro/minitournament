@@ -72,9 +72,7 @@ function loadGlobal() {
         localList[0]?.id ||
         DEFAULT_TOURNAMENT_ID;
 
-      const showManager = INITIAL_EXPLICIT_URL_TOURNAMENT_ID
-        ? false
-        : (typeof parsed.showManager === 'boolean' ? parsed.showManager : localList.length === 0);
+      const showManager = !INITIAL_EXPLICIT_URL_TOURNAMENT_ID;
 
       return {
         ...DEFAULT_GLOBAL,
@@ -456,6 +454,81 @@ export function GlobalProvider({ children }) {
     return { ok: true, id: extractedId };
   }, []);
 
+  const cloneTournament = useCallback(async (sourceId, customName = '') => {
+    if (!sourceId) return null;
+    let source = null;
+    try {
+      const raw = localStorage.getItem(`mt_state_${sourceId}`);
+      if (raw) source = JSON.parse(raw);
+    } catch {}
+
+    if (!source && isFirebaseConfigured()) {
+      try {
+        const meta = await fetchTournamentMetaById(sourceId);
+        if (meta) source = { organizer: { name: meta.name, format: meta.format }, players: [], teams: [], captains: [] };
+      } catch {}
+    }
+
+    const baseName = customName || `${source?.organizer?.name || 'Tournament'} (Season 2)`;
+    const id = `t_${Date.now().toString(36)}`;
+    const now = new Date().toISOString();
+
+    const clonedPlayers = (source?.players || []).map(p => ({
+      ...p,
+      stats: { matches: 0, goals: 0, assists: 0, cleanSheets: 0, saves: 0, avgRating: 0, mvpCount: 0 },
+    }));
+
+    const clonedState = {
+      organizer: { ...(source?.organizer || {}), name: baseName },
+      captains: source?.captains || [],
+      teams: (source?.teams || []).map(t => ({ ...t, spent: 0 })),
+      players: clonedPlayers,
+      matches: [],
+      awards: [],
+      adminPin: source?.adminPin || '0000',
+      draftMode: source?.draftMode || 'AUCTION',
+      defaultBudget: source?.defaultBudget || 1000,
+      auditLog: [],
+      ownerUid: user?.uid || null,
+      ownerName: organizer?.name || user?.displayName || '',
+      ownerEmail: user?.email || '',
+      coAdminUids: [],
+      coAdmins: [],
+      isPublic: true,
+      allowGuestPinLogin: true,
+      registrationSettings: {
+        enabled: true,
+        joinCode: generateJoinCode(id),
+        maxPlayers: source?.registrationSettings?.maxPlayers || 0,
+        deadline: '',
+        entryFee: source?.registrationSettings?.entryFee || '',
+        paymentInstructions: source?.registrationSettings?.paymentInstructions || '',
+        allowSelfWithdraw: true,
+      },
+      createdAt: now,
+      _updatedAt: Date.now(),
+    };
+
+    try { localStorage.setItem(`mt_state_${id}`, JSON.stringify(clonedState)); } catch {}
+    dispatch({
+      type: 'CREATE_TOURNAMENT',
+      payload: {
+        id,
+        name: baseName,
+        format: clonedState.organizer?.format || 'HYBRID',
+        createdAt: now,
+        ownerUid: user?.uid || null,
+        ownerName: organizer?.name || user?.displayName || '',
+        ownerEmail: user?.email || '',
+        isPublic: true,
+      },
+    });
+    if (user?.uid && isFirebaseConfigured()) {
+      await saveTournamentCloud(id, clonedState);
+    }
+    return id;
+  }, [user, organizer]);
+
   const globalValue = {
     global: {
       ...globalState,
@@ -467,6 +540,7 @@ export function GlobalProvider({ children }) {
     loadingPublic,
     refreshPublicTournaments,
     createTournament,
+    cloneTournament,
     deleteTournament,
     selectTournament,
     deselectTournament,
