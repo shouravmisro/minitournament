@@ -1,0 +1,29 @@
+# ArenaPro — All-in-One Tournament, Club & Matchday OS
+
+> ArenaPro (`https://mini-tournament-45ac1.web.app/`) is a free multi-organizer web platform for organizing football, turf, futsal, cricket, campus, and community sports competitions from A to Z. It unifies self-registration with waitlists, live multi-device auction & spin-the-wheel drafts, automated round-robin & knockout brackets, configurable tiebreakers, persistent clubs, and cross-season verified player career passports.
+
+## Core Platform URLs
+- [Homepage & Platform Overview](https://mini-tournament-45ac1.web.app/): Live stats, matchday stories, featured tournaments, capabilities, and FAQs.
+- [Tournaments Directory](https://mini-tournament-45ac1.web.app/tournaments/): Browse public leagues/knockouts, create a tournament, or enter a 6-character Join Code.
+- [Clubs & Franchises Directory](https://mini-tournament-45ac1.web.app/clubs/): Create persistent clubs, publish home grounds & trophy cabinets, and manage recruitment requests.
+- [Players & Career Passports](https://mini-tournament-45ac1.web.app/players/): Search verified career stats across seasons and compare players with 5-axis SVG attribute radars.
+- [Stories & Sports Blog](https://mini-tournament-45ac1.web.app/blog/): Matchday visual stories, A–Z tutorials, draft strategy comparisons, tiebreaker rules, and organizer playbooks.
+
+## Featured Editorial Guides & Playbooks
+- [How to Use ArenaPro: Complete A–Z Guide, Why Organizers Switch & Full Feature Tour (With Screenshots)](https://mini-tournament-45ac1.web.app/blog/how-to-use-arenapro-complete-guide-with-screenshots/)
+- [How to Organize a Local Football or Turf Tournament from Scratch (2026 Step-by-Step Checklist)](https://mini-tournament-45ac1.web.app/blog/how-to-organize-local-football-turf-tournament-2026/)
+- [Auction Draft vs. Spin-the-Wheel vs. Snake Draft: Which Team Selection Format Fits Your League?](https://mini-tournament-45ac1.web.app/blog/auction-draft-vs-spin-wheel-vs-snake-draft-leagues/)
+- [League Tiebreakers Explained: Goal Difference vs. Head-to-Head vs. Goals Scored](https://mini-tournament-45ac1.web.app/blog/league-tiebreakers-goal-difference-vs-head-to-head/)
+- [How to Manage Player Registrations, Waitlists & Entry Fees Without WhatsApp Chaos](https://mini-tournament-45ac1.web.app/blog/stop-whatsapp-registration-chaos-join-codes-waitlists/)
+- [Why Local Clubs Need Persistent Rosters & Verified Player Career Passports Across Seasons](https://mini-tournament-45ac1.web.app/blog/why-amateur-clubs-need-persistent-rosters-and-player-passports/)
+
+## Full Machine-Readable Knowledge Base
+- [llms-full.txt](https://mini-tournament-45ac1.web.app/llms-full.txt): Complete plain-text reference including all product capabilities, comparison tables, article texts, and FAQs.
+- [sitemap.xml](https://mini-tournament-45ac1.web.app/sitemap.xml): XML sitemap covering all canonical routes and editorial guides.
+
+## Verified Product Facts (Quick Reference)
+- Cost: Free for organizers, captains, and players (`$0`, web-based, no app store install required).
+- Supported Competition Formats: Round-Robin League, Single-Elimination Knockout (with penalty shootouts), and Hybrid (League + Top-N Playoffs).
+- Player Drafting Modes: Live multi-device synced Auction Draft (with budget guardrails & minimum reserve checks) and animated Spin-the-Wheel Draft.
+- Onboarding & Legacy Migration: 6-character Join Codes, direct invite links, capacity caps + automatic waitlists, Google Sign-In linking to preserve legacy stats.
+- Analytics: Dynamic League Standings, Configurable Tiebreakers (GD / H2H / GF / Wins), Head-to-Head Matrix grid, 5-axis SVG Player Radar Charts, Matchday RSVP, Starting Lineup Builder, and Fan Prediction Polls.

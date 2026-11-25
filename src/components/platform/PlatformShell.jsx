@@ -16,6 +16,11 @@ import StoriesAndBlogPage from './StoriesAndBlogPage';
 import TournamentManager from '../TournamentManager';
 import { OFFICIAL_POSTS, OFFICIAL_STORIES } from '../../data/editorialContent';
 import {
+  parsePlatformRoute,
+  buildRoutePath,
+  resolvePublicAssetUrl,
+} from '../../utils/seo';
+import {
   Trophy, Home, Shield, Users, Newspaper, LogIn, LogOut,
   Bell, X, Menu
 } from 'lucide-react';
@@ -33,11 +38,8 @@ export default function PlatformShell() {
   const { global, myTournaments, joinedTournaments, selectTournament } = useGlobal();
 
   const [tab, setTab] = useState(() => {
-    try {
-      const p = new URLSearchParams(window.location.search).get('page');
-      if (p && ['home', 'tournaments', 'clubs', 'players', 'blog'].includes(p)) return p;
-    } catch {}
-    return 'home';
+    if (typeof window === 'undefined') return 'home';
+    return parsePlatformRoute(window.location.pathname, window.location.search).tab;
   });
 
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -65,12 +67,45 @@ export default function PlatformShell() {
 
   const [initialStory, setInitialStory] = useState(null);
   const [initialPost, setInitialPost] = useState(() => {
-    try {
-      const slug = new URLSearchParams(window.location.search).get('post');
-      if (slug) return OFFICIAL_POSTS.find(p => p.slug === slug || p.id === slug) || null;
-    } catch {}
+    if (typeof window === 'undefined') return null;
+    const { postSlug } = parsePlatformRoute(window.location.pathname, window.location.search);
+    if (postSlug) return OFFICIAL_POSTS.find(p => p.slug === postSlug || p.id === postSlug) || null;
     return null;
   });
+
+  const navigateTab = React.useCallback((nextTab, postSlug = null) => {
+    const validTab = PLATFORM_TABS.some(t => t.id === nextTab) ? nextTab : 'home';
+    setTab(validTab);
+    if (validTab !== 'blog' || !postSlug) {
+      if (validTab !== 'blog') {
+        setInitialPost(null);
+        setInitialStory(null);
+      }
+    }
+    if (typeof window !== 'undefined') {
+      const nextUrl = buildRoutePath(validTab, postSlug);
+      if (window.location.pathname + window.location.search !== nextUrl) {
+        window.history.pushState({ tab: validTab, postSlug }, '', nextUrl);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPopState = () => {
+      const parsed = parsePlatformRoute(window.location.pathname, window.location.search);
+      setTab(parsed.tab);
+      if (parsed.postSlug) {
+        const found = posts.find(p => p.slug === parsed.postSlug || p.id === parsed.postSlug) || null;
+        setInitialPost(found);
+      } else {
+        setInitialPost(null);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [posts]);
 
   const hasCloud = isFirebaseConfigured();
 
@@ -85,13 +120,12 @@ export default function PlatformShell() {
   }, [hasCloud]);
 
   useEffect(() => {
-    try {
-      const slug = new URLSearchParams(window.location.search).get('post');
-      if (slug && !initialPost) {
-        const found = posts.find(p => p.slug === slug || p.id === slug);
-        if (found) setInitialPost(found);
-      }
-    } catch {}
+    if (typeof window === 'undefined') return;
+    const { postSlug } = parsePlatformRoute(window.location.pathname, window.location.search);
+    if (postSlug && !initialPost) {
+      const found = posts.find(p => p.slug === postSlug || p.id === postSlug);
+      if (found) setInitialPost(found);
+    }
   }, [posts, initialPost]);
 
   const loadDirectoryData = React.useCallback(async () => {
@@ -210,12 +244,12 @@ export default function PlatformShell() {
 
   function openStoryFromHome(story) {
     setInitialStory(story);
-    setTab('blog');
+    navigateTab('blog');
   }
 
   function openPostFromHome(post) {
     setInitialPost(post);
-    setTab('blog');
+    navigateTab('blog', post?.slug || post?.id || null);
   }
 
   return (
@@ -227,9 +261,9 @@ export default function PlatformShell() {
       <header className="sticky top-0 z-50 bg-[#050814]/90 backdrop-blur-md border-b border-slate-800/80">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           {/* Brand */}
-          <button
-            type="button"
-            onClick={() => setTab('home')}
+          <a
+            href={buildRoutePath('home')}
+            onClick={e => { e.preventDefault(); navigateTab('home'); }}
             className="flex items-center gap-2.5 shrink-0"
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-emerald-500 flex items-center justify-center text-slate-950 font-black shadow-lg">
@@ -239,18 +273,19 @@ export default function PlatformShell() {
               <span className="font-bold text-white text-lg tracking-tight block leading-none">ArenaPro</span>
               <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400">Tournament OS</span>
             </div>
-          </button>
+          </a>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav aria-label="Primary Navigation" className="hidden md:flex items-center gap-1">
             {PLATFORM_TABS.map(t => {
               const Icon = t.icon;
               const isActive = tab === t.id;
               return (
-                <button
+                <a
                   key={t.id}
-                  type="button"
-                  onClick={() => setTab(t.id)}
+                  href={buildRoutePath(t.id)}
+                  aria-current={isActive ? 'page' : undefined}
+                  onClick={e => { e.preventDefault(); navigateTab(t.id); }}
                   className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
                     isActive
                       ? 'bg-amber-500/15 text-amber-300 border border-amber-500/40'
@@ -259,7 +294,7 @@ export default function PlatformShell() {
                 >
                   <Icon className="w-4 h-4" />
                   <span>{t.label}</span>
-                </button>
+                </a>
               );
             })}
           </nav>
@@ -355,24 +390,25 @@ export default function PlatformShell() {
 
         {/* Mobile Nav Drawer */}
         {mobileMenu && (
-          <div className="md:hidden border-t border-slate-800 bg-[#050814]/95 px-4 py-3 space-y-1">
+          <nav aria-label="Mobile Navigation" className="md:hidden border-t border-slate-800 bg-[#050814]/95 px-4 py-3 space-y-1">
             {PLATFORM_TABS.map(t => {
               const Icon = t.icon;
               return (
-                <button
+                <a
                   key={t.id}
-                  type="button"
-                  onClick={() => { setTab(t.id); setMobileMenu(false); }}
+                  href={buildRoutePath(t.id)}
+                  aria-current={tab === t.id ? 'page' : undefined}
+                  onClick={e => { e.preventDefault(); navigateTab(t.id); setMobileMenu(false); }}
                   className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold ${
                     tab === t.id ? 'bg-amber-500/15 text-amber-300' : 'text-slate-300'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{t.label}</span>
-                </button>
+                </a>
               );
             })}
-          </div>
+          </nav>
         )}
       </header>
 
@@ -380,7 +416,7 @@ export default function PlatformShell() {
       <main className="relative z-20 flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 pt-6 pb-16">
         {tab === 'home' && (
           <HomePage
-            onNavigate={setTab}
+            onNavigate={navigateTab}
             clubs={clubs}
             posts={posts}
             stories={stories}
@@ -403,16 +439,49 @@ export default function PlatformShell() {
             stories={stories}
             initialStory={initialStory}
             initialPost={initialPost}
-            onClearInitial={() => { setInitialStory(null); setInitialPost(null); }}
+            onPostRouteChange={slug => navigateTab('blog', slug)}
+            onClearInitial={() => {
+              setInitialStory(null);
+              setInitialPost(null);
+              navigateTab('blog', null);
+            }}
           />
         )}
       </main>
 
-      {/* Platform Footer */}
-      <footer className="relative z-20 border-t border-slate-800/80 bg-[#050814]/80 py-6 text-center text-xs text-slate-500">
-        <p className="font-mono uppercase tracking-widest text-[10px] text-slate-400">
-          ArenaPro • Multi-Organizer Tournament, Club &amp; Matchday Platform
-        </p>
+      {/* Semantic SEO/GEO Footer */}
+      <footer className="relative z-20 border-t border-slate-800/80 bg-[#050814]/90 py-8 px-4">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+          <p className="font-mono uppercase tracking-widest text-[10px] text-slate-400">
+            ArenaPro • Multi-Organizer Tournament, Club &amp; Matchday Platform
+          </p>
+          <nav aria-label="Footer Navigation" className="flex flex-wrap items-center justify-center gap-4">
+            {PLATFORM_TABS.map(t => (
+              <a
+                key={t.id}
+                href={buildRoutePath(t.id)}
+                onClick={e => { e.preventDefault(); navigateTab(t.id); }}
+                className="hover:text-amber-300 transition-colors"
+              >
+                {t.label}
+              </a>
+            ))}
+            <a
+              href={buildRoutePath('blog', 'how-to-use-arenapro-complete-guide-with-screenshots')}
+              onClick={e => {
+                e.preventDefault();
+                const guide = posts.find(p => p.slug === 'how-to-use-arenapro-complete-guide-with-screenshots');
+                if (guide) openPostFromHome(guide);
+                else navigateTab('blog');
+              }}
+              className="hover:text-amber-300 transition-colors"
+            >
+              A–Z Guide
+            </a>
+            <a href={resolvePublicAssetUrl('sitemap.xml')} className="hover:text-emerald-300 transition-colors">Sitemap</a>
+            <a href={resolvePublicAssetUrl('llms.txt')} className="hover:text-emerald-300 transition-colors">llms.txt</a>
+          </nav>
+        </div>
       </footer>
     </div>
   );

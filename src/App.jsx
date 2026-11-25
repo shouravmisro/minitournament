@@ -16,6 +16,7 @@ import MatchEngine       from './components/MatchEngine';
 import LeagueStandings   from './components/LeagueStandings';
 import KnockoutBracket   from './components/KnockoutBracket';
 import AwardsSystem      from './components/AwardsSystem';
+import { applyPageSeo, SITE_ORIGIN } from './utils/seo';
 import {
   Home, Users, Crown, Dices, Shield, User,
   Trophy, GitBranch, Calendar, TrendingUp,
@@ -113,8 +114,36 @@ function TabBar({ tabs, active, onChange }) {
 
 function AppContent() {
   const { role } = useAuth();
-  const { state } = useTournament();
+  const { state, tournamentId } = useTournament();
   const [tab, setTab] = useState('hub');
+
+  React.useEffect(() => {
+    const tName = state?.organizer?.name || 'Tournament Center';
+    const pCount = state?.players?.length ?? 0;
+    const teamCount = state?.teams?.length ?? state?.captains?.length ?? 0;
+    applyPageSeo({
+      title: `${tName} — Live Standings, Fixtures & Draft`,
+      description: `Follow ${tName} live on ArenaPro: ${pCount} registered players, ${teamCount} teams, standings, head-to-head matrix, knockout bracket, and fan polls.`,
+      canonicalPath: tournamentId ? `/?t=${encodeURIComponent(tournamentId)}` : '/',
+      ogImage: './screenshots/03-tournament-center.png',
+      jsonLdGraph: [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+            { '@type': 'ListItem', position: 2, name: 'Tournaments', item: `${SITE_ORIGIN}/tournaments/` },
+            { '@type': 'ListItem', position: 3, name: tName, item: `${SITE_ORIGIN}/?t=${encodeURIComponent(tournamentId || '')}` },
+          ],
+        },
+        {
+          '@type': 'SportsEvent',
+          name: tName,
+          url: `${SITE_ORIGIN}/?t=${encodeURIComponent(tournamentId || '')}`,
+          description: `Live league standings, draft, fixtures, and knockout bracket for ${tName}.`,
+        },
+      ],
+    });
+  }, [state?.organizer?.name, state?.players?.length, state?.teams?.length, state?.captains?.length, tournamentId]);
 
   React.useEffect(() => {
     const defaults = { PUBLIC: 'hub', ADMIN: 'admin', CAPTAIN: 'captain', PLAYER: 'player' };

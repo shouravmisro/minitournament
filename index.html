@@ -7,11 +7,15 @@
     <title>ArenaPro — Free Tournament, Club, Draft &amp; Standings Platform</title>
     <meta name="description" content="ArenaPro is a free all-in-one sports tournament and club management platform. Run player registration, waitlists, live auction drafts, round-robin fixtures, knockout brackets, tiebreakers, club rosters, and player career stats." />
     <meta name="keywords" content="tournament management software, free football league maker, auction draft app, sports club management, round robin fixture generator, knockout bracket maker, player career stats, 7-a-side turf tournament app" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <meta name="theme-color" content="#050814" />
+    <link rel="canonical" href="https://mini-tournament-45ac1.web.app/" />
+    <link rel="alternate" type="text/plain" title="LLMs Knowledge Index" href="./llms.txt" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ArenaPro" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content="ArenaPro — Tournament, Club &amp; Matchday Platform" />
     <meta property="og:description" content="Run leagues, live player auctions, clubs, lineups, standings, and matchday stories from registration to trophy." />
     <meta property="og:image" content="https://mini-tournament-45ac1.web.app/screenshots/01-homepage.png" />
@@ -27,25 +31,51 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "ArenaPro",
-        "alternateName": "Mini Tournament OS",
-        "applicationCategory": "SportsApplication",
-        "operatingSystem": "Web",
-        "url": "https://mini-tournament-45ac1.web.app/",
-        "description": "All-in-one web platform for organizing sports tournaments, player drafts, club rosters, league standings, knockout brackets, and verified player career passports.",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
-        "featureList": [
-          "Google Sign-In and multi-organizer isolation",
-          "Self-service player registration with join codes and automatic waitlists",
-          "Live multi-device synced auction draft and spin-the-wheel draft",
-          "Automated round-robin fixture scheduler and knockout brackets with penalty shootouts",
-          "Configurable tiebreakers (Goal Difference, Head-to-Head, Goals For) and H2H Matrix",
-          "Persistent clubs, matchday RSVP, starting lineup builder, and 5-axis SVG player radar stats"
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://mini-tournament-45ac1.web.app/#organization",
+            "name": "ArenaPro",
+            "alternateName": "Mini Tournament OS",
+            "url": "https://mini-tournament-45ac1.web.app/",
+            "logo": "https://mini-tournament-45ac1.web.app/screenshots/01-homepage.png"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://mini-tournament-45ac1.web.app/#website",
+            "name": "ArenaPro Tournament & Club OS",
+            "url": "https://mini-tournament-45ac1.web.app/",
+            "publisher": { "@id": "https://mini-tournament-45ac1.web.app/#organization" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://mini-tournament-45ac1.web.app/?page=blog&q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://mini-tournament-45ac1.web.app/#app",
+            "name": "ArenaPro",
+            "alternateName": "Mini Tournament OS",
+            "applicationCategory": "SportsApplication",
+            "operatingSystem": "Web",
+            "url": "https://mini-tournament-45ac1.web.app/",
+            "publisher": { "@id": "https://mini-tournament-45ac1.web.app/#organization" },
+            "description": "All-in-one web platform for organizing sports tournaments, player drafts, club rosters, league standings, knockout brackets, and verified player career passports.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "featureList": [
+              "Google Sign-In and multi-organizer isolation",
+              "Self-service player registration with join codes and automatic waitlists",
+              "Live multi-device synced auction draft and spin-the-wheel draft",
+              "Automated round-robin fixture scheduler and knockout brackets with penalty shootouts",
+              "Configurable tiebreakers (Goal Difference, Head-to-Head, Goals For) and H2H Matrix",
+              "Persistent clubs, matchday RSVP, starting lineup builder, and 5-axis SVG player radar stats"
+            ]
+          }
         ]
       }
     </script>

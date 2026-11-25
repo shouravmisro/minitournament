@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGlobal } from '../../context/GlobalContext';
 import { useAuth } from '../../context/AuthContext';
 import {
+  applyPageSeo,
+  buildRoutePath,
+  resolvePublicAssetUrl,
+  PLATFORM_FAQS,
+  SITE_ORIGIN,
+} from '../../utils/seo';
+import {
   Trophy, Users, Shield, ArrowRight, Sparkles, Dices, Calendar,
-  Newspaper, Search, Play, CheckCircle2, Globe, Award, Flame, ChevronRight
+  Newspaper, Search, Play, CheckCircle2, Globe, Award, Flame, ChevronRight, HelpCircle
 } from 'lucide-react';
 
 export default function HomePage({
@@ -19,10 +26,58 @@ export default function HomePage({
   const { user, signInGoogle } = useAuth();
   const [quickJoin, setQuickJoin] = useState('');
   const [joinErr, setJoinErr] = useState('');
+  const [openFaq, setOpenFaq] = useState(0);
 
   const featuredTournaments = [...myTournaments, ...joinedTournaments, ...discoverTournaments].slice(0, 6);
   const latestPosts = posts.slice(0, 3);
   const featuredClubs = clubs.slice(0, 4);
+
+  useEffect(() => {
+    applyPageSeo({
+      title: 'ArenaPro — Free Tournament, Club, Draft & Standings Platform',
+      description:
+        'ArenaPro is a free all-in-one sports tournament and club management platform. Run player registration, waitlists, live auction drafts, round-robin fixtures, knockout brackets, tiebreakers, club rosters, and player career stats.',
+      canonicalPath: '/',
+      jsonLdGraph: [
+        {
+          '@type': 'Organization',
+          '@id': `${SITE_ORIGIN}/#organization`,
+          name: 'ArenaPro',
+          url: `${SITE_ORIGIN}/`,
+          logo: `${SITE_ORIGIN}/screenshots/01-homepage.png`,
+        },
+        {
+          '@type': 'WebSite',
+          '@id': `${SITE_ORIGIN}/#website`,
+          name: 'ArenaPro Tournament & Club OS',
+          url: `${SITE_ORIGIN}/`,
+          publisher: { '@id': `${SITE_ORIGIN}/#organization` },
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: `${SITE_ORIGIN}/?page=blog&q={search_term_string}`,
+            'query-input': 'required name=search_term_string',
+          },
+        },
+        {
+          '@type': 'SoftwareApplication',
+          '@id': `${SITE_ORIGIN}/#app`,
+          name: 'ArenaPro',
+          applicationCategory: 'SportsApplication',
+          operatingSystem: 'Web',
+          url: `${SITE_ORIGIN}/`,
+          offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: PLATFORM_FAQS.map(f => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
+        },
+      ],
+    });
+  }, []);
 
   async function handleQuickOpen(e) {
     e.preventDefault();
@@ -180,7 +235,7 @@ export default function HomePage({
                 <div className="w-32 h-44 rounded-2xl p-0.5 bg-gradient-to-tr from-amber-500 via-pink-500 to-cyan-400 shadow-lg group-hover:scale-[1.03] transition-transform">
                   <div className="w-full h-full rounded-[14px] overflow-hidden bg-[#050814] relative flex flex-col justify-end p-2.5">
                     {story.imageUrl ? (
-                      <img src={story.imageUrl} alt={story.title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                      <img src={resolvePublicAssetUrl(story.imageUrl)} alt={story.title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-[#0b132b] to-emerald-950" />
                     )}
@@ -335,9 +390,13 @@ export default function HomePage({
             <h3 className="font-bold text-lg text-white flex items-center gap-2">
               <Newspaper className="w-5 h-5 text-amber-400" /> Latest News &amp; Match Reports
             </h3>
-            <button type="button" onClick={() => onNavigate('blog')} className="text-xs text-amber-300 hover:underline">
+            <a
+              href={buildRoutePath('blog')}
+              onClick={e => { e.preventDefault(); onNavigate('blog'); }}
+              className="text-xs text-amber-300 hover:underline"
+            >
               Read Blog →
-            </button>
+            </a>
           </div>
           {latestPosts.length === 0 ? (
             <p className="text-xs text-slate-400 py-6 text-center">
@@ -346,11 +405,11 @@ export default function HomePage({
           ) : (
             <div className="space-y-2.5">
               {latestPosts.map(p => (
-                <button
+                <a
                   key={p.id}
-                  type="button"
-                  onClick={() => onOpenPost && onOpenPost(p)}
-                  className="w-full p-3 rounded-xl bg-[#050814]/70 border border-slate-800 hover:border-amber-500/40 text-left transition-colors space-y-1"
+                  href={buildRoutePath('blog', p.slug || p.id)}
+                  onClick={e => { e.preventDefault(); onOpenPost && onOpenPost(p); }}
+                  className="block w-full p-3 rounded-xl bg-[#050814]/70 border border-slate-800 hover:border-amber-500/40 text-left transition-colors space-y-1"
                 >
                   <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-amber-300 uppercase">
                     <span>{p.category || 'Match Report'}</span>
@@ -358,10 +417,60 @@ export default function HomePage({
                   </div>
                   <p className="font-semibold text-sm text-white line-clamp-1">{p.title}</p>
                   <p className="text-xs text-slate-400 line-clamp-1">{p.summary || p.body}</p>
-                </button>
+                </a>
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ── AEO Platform FAQs (Paired with Homepage FAQPage JSON-LD) ── */}
+      <section className="pro-card rounded-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-cyan-400" /> Frequently Asked Questions
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Direct answers on ArenaPro registration, auction drafts, tiebreakers, and pricing.
+            </p>
+          </div>
+          <a
+            href={buildRoutePath('blog', 'how-to-use-arenapro-complete-guide-with-screenshots')}
+            onClick={e => {
+              e.preventDefault();
+              const guide = posts.find(p => p.slug === 'how-to-use-arenapro-complete-guide-with-screenshots');
+              if (guide && onOpenPost) onOpenPost(guide);
+              else onNavigate('blog');
+            }}
+            className="text-xs font-mono uppercase tracking-wider text-emerald-300 hover:underline"
+          >
+            Read Full A–Z Guide →
+          </a>
+        </div>
+
+        <div className="space-y-2">
+          {PLATFORM_FAQS.map((faq, idx) => {
+            const isOpen = openFaq === idx;
+            return (
+              <div key={idx} className="rounded-xl bg-[#050814]/80 border border-slate-800 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpenFaq(isOpen ? -1 : idx)}
+                  aria-expanded={isOpen}
+                  className="w-full text-left px-4 py-3 text-xs sm:text-sm font-semibold text-amber-100 flex items-center justify-between gap-3"
+                >
+                  <span>{faq.q}</span>
+                  <span className="text-amber-400 font-mono shrink-0">{isOpen ? '−' : '+'}</span>
+                </button>
+                {isOpen && (
+                  <p className="px-4 pb-3.5 pt-2 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-slate-800/70">
+                    {faq.a}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>

@@ -2,46 +2,74 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mini-tournament-45ac1.web.app/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://mini-tournament-45ac1.web.app/?page=tournaments</loc>
+    <loc>https://mini-tournament-45ac1.web.app/tournaments/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://mini-tournament-45ac1.web.app/?page=clubs</loc>
+    <loc>https://mini-tournament-45ac1.web.app/clubs/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://mini-tournament-45ac1.web.app/?page=players</loc>
+    <loc>https://mini-tournament-45ac1.web.app/players/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://mini-tournament-45ac1.web.app/?page=blog</loc>
+    <loc>https://mini-tournament-45ac1.web.app/blog/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://mini-tournament-45ac1.web.app/?page=blog&amp;post=how-to-use-arenapro-complete-guide-with-screenshots</loc>
+    <loc>https://mini-tournament-45ac1.web.app/llms.txt</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://mini-tournament-45ac1.web.app/blog/how-to-use-arenapro-complete-guide-with-screenshots/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://mini-tournament-45ac1.web.app/?page=blog&amp;post=how-to-organize-local-football-turf-tournament-2026</loc>
+    <loc>https://mini-tournament-45ac1.web.app/blog/how-to-organize-local-football-turf-tournament-2026/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://mini-tournament-45ac1.web.app/?page=blog&amp;post=auction-draft-vs-spin-wheel-vs-snake-draft-leagues</loc>
-    <priority>0.8</priority>
+    <loc>https://mini-tournament-45ac1.web.app/blog/auction-draft-vs-spin-wheel-vs-snake-draft-leagues/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://mini-tournament-45ac1.web.app/?page=blog&amp;post=league-tiebreakers-goal-difference-vs-head-to-head</loc>
-    <priority>0.8</priority>
+    <loc>https://mini-tournament-45ac1.web.app/blog/league-tiebreakers-goal-difference-vs-head-to-head/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://mini-tournament-45ac1.web.app/?page=blog&amp;post=stop-whatsapp-registration-chaos-join-codes-waitlists</loc>
-    <priority>0.8</priority>
+    <loc>https://mini-tournament-45ac1.web.app/blog/stop-whatsapp-registration-chaos-join-codes-waitlists/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://mini-tournament-45ac1.web.app/?page=blog&amp;post=why-amateur-clubs-need-persistent-rosters-and-player-passports</loc>
-    <priority>0.8</priority>
+    <loc>https://mini-tournament-45ac1.web.app/blog/why-amateur-clubs-need-persistent-rosters-and-player-passports/</loc>
+    <lastmod>2026-11-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
   </url>
 </urlset>

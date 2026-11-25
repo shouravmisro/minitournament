@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { upsertUserProfile } from '../../services/firebase';
+import { applyPageSeo, SITE_ORIGIN } from '../../utils/seo';
 import ImageUploadButton from '../ImageUploadButton';
 import PlayerRadarChart from '../PlayerRadarChart';
 import {
@@ -52,6 +53,42 @@ export default function PlayersDirectoryPage({ careerPlayers = [], onRefresh }) 
     });
     return list;
   }, [careerPlayers, posFilter, search, sortBy]);
+
+  useEffect(() => {
+    applyPageSeo({
+      title: selectedPlayer
+        ? `${selectedPlayer.name} (${selectedPlayer.position}) — Player Career Passport`
+        : 'Players & Career Passports Directory — Cross-Season Stats & Radar',
+      description: selectedPlayer
+        ? `${selectedPlayer.name}: ${selectedPlayer.stats.matches} matches, ${selectedPlayer.stats.goals} goals, ${selectedPlayer.stats.assists} assists across ${selectedPlayer.tournamentsCount} tournaments on ArenaPro.`
+        : 'Browse verified player career passports across tournaments on ArenaPro. Filter by position, compare 5-axis SVG attribute radars, and track goals, assists, clean sheets, and MVPs.',
+      canonicalPath: '/players/',
+      ogImage: './screenshots/06-player-radar-profile.png',
+      jsonLdGraph: [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+            { '@type': 'ListItem', position: 2, name: 'Players', item: `${SITE_ORIGIN}/players/` },
+          ],
+        },
+        {
+          '@type': 'ItemList',
+          name: 'ArenaPro Players Directory',
+          numberOfItems: filtered.length,
+          itemListElement: filtered.slice(0, 20).map((p, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            item: {
+              '@type': 'Person',
+              name: p.name,
+              jobTitle: p.position || 'Athlete',
+            },
+          })),
+        },
+      ],
+    });
+  }, [filtered, selectedPlayer]);
 
   function openEditPassport() {
     setPassportForm({

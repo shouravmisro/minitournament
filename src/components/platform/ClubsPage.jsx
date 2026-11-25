@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import ImageUploadButton from '../ImageUploadButton';
+import { applyPageSeo, SITE_ORIGIN } from '../../utils/seo';
 import {
   createClubCloud,
   updateClubCloud,
@@ -71,6 +72,41 @@ export default function ClubsPage({ clubs = [] }) {
     }
     return () => unsubs.forEach(u => u());
   }, [activeClub?.id, isClubMgr, user?.uid]);
+
+  useEffect(() => {
+    applyPageSeo({
+      title: activeClub
+        ? `${activeClub.name} (${activeClub.shortTag || 'Club'}) — Roster & Honors`
+        : 'Clubs & Franchises Directory — Rosters, Grounds & Recruitment',
+      description: activeClub?.bio ||
+        'Explore persistent sports clubs and local franchises on ArenaPro. View club rosters, home grounds, trophy cabinets, and open recruitment status.',
+      canonicalPath: '/clubs/',
+      ogImage: activeClub?.logoUrl || './screenshots/07-teams-overview.png',
+      jsonLdGraph: [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+            { '@type': 'ListItem', position: 2, name: 'Clubs', item: `${SITE_ORIGIN}/clubs/` },
+          ],
+        },
+        {
+          '@type': 'ItemList',
+          name: 'ArenaPro Clubs & Franchises',
+          numberOfItems: clubs.length,
+          itemListElement: clubs.slice(0, 20).map((c, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            item: {
+              '@type': 'SportsOrganization',
+              name: c.name,
+              location: c.city || c.homeGround || undefined,
+            },
+          })),
+        },
+      ],
+    });
+  }, [clubs, activeClub]);
 
   const filteredClubs = clubs.filter(c => {
     if (onlyRecruiting && !c.isRecruiting) return false;

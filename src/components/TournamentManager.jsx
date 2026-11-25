@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGlobal, useOrganizer } from '../context/GlobalContext';
 import { useAuth } from '../context/AuthContext';
 import { isFirebaseConfigured } from '../services/firebase';
+import { applyPageSeo, SITE_ORIGIN } from '../utils/seo';
 import {
   Trophy, Plus, Trash2, Play, Calendar, Users, Crown,
   ChevronRight, Settings, Globe, Dices, X, Edit3, Check,
@@ -235,6 +236,41 @@ export default function TournamentManager({ embedded = false }) {
   const [formatFilter, setFormatFilter] = useState('ALL');
 
   const hasCloud = isFirebaseConfigured();
+
+  useEffect(() => {
+    const listed = [...myTournaments, ...joinedTournaments, ...discoverTournaments].slice(0, 15);
+    applyPageSeo({
+      title: 'Tournaments Directory — Live Leagues, Auction Drafts & Cups',
+      description:
+        'Browse public football and local sports tournaments, create a new league or knockout cup, or enter a 6-character Join Code on ArenaPro.',
+      canonicalPath: '/tournaments/',
+      ogImage: './screenshots/02-tournaments-hub.png',
+      jsonLdGraph: [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+            { '@type': 'ListItem', position: 2, name: 'Tournaments', item: `${SITE_ORIGIN}/tournaments/` },
+          ],
+        },
+        {
+          '@type': 'ItemList',
+          name: 'ArenaPro Tournaments Directory',
+          numberOfItems: listed.length,
+          itemListElement: listed.map((t, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            item: {
+              '@type': 'SportsEvent',
+              name: t.name || 'Tournament',
+              url: `${SITE_ORIGIN}/?t=${encodeURIComponent(t.id)}`,
+              eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+            },
+          })),
+        },
+      ],
+    });
+  }, [myTournaments, joinedTournaments, discoverTournaments]);
 
   async function handleGoogleSignIn() {
     setSigningIn(true);

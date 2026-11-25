@@ -3,6 +3,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useGlobal } from '../../context/GlobalContext';
 import ImageUploadButton from '../ImageUploadButton';
 import {
+  applyPageSeo,
+  buildRoutePath,
+  resolvePublicAssetUrl,
+  SITE_ORIGIN,
+} from '../../utils/seo';
+import {
   createPostCloud,
   togglePostLikeCloud,
   deletePostCloud,
@@ -95,7 +101,7 @@ function StructuredArticleContent({ post }) {
               {sec.screenshot && (
                 <figure className="rounded-2xl overflow-hidden border border-amber-500/30 bg-[#050814] shadow-lg">
                   <img
-                    src={sec.screenshot.src}
+                    src={resolvePublicAssetUrl(sec.screenshot.src)}
                     alt={sec.screenshot.alt || sec.heading}
                     className="w-full h-auto object-cover"
                     loading="lazy"
@@ -155,6 +161,7 @@ export default function StoriesAndBlogPage({
   stories = [],
   initialStory = null,
   initialPost = null,
+  onPostRouteChange,
   onClearInitial,
 }) {
   const { user, signInGoogle } = useAuth();
@@ -188,45 +195,89 @@ export default function StoriesAndBlogPage({
   const [err, setErr] = useState('');
 
   useEffect(() => {
-    if (initialPost) setActivePost(initialPost);
+    setActivePost(initialPost || null);
   }, [initialPost]);
 
   useEffect(() => {
     if (initialStory) setActiveStory(initialStory);
   }, [initialStory]);
 
-  // Dynamic SEO / GEO / AEO meta + Schema.org JSON-LD when viewing an article
+  function openPost(post) {
+    setActivePost(post);
+    onPostRouteChange?.(post?.slug || post?.id || null);
+  }
+
+  function closePost() {
+    setActivePost(null);
+    onClearInitial?.();
+  }
+
+  // Dynamic SEO / GEO / AEO meta + Schema.org @graph (Blog / Article + BreadcrumbList + FAQPage)
   useEffect(() => {
-    const prevTitle = document.title;
-    const metaDesc = document.querySelector('meta[name="description"]');
-    const prevDesc = metaDesc?.getAttribute('content') || '';
-
-    const existingLd = document.getElementById('article-jsonld');
-    if (existingLd) existingLd.remove();
-
-    if (!activePost) return;
-
-    document.title = `${activePost.title} | ArenaPro`;
-    if (metaDesc && (activePost.metaDescription || activePost.summary)) {
-      metaDesc.setAttribute('content', activePost.metaDescription || activePost.summary);
+    if (!activePost) {
+      applyPageSeo({
+        title: 'Stories & Sports Blog — Tournament Guides, Draft Playbooks & News',
+        description:
+          'Step-by-step ArenaPro platform guide with screenshots, auction vs. wheel draft strategy, tiebreaker rules, club management, and tournament checklists.',
+        canonicalPath: '/blog/',
+        jsonLdGraph: [
+          {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+              { '@type': 'ListItem', position: 2, name: 'Stories & Blog', item: `${SITE_ORIGIN}/blog/` },
+            ],
+          },
+          {
+            '@type': 'Blog',
+            name: 'ArenaPro Sports & Tournament Blog',
+            url: `${SITE_ORIGIN}/blog/`,
+            blogPost: posts.slice(0, 12).map(p => ({
+              '@type': 'BlogPosting',
+              headline: p.title,
+              url: `${SITE_ORIGIN}/blog/${encodeURIComponent(p.slug || p.id)}/`,
+              datePublished: new Date(p.createdAt || Date.now()).toISOString(),
+            })),
+          },
+        ],
+      });
+      return;
     }
 
-    const ldObjects = [
+    const slug = activePost.slug || activePost.id;
+    const articlePath = `/blog/${encodeURIComponent(slug)}/`;
+    const articleUrl = `${SITE_ORIGIN}${articlePath}`;
+    const graph = [
       {
-        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+          { '@type': 'ListItem', position: 2, name: 'Stories & Blog', item: `${SITE_ORIGIN}/blog/` },
+          { '@type': 'ListItem', position: 3, name: activePost.title, item: articleUrl },
+        ],
+      },
+      {
         '@type': 'Article',
+        mainEntityOfPage: articleUrl,
         headline: activePost.title,
         description: activePost.metaDescription || activePost.summary || '',
+        image: activePost.coverUrl
+          ? `${SITE_ORIGIN}/${activePost.coverUrl.replace(/^\.\//, '').replace(/^\//, '')}`
+          : `${SITE_ORIGIN}/screenshots/01-homepage.png`,
         author: { '@type': 'Organization', name: activePost.authorName || 'ArenaPro' },
-        publisher: { '@type': 'Organization', name: 'ArenaPro' },
+        publisher: {
+          '@type': 'Organization',
+          name: 'ArenaPro',
+          logo: { '@type': 'ImageObject', url: `${SITE_ORIGIN}/screenshots/01-homepage.png` },
+        },
         datePublished: new Date(activePost.createdAt || Date.now()).toISOString(),
+        dateModified: new Date(activePost.updatedAt || activePost.createdAt || Date.now()).toISOString(),
         keywords: Array.isArray(activePost.keywords) ? activePost.keywords.join(', ') : '',
       },
     ];
 
     if (Array.isArray(activePost.faqs) && activePost.faqs.length > 0) {
-      ldObjects.push({
-        '@context': 'https://schema.org',
+      graph.push({
         '@type': 'FAQPage',
         mainEntity: activePost.faqs.map(f => ({
           '@type': 'Question',
@@ -236,19 +287,16 @@ export default function StoriesAndBlogPage({
       });
     }
 
-    const script = document.createElement('script');
-    script.id = 'article-jsonld';
-    script.type = 'application/ld+json';
-    script.text = JSON.stringify(ldObjects);
-    document.head.appendChild(script);
-
-    return () => {
-      document.title = prevTitle;
-      if (metaDesc && prevDesc) metaDesc.setAttribute('content', prevDesc);
-      const s = document.getElementById('article-jsonld');
-      if (s) s.remove();
-    };
-  }, [activePost]);
+    applyPageSeo({
+      title: activePost.title,
+      description: activePost.metaDescription || activePost.summary || '',
+      canonicalPath: articlePath,
+      keywords: Array.isArray(activePost.keywords) ? activePost.keywords.join(', ') : '',
+      ogType: 'article',
+      ogImage: activePost.coverUrl || './screenshots/01-homepage.png',
+      jsonLdGraph: graph,
+    });
+  }, [activePost, posts]);
 
   const filteredPosts = posts.filter(p => {
     if (category !== 'ALL' && p.category !== category) return false;
@@ -266,7 +314,7 @@ export default function StoriesAndBlogPage({
 
   function copyPostUrl(post) {
     const slug = post.slug || post.id;
-    const url = `${window.location.origin}${window.location.pathname}?page=blog&post=${encodeURIComponent(slug)}`;
+    const url = `${SITE_ORIGIN}/blog/${encodeURIComponent(slug)}/`;
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
@@ -390,7 +438,7 @@ export default function StoriesAndBlogPage({
               <div className="w-36 h-48 rounded-2xl p-0.5 bg-gradient-to-tr from-amber-500 via-rose-500 to-cyan-400 group-hover:scale-[1.02] transition-transform">
                 <div className="w-full h-full rounded-[14px] overflow-hidden bg-[#050814] relative flex flex-col justify-end p-2.5">
                   {story.imageUrl ? (
-                    <img src={story.imageUrl} alt={story.title} className="absolute inset-0 w-full h-full object-cover opacity-85" />
+                    <img src={resolvePublicAssetUrl(story.imageUrl)} alt={story.title} className="absolute inset-0 w-full h-full object-cover opacity-85" />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-[#0b132b] to-emerald-950" />
                   )}
@@ -447,16 +495,18 @@ export default function StoriesAndBlogPage({
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredPosts.map(post => {
               const isLiked = Boolean(user?.uid && post.likedByUids?.includes(user.uid));
+              const postHref = buildRoutePath('blog', post.slug || post.id);
               return (
                 <article key={post.id} className="pro-card rounded-2xl overflow-hidden flex flex-col justify-between hover:border-amber-400/45 transition-all">
                   <div>
                     {post.coverUrl && (
-                      <div
-                        onClick={() => setActivePost(post)}
-                        className="h-44 w-full bg-[#050814] overflow-hidden cursor-pointer"
+                      <a
+                        href={postHref}
+                        onClick={e => { e.preventDefault(); openPost(post); }}
+                        className="block h-44 w-full bg-[#050814] overflow-hidden cursor-pointer"
                       >
-                        <img src={post.coverUrl} alt={post.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                      </div>
+                        <img src={resolvePublicAssetUrl(post.coverUrl)} alt={post.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                      </a>
                     )}
                     <div className="p-5 space-y-2.5">
                       <div className="flex items-center justify-between text-[10px] font-mono uppercase">
@@ -468,11 +518,14 @@ export default function StoriesAndBlogPage({
                         </span>
                       </div>
 
-                      <h3
-                        onClick={() => setActivePost(post)}
-                        className="font-bold text-lg text-white leading-snug cursor-pointer hover:text-amber-300 transition-colors"
-                      >
-                        {post.title}
+                      <h3 className="font-bold text-lg text-white leading-snug">
+                        <a
+                          href={postHref}
+                          onClick={e => { e.preventDefault(); openPost(post); }}
+                          className="hover:text-amber-300 transition-colors"
+                        >
+                          {post.title}
+                        </a>
                       </h3>
 
                       <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
@@ -508,13 +561,13 @@ export default function StoriesAndBlogPage({
                           <span>{post.likesCount || 0}</span>
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => setActivePost(post)}
+                      <a
+                        href={postHref}
+                        onClick={e => { e.preventDefault(); openPost(post); }}
                         className="text-xs font-semibold text-amber-300 hover:text-amber-200 px-2 py-1"
                       >
                         Read →
-                      </button>
+                      </a>
                     </div>
                   </div>
                 </article>
@@ -528,14 +581,14 @@ export default function StoriesAndBlogPage({
       {activePost && (
         <div
           className="fixed inset-0 bg-black/85 backdrop-blur-md z-[200] flex items-center justify-center p-3 sm:p-5"
-          onClick={e => { if (e.target === e.currentTarget) { setActivePost(null); onClearInitial?.(); } }}
+          onClick={e => { if (e.target === e.currentTarget) closePost(); }}
         >
-          <div className="pro-card bg-[#0b132b] rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
+          <article className="pro-card bg-[#0b132b] rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
             {activePost.coverUrl && (
               <div className="h-52 sm:h-64 w-full bg-[#050814] shrink-0 relative">
-                <img src={activePost.coverUrl} alt={activePost.title} className="w-full h-full object-cover" />
+                <img src={resolvePublicAssetUrl(activePost.coverUrl)} alt={activePost.title} className="w-full h-full object-cover" />
                 <button
-                  onClick={() => { setActivePost(null); onClearInitial?.(); }}
+                  onClick={closePost}
                   className="absolute top-3 right-3 p-2 rounded-full bg-black/70 text-white hover:bg-black"
                 >
                   <X className="w-5 h-5" />
@@ -558,7 +611,7 @@ export default function StoriesAndBlogPage({
                   </button>
                   {!activePost.coverUrl && (
                     <button
-                      onClick={() => { setActivePost(null); onClearInitial?.(); }}
+                      onClick={closePost}
                       className="text-slate-400 hover:text-white p-1"
                     >
                       <X className="w-5 h-5" />
@@ -574,7 +627,7 @@ export default function StoriesAndBlogPage({
                 {activePost.tournamentId && (
                   <button
                     type="button"
-                    onClick={() => { setActivePost(null); selectTournament(activePost.tournamentId); }}
+                    onClick={() => { closePost(); selectTournament(activePost.tournamentId); }}
                     className="flex items-center gap-1 text-cyan-300 hover:underline"
                   >
                     <ExternalLink className="w-3.5 h-3.5" /> Open Linked Tournament
@@ -590,7 +643,7 @@ export default function StoriesAndBlogPage({
                     type="button"
                     onClick={async () => {
                       await deletePostCloud(activePost.id);
-                      setActivePost(null);
+                      closePost();
                     }}
                     className="flex items-center gap-1.5 text-xs text-red-300 hover:text-red-200 px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-500/30"
                   >
@@ -599,7 +652,7 @@ export default function StoriesAndBlogPage({
                 </div>
               )}
             </div>
-          </div>
+          </article>
         </div>
       )}
 
@@ -611,7 +664,7 @@ export default function StoriesAndBlogPage({
         >
           <div className="w-full max-w-md h-[80vh] max-h-[680px] rounded-3xl overflow-hidden bg-[#050814] border border-amber-500/40 relative flex flex-col justify-between shadow-2xl">
             {activeStory.imageUrl ? (
-              <img src={activeStory.imageUrl} alt={activeStory.title} className="absolute inset-0 w-full h-full object-contain bg-[#050814]" />
+              <img src={resolvePublicAssetUrl(activeStory.imageUrl)} alt={activeStory.title} className="absolute inset-0 w-full h-full object-contain bg-[#050814]" />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-[#0b132b] to-emerald-950" />
             )}
