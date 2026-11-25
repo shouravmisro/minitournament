@@ -162,8 +162,7 @@ export function applyPageSeo({
   upsertMetaTag('name', 'twitter:description', description);
   upsertMetaTag('name', 'twitter:image', absImage);
 
-  const existing = document.getElementById('dynamic-jsonld');
-  if (existing) existing.remove();
+  document.head.querySelectorAll('script[type="application/ld+json"]').forEach(el => el.remove());
 
   if (Array.isArray(jsonLdGraph) && jsonLdGraph.length > 0) {
     const script = document.createElement('script');
